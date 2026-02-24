@@ -32,7 +32,7 @@ const server = http.createServer(app);
 // ── Socket.io setup ──────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5500',
+    origin: *',
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -40,7 +40,7 @@ const io = new Server(server, {
 
 // ── Middleware ───────────────────────────────
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5500', credentials: true }));
+app.use(cors({ origin:'*', 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
