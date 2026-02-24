@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InsureDesk — 360° Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#222d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#00d4ff;--accent2:#7c3aed;--accent3:#10b981;--accent4:#f59e0b;--accent5:#ef4444;--text:#f0f4ff;--muted:#6b7a99;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 15% 10%,rgba(0,212,255,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 85% 85%,rgba(124,58,237,0.07) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:200;background:rgba(10,14,26,0.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:62px;gap:12px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:-0.5px;white-space:nowrap;}
+.logo span{color:var(--accent);}
+.logo em{font-size:0.6rem;color:var(--muted);font-style:normal;font-weight:400;margin-left:6px;background:var(--surface2);padding:2px 6px;border-radius:6px;border:1px solid var(--border);vertical-align:middle;}
+.portal-tabs{display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:3px;flex-shrink:0;}
+.tab-btn{padding:6px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;transition:all 0.25s;background:transparent;color:var(--muted);white-space:nowrap;}
+.tab-btn.active{background:var(--accent);color:#000;font-weight:700;box-shadow:0 2px 12px rgba(0,212,255,0.3);}
+.tab-btn:not(.active):hover{color:var(--text);background:var(--surface2);}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--accent3);font-size:0.72rem;font-weight:600;padding:4px 10px;border-radius:20px;}
+.live-dot{width:6px;height:6px;background:var(--accent3);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.clock-wrap{font-size:0.78rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:0.5px;}
+.notif-btn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all 0.2s;}
+.notif-btn:hover{border-color:var(--border2);background:var(--surface2);}
+.notif-badge{position:absolute;top:-5px;right:-5px;background:var(--accent5);color:#fff;font-size:0.55rem;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);animation:popIn 0.3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;cursor:pointer;border:2px solid rgba(0,212,255,0.3);transition:all 0.2s;}
+.avatar:hover{border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.3);}
+
+/* TOAST */
+#toasts{position:fixed;top:74px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface2);border:1px solid var(--border2);border-radius:13px;padding:12px 14px;min-width:272px;max-width:330px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.45);animation:toastIn 0.35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.out{animation:toastOut 0.28s ease forwards;}
+@keyframes toastOut{to{transform:translateX(110%);opacity:0}}
+.ti{font-size:1.05rem;flex-shrink:0;margin-top:1px;}
+.tb{flex:1;}
+.tt{font-size:0.82rem;font-weight:600;}
+.ts{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.tx{color:var(--muted);cursor:pointer;font-size:0.85rem;padding:0 2px;flex-shrink:0;}
+.tx:hover{color:var(--text);}
+
+/* NOTIFICATION PANEL */
+#nPanel{position:fixed;top:62px;right:0;width:310px;height:calc(100vh - 62px);background:var(--surface);border-left:1px solid var(--border);z-index:150;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:1rem;}
+#nPanel.open{transform:translateX(0);}
+.nph{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
+.npi{padding:11px;border-radius:10px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);transition:all 0.2s;}
+.npi:hover{background:var(--surface3);}
+.npi.unread{border-left:3px solid var(--accent);}
+.npi.warn{border-left-color:var(--accent5);}
+.npi.caution{border-left-color:var(--accent4);}
+.npi-h{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.npi-t{font-size:0.79rem;font-weight:600;flex:1;}
+.npi-tm{font-size:0.67rem;color:var(--muted);}
+.npi-b{font-size:0.74rem;color:var(--muted);}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:1.5rem;min-width:300px;max-width:460px;width:90%;transform:scale(0.9);transition:transform 0.25s cubic-bezier(.34,1.56,.64,1);}
+.overlay.open .modal{transform:scale(1);}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:.75rem;}
+.modal-body{font-size:0.83rem;color:var(--muted);line-height:1.6;margin-bottom:1.1rem;}
+.modal-body strong{color:var(--text);}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;}
+select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;margin-bottom:1rem;}
+
+/* MAIN */
+.main{position:relative;z-index:1;padding:1.4rem 1.75rem;max-width:1700px;margin:0 auto;}
+.portal-panel{display:none;}
+.portal-panel.active{display:block;animation:fadeUp 0.32s cubic-bezier(.4,0,.2,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.5px;}
+.section-sub{color:var(--muted);font-size:.83rem;margin-top:3px;margin-bottom:1.4rem;}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.2rem;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.2rem;}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:1rem;margin-bottom:1.2rem;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;}
+.col{display:flex;flex-direction:column;gap:1rem;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.15rem;position:relative;overflow:hidden;transition:border-color .25s,transform .2s,box-shadow .25s;}
+.card:hover{border-color:rgba(0,212,255,0.18);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.22);}
+.card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none;border-radius:inherit;}
+.cb::after{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,212,255,0.07),transparent);}
+.cg::after{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(16,185,129,0.07),transparent);}
+.ca::after{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(245,158,11,0.07),transparent);}
+.cp::after{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,58,237,0.07),transparent);}
+.cr::after{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(239,68,68,0.07),transparent);}
+.card:hover::after{opacity:1;}
+
+/* STAT */
+.sl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.sv{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-1.5px;line-height:1;}
+.sc{font-size:.72rem;margin-top:5px;}
+.up{color:var(--accent3);}
+.down{color:var(--accent5);}
+.si{position:absolute;top:1.1rem;right:1.1rem;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+
+/* CARD HEADER */
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:8px;}
+.ct{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:-.2px;}
+.badge{font-size:.68rem;padding:3px 9px;border-radius:20px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2);white-space:nowrap;}
+.bg{background:rgba(16,185,129,0.1);color:var(--accent3);border-color:rgba(16,185,129,0.2);}
+.br{background:rgba(239,68,68,0.1);color:var(--accent5);border-color:rgba(239,68,68,0.2);}
+.ba{background:rgba(245,158,11,0.1);color:var(--accent4);border-color:rgba(245,158,11,0.2);}
+
+/* BTN */
+.btn{padding:6px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:4px;}
+.btn-d{background:rgba(239,68,68,0.15);color:var(--accent5);border:1px solid rgba(239,68,68,0.3);}
+.btn-d:hover{background:rgba(239,68,68,0.28);}
+.btn-p{background:var(--accent);color:#000;}
+.btn-p:hover{background:#22e0ff;box-shadow:0 4px 16px rgba(0,212,255,0.3);}
+.btn-g{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-g:hover{background:var(--surface3);border-color:var(--border2);}
+
+/* LIVE CALL BANNER */
+.lcb{background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(0,212,255,0.08));border:1px solid rgba(16,185,129,0.25);border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-bottom:1rem;}
+.lcd{width:9px;height:9px;background:var(--accent3);border-radius:50%;animation:pulse 1s infinite;flex-shrink:0;}
+.lct{font-size:.8rem;font-weight:500;flex:1;}
+.lctimer{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent3);font-variant-numeric:tabular-nums;letter-spacing:1px;}
+
+/* QUEUE BOX */
+.qbox{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;}
+.qnum{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent4);font-variant-numeric:tabular-nums;min-width:34px;}
+.qi{flex:1;}
+.ql{font-size:.72rem;color:var(--muted);}
+.qs{font-size:.68rem;color:var(--muted);margin-top:1px;}
+
+/* CALL ITEM */
+.ci{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;border-radius:0;margin:0 -4px;}
+.ci:last-child{border-bottom:none;}
+.ci:hover{background:var(--surface2);border-radius:8px;}
+.cav{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;flex-shrink:0;}
+.cinfo{flex:1;min-width:0;}
+.cname{font-size:.83rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ctype{font-size:.7rem;color:var(--muted);margin-top:1px;}
+.cst{font-size:.68rem;padding:3px 9px;border-radius:20px;flex-shrink:0;font-weight:600;}
+.sa{background:rgba(16,185,129,0.15);color:var(--accent3);border:1px solid rgba(16,185,129,0.3);}
+.sq{background:rgba(245,158,11,0.15);color:var(--accent4);border:1px solid rgba(245,158,11,0.3);}
+.sh{background:rgba(239,68,68,0.1);color:var(--accent5);border:1px solid rgba(239,68,68,0.2);}
+
+/* PROGRESS */
+.pw{margin-top:8px;}
+.pl{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:4px;color:var(--muted);}
+.pl span:first-child{color:var(--text);}
+.pb{height:6px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+.pf{height:100%;border-radius:4px;width:0;transition:width 1.3s cubic-bezier(.4,0,.2,1);}
+
+/* SENTIMENT */
+.sr{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.srl{font-size:.78rem;width:92px;flex-shrink:0;}
+.srb{flex:1;height:7px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+.srf{height:100%;border-radius:4px;width:0;transition:width 1.3s cubic-bezier(.4,0,.2,1);}
+.srp{font-size:.72rem;color:var(--muted);width:36px;text-align:right;font-variant-numeric:tabular-nums;}
+
+/* TIMELINE */
+.tli{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.tli:last-child{border-bottom:none;}
+.tld{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.tlt{font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0;width:60px;font-variant-numeric:tabular-nums;}
+.tldesc{font-size:.8rem;}
+.tlsub{font-size:.7rem;color:var(--muted);margin-top:2px;}
+
+/* POLICY ROW */
+.pr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+.pr:last-child{border-bottom:none;}
+.pk{font-size:.75rem;color:var(--muted);}
+.pv{font-size:.8rem;font-weight:500;}
+
+/* STEPPER */
+.stepper{display:flex;flex-direction:column;gap:12px;}
+.step-row{display:flex;align-items:flex-start;gap:12px;}
+.step-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.step-n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;}
+.step-l{width:2px;flex:1;min-height:14px;border-radius:2px;margin-top:3px;}
+.n-done{background:var(--accent3);color:#000;}
+.n-cur{background:var(--accent);color:#000;animation:pulse 1.5s infinite;}
+.n-pend{background:rgba(255,255,255,0.1);color:var(--muted);}
+.l-done{background:var(--accent3);}
+.l-pend{background:rgba(255,255,255,0.08);}
+.step-info .st{font-size:.8rem;font-weight:500;}
+.step-info .sd{font-size:.7rem;color:var(--muted);margin-top:1px;}
+
+/* AGENT TABLE */
+.at{width:100%;border-collapse:collapse;}
+.at th{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 8px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.at th:not(:first-child){text-align:center;}
+.at td{padding:9px 8px;border-bottom:1px solid var(--border);font-size:.79rem;}
+.at td:not(:first-child){text-align:center;}
+.at tr:last-child td{border-bottom:none;}
+.at tr{cursor:pointer;transition:background .15s;}
+.at tr:hover td{background:var(--surface2);}
+.adot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px;}
+.spill{font-family:'Syne',sans-serif;font-weight:700;font-size:.79rem;padding:3px 10px;border-radius:8px;}
+
+/* MINI CHART */
+.mc{display:flex;align-items:flex-end;gap:3px;}
+.mb{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .7s cubic-bezier(.4,0,.2,1);}
+
+/* KPI ROW */
+.krow{display:flex;gap:1rem;margin-bottom:1rem;}
+.ki{flex:1;}
+.kv{font-family:'Syne',sans-serif;font-size:1.45rem;font-weight:800;line-height:1;}
+.kn{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+/* RING */
+.ring-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.ring-svg{transform:rotate(-90deg);}
+.ring-center{position:absolute;text-align:center;}
+.rv{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;line-height:1;}
+.rl{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+
+/* SLOT */
+.slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.slot{padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;text-align:center;font-size:.77rem;transition:all .2s;user-select:none;line-height:1.4;}
+.slot:hover{border-color:var(--border2);background:var(--surface2);}
+.slot.sel{border-color:var(--accent3);color:var(--accent3);background:rgba(16,185,129,0.08);}
+.slot.bk{border-color:var(--accent5);color:var(--accent5);background:rgba(239,68,68,0.06);cursor:not-allowed;opacity:.6;}
+.confirm{display:none;margin-top:10px;padding:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:9px;font-size:.77rem;color:var(--accent3);}
+.confirm.show{display:block;animation:fadeUp .3s ease;}
+
+/* ALERT ITEM */
+.ali{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.ali:last-child{border-bottom:none;}
+.ali-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.ali-c{flex:1;}
+.ali-t{font-size:.8rem;font-weight:500;}
+.ali-tm{font-size:.68rem;color:var(--muted);margin-top:2px;}
+.ali-a{font-size:.68rem;color:var(--accent);cursor:pointer;margin-top:3px;display:inline-block;}
+.ali-a:hover{text-decoration:underline;}
+
+/* FAB */
+.fab{position:fixed;bottom:2rem;right:2rem;z-index:300;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:1.4rem;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(0,212,255,0.35);transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;}
+.fab:hover{transform:scale(1.12);box-shadow:0 12px 36px rgba(0,212,255,0.5);}
+.fab:active{transform:scale(.95);}
+#fab-menu{position:fixed;bottom:6.5rem;right:2rem;z-index:300;display:flex;flex-direction:column;gap:8px;align-items:flex-end;opacity:0;pointer-events:none;transition:all .25s;}
+#fab-menu.open{opacity:1;pointer-events:all;}
+.fmi{display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:8px 14px;font-size:.79rem;font-weight:500;transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+.fmi:hover{background:var(--surface3);border-color:rgba(0,212,255,0.3);color:var(--accent);}
+
+/* ESCALATION FLASH */
+@keyframes escFlash{0%,100%{border-color:var(--border)}50%{border-color:var(--accent5);box-shadow:0 0 24px rgba(239,68,68,0.25)}}
+.esc-flash{animation:escFlash 1s ease 3;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
+
+@media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.g21,.g12{grid-template-columns:1fr}}
+@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.main{padding:1rem}.header{padding:0 1rem}.portal-tabs{display:none}}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- Notification Panel -->
+<div id="nPanel">
+  <div class="nph">Notifications <button class="btn btn-g" style="font-size:.72rem;padding:4px 10px;" onclick="closeNPanel()">✕ Close</button></div>
+  <div class="npi unread warn"><div class="npi-h"><span>⚠️</span><span class="npi-t">Escalation Flagged</span><span class="npi-tm">2m ago</span></div><div class="npi-b">Jake Miller flagged call #4882 for supervisor review</div></div>
+  <div class="npi unread caution"><div class="npi-h"><span>🕒</span><span class="npi-t">Queue Wait Exceeded SLA</span><span class="npi-tm">5m ago</span></div><div class="npi-b">Avg wait is 4m 22s — above 4-min threshold</div></div>
+  <div class="npi unread warn"><div class="npi-h"><span>😠</span><span class="npi-t">Angry Sentiment Detected</span><span class="npi-tm">12m ago</span></div><div class="npi-b">High frustration on Ryan Scott's active call</div></div>
+  <div class="npi"><div class="npi-h"><span>✅</span><span class="npi-t">Claim CLM-4471 Updated</span><span class="npi-tm">18m ago</span></div><div class="npi-b">Adjuster Mark Davis moved claim to review</div></div>
+  <div class="npi"><div class="npi-h"><span>📅</span><span class="npi-t">Callback Booked</span><span class="npi-tm">35m ago</span></div><div class="npi-b">Lisa Park scheduled Feb 21 at 2:00 PM</div></div>
+  <div class="npi"><div class="npi-h"><span>💳</span><span class="npi-t">Payment Confirmed</span><span class="npi-tm">1h ago</span></div><div class="npi-b">Sarah Anderson — $284 processed successfully</div></div>
+</div>
+
+<!-- Escalate Modal -->
+<div class="overlay" id="m-esc">
+  <div class="modal">
+    <div class="modal-title">🚨 Escalate Call</div>
+    <div class="modal-body">Escalating <strong>Sarah Anderson</strong> to a supervisor. Context will be auto-transferred.</div>
+    <select class="msel">
+      <option>Complex claim dispute</option><option>Billing issue beyond authority</option>
+      <option>Customer requesting supervisor</option><option>Compliance concern</option>
+    </select>
+    <div class="modal-foot"><button class="btn btn-g" onclick="closeM('m-esc')">Cancel</button><button class="btn btn-d" onclick="doEscalate()">Escalate Now</button></div>
+  </div>
+</div>
+
+<!-- Call Modal -->
+<div class="overlay" id="m-call">
+  <div class="modal">
+    <div class="modal-title" id="cm-title">📞 Call</div>
+    <div class="modal-body" id="cm-body"></div>
+    <div class="modal-foot"><button class="btn btn-g" onclick="closeM('m-call')">Close</button><button class="btn btn-p" onclick="closeM('m-call')">Connect</button></div>
+  </div>
+</div>
+
+<!-- Agent Modal -->
+<div class="overlay" id="m-agent">
+  <div class="modal">
+    <div class="modal-title" id="am-title">👤 Agent Profile</div>
+    <div class="modal-body" id="am-body"></div>
+    <div class="modal-foot"><button class="btn btn-g" onclick="closeM('m-agent')">Close</button><button class="btn btn-p" onclick="showToast('📋','Coaching note sent','Agent has been notified');closeM('m-agent')">Send Coaching Note</button></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">Insure<span>Desk</span><em>360° LIVE</em></div>
+  <div class="portal-tabs">
+    <button class="tab-btn active" onclick="switchTab('agent',this)">🎧 Agent</button>
+    <button class="tab-btn" onclick="switchTab('customer',this)">👤 Customer</button>
+    <button class="tab-btn" onclick="switchTab('manager',this)">📊 Manager</button>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="clock-wrap" id="clock">--:--:--</div>
+    <button class="notif-btn" onclick="toggleNPanel()" title="Notifications">🔔<span class="notif-badge" id="nbadge">3</span></button>
+    <div class="avatar" title="Alex Johnson">AJ</div>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ═══════════════ AGENT PORTAL ═══════════════ -->
+<div class="portal-panel active" id="panel-agent">
+  <div class="section-title">Agent 360° Dashboard</div>
+  <div class="section-sub">Live customer profile & call control — Alex Johnson on shift</div>
+
+  <div class="g4">
+    <div class="card cg"><div class="sl">Calls Today</div><div class="sv" style="color:var(--accent3)">24</div><div class="sc up">↑ 4 vs yesterday</div><div class="si" style="background:rgba(16,185,129,0.12)">📞</div></div>
+    <div class="card cb"><div class="sl">Avg Handle Time</div><div class="sv" style="color:var(--accent);font-size:1.65rem;">4:32</div><div class="sc up">↓ 18s improved</div><div class="si" style="background:rgba(0,212,255,0.1)">⏱</div></div>
+    <div class="card ca"><div class="sl">First Call Resolution</div><div class="sv" style="color:var(--accent4)">87%</div><div class="sc up">↑ 3% this week</div><div class="si" style="background:rgba(245,158,11,0.1)">✅</div></div>
+    <div class="card cp"><div class="sl">CSAT Score</div><div class="sv" style="color:#a78bfa">4.6</div><div class="sc up">↑ 0.2 this month</div><div class="si" style="background:rgba(124,58,237,0.1)">⭐</div></div>
+  </div>
+
+  <div class="g21">
+    <!-- Profile -->
+    <div class="card cb" id="profile-card">
+      <div class="ch">
+        <div class="ct">Customer 360° Profile</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge br" id="call-badge">🔴 LIVE CALL</span>
+          <button class="btn btn-d" onclick="openM('m-esc')" style="font-size:.7rem;padding:5px 9px;">⬆ Escalate</button>
+        </div>
+      </div>
+      <div class="lcb">
+        <div class="lcd"></div>
+        <div class="lct">Active call with <strong>Sarah Anderson</strong> — Claim Inquiry #CLM-4471</div>
+        <div class="lctimer" id="call-timer">00:00</div>
+        <button class="btn btn-d" onclick="endCall()" style="font-size:.68rem;padding:4px 9px;margin-left:4px;">End</button>
+      </div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <div style="min-width:160px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(124,58,237,0.18));display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:var(--accent);border:1px solid rgba(0,212,255,0.2)">SA</div>
+            <div><div style="font-weight:600;font-size:.9rem;">Sarah Anderson</div><div style="font-size:.7rem;color:var(--muted)">Policy #INS-2024-8821</div><div style="font-size:.68rem;color:var(--accent3);margin-top:2px">● Member since 2019</div></div>
+          </div>
+          <div class="pr"><span class="pk">Phone</span><span class="pv">+1 (555) 204-8821</span></div>
+          <div class="pr"><span class="pk">Location</span><span class="pv">Austin, TX</span></div>
+          <div class="pr"><span class="pk">Risk Level</span><span class="pv" style="color:var(--accent3)">Low ●</span></div>
+          <div class="pr"><span class="pk">LTV</span><span class="pv" style="color:var(--accent4)">$18,420</span></div>
+        </div>
+        <div style="flex:1;min-width:155px;">
+          <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Policy</div>
+          <div class="pr"><span class="pk">Type</span><span class="pv">Auto + Home Bundle</span></div>
+          <div class="pr"><span class="pk">Premium</span><span class="pv">$284/mo</span></div>
+          <div class="pr"><span class="pk">Deductible</span><span class="pv">$1,000</span></div>
+          <div class="pr"><span class="pk">Coverage</span><span class="pv">$500,000</span></div>
+          <div class="pr"><span class="pk">Renewal</span><span class="pv" style="color:var(--accent4)">Mar 15, 2026</span></div>
+          <div class="pr"><span class="pk">Payment</span><span class="pv" style="color:var(--accent3)">✓ Up to date</span></div>
+        </div>
+        <div style="flex:1;min-width:155px;">
+          <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Open Claim #CLM-4471</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Auto Collision · Jan 28, 2026</div>
+          <div class="stepper">
+            <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Filed</div><div class="sd">Jan 28 · Confirmed</div></div></div>
+            <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Assessed</div><div class="sd">Feb 1 · Approved</div></div></div>
+            <div class="step-row"><div class="step-col"><div class="step-n n-cur">●</div><div class="step-l l-pend"></div></div><div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review</div><div class="sd">Est. Feb 22</div></div></div>
+            <div class="step-row"><div class="step-col"><div class="step-n n-pend">4</div></div><div class="step-info"><div class="st">Settlement</div><div class="sd">Pending</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue -->
+    <div class="card cp">
+      <div class="ch"><div class="ct">Live Call Queue</div><span class="badge ba" id="q-badge">5 waiting</span></div>
+      <div class="qbox">
+        <div class="qnum" id="q-num">5</div>
+        <div class="qi"><div class="ql">Customers waiting</div><div class="qs" id="q-wait">Avg wait: 3m 42s</div></div>
+        <span style="font-size:1.4rem" id="q-trend">→</span>
+      </div>
+      <div class="ci" onclick="callModal('Sarah Anderson','Claim Inquiry #CLM-4471','active')"><div class="cav" style="background:rgba(16,185,129,0.15);color:var(--accent3)">SA</div><div class="cinfo"><div class="cname">Sarah Anderson</div><div class="ctype">Claim Inquiry #CLM-4471</div></div><span class="cst sa" id="active-badge">Active 0:00</span></div>
+      <div class="ci" onclick="callModal('Marcus Roberts','Billing Dispute','queue')"><div class="cav" style="background:rgba(245,158,11,0.15);color:var(--accent4)">MR</div><div class="cinfo"><div class="cname">Marcus Roberts</div><div class="ctype">Billing Dispute</div></div><span class="cst sq">Queue #1</span></div>
+      <div class="ci" onclick="callModal('Lisa Park','Policy Renewal','queue')"><div class="cav" style="background:rgba(124,58,237,0.15);color:#a78bfa">LP</div><div class="cinfo"><div class="cname">Lisa Park</div><div class="ctype">Policy Renewal</div></div><span class="cst sq">Queue #2</span></div>
+      <div class="ci" onclick="callModal('David Kim','New Policy Quote','hold')"><div class="cav" style="background:rgba(0,212,255,0.1);color:var(--accent)">DK</div><div class="cinfo"><div class="cname">David Kim</div><div class="ctype">New Policy Quote</div></div><span class="cst sh">On Hold</span></div>
+      <div class="ci" onclick="callModal('James Turner','Escalation Request','escalation')"><div class="cav" style="background:rgba(239,68,68,0.1);color:var(--accent5)">JT</div><div class="cinfo"><div class="cname">James Turner</div><div class="ctype">🚨 Escalation</div></div><span class="cst sh">Escalated</span></div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct">Call History</div><span class="badge">Last 7 Days</span></div>
+      <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Today 9:14</div><div><div class="tldesc">Claim status inquiry</div><div class="tlsub">Resolved · 5:12 · ⭐ 4.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt">Feb 17 2:30</div><div><div class="tldesc">Billing question</div><div class="tlsub">Escalated · 8:45 · ⭐ 3.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Feb 15 11:02</div><div><div class="tldesc">Policy update request</div><div class="tlsub">Resolved · 3:20 · ⭐ 5.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent5)"></div><div class="tlt">Feb 12 4:15</div><div><div class="tldesc">Claim filing CLM-4471</div><div class="tlsub">Filed · 12:04 · ⭐ 4.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent)"></div><div class="tlt">Feb 10 10:44</div><div><div class="tldesc">Coverage inquiry</div><div class="tlsub">Resolved · 4:50 · ⭐ 5.0</div></div></div>
+    </div>
+    <div class="card cg">
+      <div class="ch"><div class="ct">Customer Sentiment</div><span class="badge">This Month</span></div>
+      <div class="sr"><div class="srl" style="color:var(--accent3)">😊 Happy</div><div class="srb"><div class="srf" data-w="62" style="background:var(--accent3)"></div></div><div class="srp">62%</div></div>
+      <div class="sr"><div class="srl" style="color:var(--accent)">😐 Neutral</div><div class="srb"><div class="srf" data-w="24" style="background:var(--accent)"></div></div><div class="srp">24%</div></div>
+      <div class="sr"><div class="srl" style="color:var(--accent4)">😤 Frustrated</div><div class="srb"><div class="srf" data-w="10" style="background:var(--accent4)"></div></div><div class="srp">10%</div></div>
+      <div class="sr"><div class="srl" style="color:var(--accent5)">😠 Angry</div><div class="srb"><div class="srf" data-w="4" style="background:var(--accent5)"></div></div><div class="srp">4%</div></div>
+      <div style="margin-top:12px;padding:10px;background:rgba(16,185,129,0.08);border-radius:10px;border:1px solid rgba(16,185,129,0.2);">
+        <div style="font-size:.67rem;color:var(--muted);margin-bottom:3px;">🤖 AI Insight</div>
+        <div style="font-size:.77rem;">Sarah's tone is calm but shows urgency on claim timeline. Recommend proactive update on adjuster status.</div>
+      </div>
+    </div>
+    <div class="card ca">
+      <div class="ch"><div class="ct">Billing & Payments</div><span class="badge bg">Good Standing</span></div>
+      <div class="pr"><span class="pk">Next Due</span><span class="pv">Mar 1, 2026</span></div>
+      <div class="pr"><span class="pk">Amount</span><span class="pv">$284.00</span></div>
+      <div class="pr"><span class="pk">Last Payment</span><span class="pv" style="color:var(--accent3)">✓ Feb 1 — $284</span></div>
+      <div class="pr"><span class="pk">Method</span><span class="pv">Visa ···4892</span></div>
+      <div class="pr"><span class="pk">Status</span><span class="pv" style="color:var(--accent3)">Good Standing</span></div>
+      <div style="margin-top:12px;">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px;">Payment History (6 months)</div>
+        <div class="mc" style="height:44px;">
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+          <div class="mb" style="height:80%;background:var(--accent3)"></div>
+        </div>
+        <div style="font-size:.67rem;color:var(--muted);margin-top:4px;">6/6 on-time payments ✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CUSTOMER PORTAL ═══════════════ -->
+<div class="portal-panel" id="panel-customer">
+  <div class="section-title">My Insurance 360° View</div>
+  <div class="section-sub">Hi Sarah 👋 — Everything about your policy, claims & support in one place</div>
+  <div class="g4">
+    <div class="card cg"><div class="sl">Policy Status</div><div class="sv" style="color:var(--accent3);font-size:1.3rem;margin-top:4px;">Active ✓</div><div class="sc" style="color:var(--muted)">Renews Mar 15, 2026</div><div class="si" style="background:rgba(16,185,129,0.12)">🛡</div></div>
+    <div class="card ca"><div class="sl">Open Claims</div><div class="sv" style="color:var(--accent4)">1</div><div class="sc" style="color:var(--muted)">CLM-4471 in review</div><div class="si" style="background:rgba(245,158,11,0.1)">📋</div></div>
+    <div class="card cb"><div class="sl">Next Payment</div><div class="sv" style="color:var(--accent);font-size:1.5rem;">$284</div><div class="sc" style="color:var(--muted)">Due Mar 1, 2026</div><div class="si" style="background:rgba(0,212,255,0.1)">💳</div></div>
+    <div class="card cp"><div class="sl">My Support Rating</div><div class="sv" style="color:#a78bfa">4.6 ⭐</div><div class="sc" style="color:var(--muted)">Last 5 calls avg</div><div class="si" style="background:rgba(124,58,237,0.1)">⭐</div></div>
+  </div>
+  <div class="g12">
+    <div class="card ca">
+      <div class="ch"><div class="ct">Claim Tracker</div><span class="badge ba">CLM-4471 · In Progress</span></div>
+      <div style="font-size:.77rem;color:var(--muted);margin-bottom:12px;">Auto Collision · Filed Jan 28, 2026</div>
+      <div class="stepper">
+        <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Claim Filed</div><div class="sd">Jan 28 · Confirmed</div></div></div>
+        <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Damage Assessed</div><div class="sd">Feb 1 · $4,200 approved</div></div></div>
+        <div class="step-row"><div class="step-col"><div class="step-n n-cur">3</div><div class="step-l l-pend"></div></div><div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review</div><div class="sd">In Progress · Est. Feb 22</div></div></div>
+        <div class="step-row"><div class="step-col"><div class="step-n n-pend">4</div></div><div class="step-info"><div class="st">Settlement Issued</div><div class="sd">Pending</div></div></div>
+      </div>
+      <div style="margin-top:14px;padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:.68rem;color:var(--muted)">Assigned Adjuster</div>
+        <div style="font-size:.83rem;font-weight:500;margin-top:2px;">Mark Davis · +1 (555) 300-1122</div>
+        <div style="font-size:.7rem;color:var(--accent);margin-top:4px;cursor:pointer;" onclick="showToast('📞','Calling adjuster...','Connecting to Mark Davis')">📞 Call Adjuster →</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="ch"><div class="ct">My Call History</div><span class="badge">Recent</span></div>
+        <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Today 9:14</div><div><div class="tldesc">Claim status inquiry — Resolved ✓</div><div class="tlsub">Agent AJ · 5:12 min · ⭐ 4.0</div></div></div>
+        <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt">Feb 17</div><div><div class="tldesc">Billing question — Escalated</div><div class="tlsub">Agent MC · 8:45 min · ⭐ 3.0</div></div></div>
+        <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Feb 15</div><div><div class="tldesc">Policy update — Resolved ✓</div><div class="tlsub">Agent AJ · 3:20 min · ⭐ 5.0</div></div></div>
+      </div>
+      <div class="card cb">
+        <div class="ch"><div class="ct">My Policy</div><span class="badge bg">Active</span></div>
+        <div class="pr"><span class="pk">Coverage Type</span><span class="pv">Auto + Home Bundle</span></div>
+        <div class="pr"><span class="pk">Coverage Amount</span><span class="pv">$500,000</span></div>
+        <div class="pr"><span class="pk">Monthly Premium</span><span class="pv">$284.00</span></div>
+        <div class="pr"><span class="pk">Deductible</span><span class="pv">$1,000</span></div>
+        <div class="pr"><span class="pk">Renewal Date</span><span class="pv" style="color:var(--accent4)">Mar 15, 2026</span></div>
+      </div>
+      <div class="card cg">
+        <div class="ch"><div class="ct">📅 Schedule Callback</div><span class="badge bg">Pick a slot</span></div>
+        <div class="slot-grid">
+          <div class="slot" onclick="pickSlot(this,'Feb 20 · 9:00 AM')">Feb 20 · 9:00 AM</div>
+          <div class="slot" onclick="pickSlot(this,'Feb 20 · 11:00 AM')">Feb 20 · 11:00 AM</div>
+          <div class="slot bk">Feb 21 · 10:00 AM<br><span style="font-size:.64rem;">Booked</span></div>
+          <div class="slot" onclick="pickSlot(this,'Feb 21 · 2:00 PM')">Feb 21 · 2:00 PM</div>
+          <div class="slot" onclick="pickSlot(this,'Feb 21 · 4:00 PM')">Feb 21 · 4:00 PM</div>
+          <div class="slot" onclick="pickSlot(this,'Feb 22 · 9:30 AM')">Feb 22 · 9:30 AM</div>
+        </div>
+        <div class="confirm" id="slot-confirm"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MANAGER PORTAL ═══════════════ -->
+<div class="portal-panel" id="panel-manager">
+  <div class="section-title">Manager 360° Command Center</div>
+  <div class="section-sub">Real-time oversight of team performance, call ops & customer experience</div>
+  <div class="g4">
+    <div class="card cb"><div class="sl">Active Calls Now</div><div class="sv" style="color:var(--accent)" id="ac-stat">18</div><div class="sc" style="color:var(--muted)">12 agents on calls</div><div class="si" style="background:rgba(0,212,255,0.1)">📡</div></div>
+    <div class="card ca"><div class="sl">Queue Waiting</div><div class="sv" style="color:var(--accent4)" id="mq-stat">5</div><div class="sc up">↓ 3 from peak</div><div class="si" style="background:rgba(245,158,11,0.1)">⏳</div></div>
+    <div class="card cg"><div class="sl">Team FCR Today</div><div class="sv" style="color:var(--accent3)">84%</div><div class="sc up">↑ 2% vs last week</div><div class="si" style="background:rgba(16,185,129,0.1)">🎯</div></div>
+    <div class="card cr"><div class="sl">Escalations Today</div><div class="sv" style="color:var(--accent5)" id="esc-stat">3</div><div class="sc down">↑ 1 above target</div><div class="si" style="background:rgba(239,68,68,0.1)">⚠️</div></div>
+  </div>
+  <div class="g21">
+    <div class="card">
+      <div class="ch"><div class="ct">Agent Performance Scorecards</div><span class="badge">Live Today</span></div>
+      <table class="at">
+        <thead><tr><th>Agent</th><th>Calls</th><th>AHT</th><th>FCR</th><th>CSAT</th><th>Score</th></tr></thead>
+        <tbody>
+          <tr onclick="agentModal('Alex Johnson',94,'4:32','87%','4.8')"><td><span class="adot" style="background:var(--accent3)"></span>Alex Johnson</td><td>24</td><td>4:32</td><td>87%</td><td>4.8</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">94</span></td></tr>
+          <tr onclick="agentModal('Maria Chen',88,'5:10','82%','4.5')"><td><span class="adot" style="background:var(--accent3)"></span>Maria Chen</td><td>19</td><td>5:10</td><td>82%</td><td>4.5</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">88</span></td></tr>
+          <tr onclick="agentModal('Ryan Scott',74,'6:22','71%','3.8')"><td><span class="adot" style="background:var(--accent4)"></span>Ryan Scott</td><td>16</td><td>6:22</td><td>71%</td><td>3.8</td><td><span class="spill" style="background:rgba(245,158,11,0.15);color:var(--accent4)">74</span></td></tr>
+          <tr onclick="agentModal('Priya Nair',91,'4:48','85%','4.6')"><td><span class="adot" style="background:var(--accent3)"></span>Priya Nair</td><td>21</td><td>4:48</td><td>85%</td><td>4.6</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">91</span></td></tr>
+          <tr onclick="agentModal('Jake Miller',61,'7:14','64%','3.2')"><td><span class="adot" style="background:var(--accent5)"></span>Jake Miller</td><td>11</td><td>7:14</td><td>64%</td><td>3.2</td><td><span class="spill" style="background:rgba(239,68,68,0.15);color:var(--accent5)">61</span></td></tr>
+          <tr onclick="agentModal('Sofia Torres',89,'4:55','83%','4.7')"><td><span class="adot" style="background:var(--accent3)"></span>Sofia Torres</td><td>22</td><td>4:55</td><td>83%</td><td>4.7</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">89</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <div class="card cb">
+        <div class="ch"><div class="ct">Call Volume Today</div><span class="badge">Hourly</span></div>
+        <div class="mc" style="height:64px;" id="vol-chart"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:.66rem;color:var(--muted);"><span>8AM</span><span>10AM</span><span>12PM</span><span>2PM</span><span>4PM</span><span>6PM</span></div>
+        <div class="krow" style="margin-top:12px;margin-bottom:0;">
+          <div class="ki"><div class="kv" style="color:var(--accent)" id="vol-tot">218</div><div class="kn">Total</div></div>
+          <div class="ki"><div class="kv" style="color:var(--accent3)">183</div><div class="kn">Resolved</div></div>
+          <div class="ki"><div class="kv" style="color:var(--accent4)">35</div><div class="kn">Pending</div></div>
+        </div>
+      </div>
+      <div class="card cr" id="alerts-card">
+        <div class="ch"><div class="ct">🚨 Live Alerts</div><span class="badge br" id="alert-badge">3 active</span></div>
+        <div class="ali"><div class="ali-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">⚠️</div><div class="ali-c"><div class="ali-t">Jake Miller — Escalation flagged</div><div class="ali-tm">2 min ago · Call #4882</div><span class="ali-a" onclick="showToast('🎧','Joining Jake Miller call...','Supervisor override activated')">Join call →</span></div></div>
+        <div class="ali"><div class="ali-icon" style="background:rgba(245,158,11,0.15);color:var(--accent4)">🕒</div><div class="ali-c"><div class="ali-t">Queue wait exceeds 4-min SLA</div><div class="ali-tm">5 min ago · 5 waiting</div><span class="ali-a" onclick="showToast('📋','Reassigning queue...','2 agents pulled from wrap-up')">Reassign →</span></div></div>
+        <div class="ali"><div class="ali-icon" style="background:rgba(239,68,68,0.1);color:var(--accent5)">😠</div><div class="ali-c"><div class="ali-t">Angry sentiment — Ryan Scott</div><div class="ali-tm">12 min ago · Active call</div><span class="ali-a" onclick="showToast('🎧','Monitoring Ryan call...','Score: 82% frustrated')">Monitor →</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card ca">
+      <div class="ch"><div class="ct">Claims Overview</div><span class="badge">This Month</span></div>
+      <div class="krow"><div class="ki"><div class="kv" style="color:var(--accent4)">142</div><div class="kn">Open</div></div><div class="ki"><div class="kv" style="color:var(--accent3)">89</div><div class="kn">Resolved</div></div><div class="ki"><div class="kv" style="color:var(--accent5)">14</div><div class="kn">Escalated</div></div></div>
+      <div class="pw"><div class="pl"><span>Resolution Rate</span><span>62.7%</span></div><div class="pb"><div class="pf" data-w="62.7" style="background:var(--accent4)"></div></div></div>
+      <div class="pw"><div class="pl"><span>Avg Resolution Time</span><span>4.2 days</span></div><div class="pb"><div class="pf" data-w="70" style="background:var(--accent3)"></div></div></div>
+    </div>
+    <div class="card cp">
+      <div class="ch"><div class="ct">Policy & Billing Health</div><span class="badge">Feb 2026</span></div>
+      <div class="krow"><div class="ki"><div class="kv" style="color:#a78bfa">4,821</div><div class="kn">Active Policies</div></div><div class="ki"><div class="kv" style="color:var(--accent3)">97%</div><div class="kn">On-Time</div></div></div>
+      <div class="pw"><div class="pl"><span>Renewal Conversion</span><span>91%</span></div><div class="pb"><div class="pf" data-w="91" style="background:#7c3aed"></div></div></div>
+      <div class="pw"><div class="pl"><span>Late Payments</span><span>3%</span></div><div class="pb"><div class="pf" data-w="3" style="background:var(--accent5)"></div></div></div>
+      <div style="margin-top:10px;">
+        <div class="sr"><div class="srl" style="color:var(--muted);font-size:.72rem;">Team 😊</div><div class="srb"><div class="srf" data-w="58" style="background:var(--accent3)"></div></div><div class="srp">58%</div></div>
+      </div>
+    </div>
+    <div class="card cb">
+      <div class="ch"><div class="ct">CSAT &amp; NPS Scores</div><span class="badge">This Week</span></div>
+      <div style="display:flex;justify-content:space-around;align-items:center;padding:.75rem 0 .5rem;">
+        <div style="text-align:center;">
+          <div class="ring-wrap">
+            <svg class="ring-svg" width="90" height="90" viewBox="0 0 90 90">
+              <circle fill="none" stroke="rgba(255,255,255,0.07)" cx="45" cy="45" r="37" stroke-width="8"/>
+              <circle class="ring-fill" fill="none" stroke="var(--accent)" cx="45" cy="45" r="37" stroke-width="8" stroke-dasharray="232" stroke-dashoffset="232" data-off="35" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-center"><div class="rv" style="color:var(--accent)">4.6</div><div class="rl">CSAT</div></div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div class="ring-wrap">
+            <svg class="ring-svg" width="90" height="90" viewBox="0 0 90 90">
+              <circle fill="none" stroke="rgba(255,255,255,0.07)" cx="45" cy="45" r="37" stroke-width="8"/>
+              <circle class="ring-fill" fill="none" stroke="var(--accent3)" cx="45" cy="45" r="37" stroke-width="8" stroke-dasharray="232" stroke-dashoffset="232" data-off="57" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-center"><div class="rv" style="color:var(--accent3)">72</div><div class="rl">NPS</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);text-align:center;">Industry avg: CSAT 4.1 · NPS 48</div>
+      <div style="text-align:center;margin-top:5px;font-size:.77rem;color:var(--accent3);">↑ Above industry benchmark</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- FAB -->
+<div id="fab-menu">
+  <div class="fmi" onclick="showToast('📞','New outbound call started','Dialing from queue')">📞 New Call</div>
+  <div class="fmi" onclick="showToast('📋','Claim form opened','Wizard launched')">📋 New Claim</div>
+  <div class="fmi" onclick="showToast('📊','Generating report...','PDF ready in 30s')">📊 Export Report</div>
+</div>
+<button class="fab" id="fab-btn" onclick="toggleFab()">＋</button>
+
+<script>
+// ── CLOCK ──
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+tick();setInterval(tick,1000);
+
+// ── PORTAL TABS ──
+function switchTab(id,btn){
+  document.querySelectorAll('.portal-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>{animFills();animRings();},120);
+}
+
+// ── LIVE CALL TIMER ──
+let cs=0,running=true;
+function timerTick(){
+  if(!running)return;
+  cs++;
+  const m=Math.floor(cs/60),s=cs%60;
+  const str=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const t=document.getElementById('call-timer'),a=document.getElementById('active-badge');
+  if(t)t.textContent=str;
+  if(a)a.textContent=`Active ${m}:${String(s).padStart(2,'0')}`;
+}
+setInterval(timerTick,1000);
+
+function endCall(){
+  running=false;
+  const t=document.getElementById('call-timer');
+  if(t)t.style.color='var(--muted)';
+  const b=document.getElementById('call-badge');
+  if(b){b.textContent='✓ COMPLETED';b.className='badge bg';}
+  showToast('✅','Call ended',`Duration: ${Math.floor(cs/60)}m ${cs%60}s`);
+  setTimeout(()=>{cs=0;running=true;if(t)t.style.color='';if(b){b.textContent='🔴 LIVE CALL';b.className='badge br';}},6000);
+}
+
+// ── TOAST ──
+function showToast(icon,title,sub){
+  const c=document.getElementById('toasts');
+  const d=document.createElement('div');d.className='toast';
+  d.innerHTML=`<div class="ti">${icon}</div><div class="tb"><div class="tt">${title}</div>${sub?`<div class="ts">${sub}</div>`:''}</div><div class="tx" onclick="dismissToast(this.parentElement)">✕</div>`;
+  c.appendChild(d);setTimeout(()=>dismissToast(d),5000);
+}
+function dismissToast(el){if(!el||!el.parentElement)return;el.classList.add('out');setTimeout(()=>el.remove(),280);}
+
+// ── NOTIFICATIONS ──
+let nOpen=false;
+function toggleNPanel(){
+  nOpen=!nOpen;
+  document.getElementById('nPanel').classList.toggle('open',nOpen);
+  if(nOpen){const b=document.getElementById('nbadge');if(b)b.style.display='none';}
+}
+function closeNPanel(){nOpen=false;document.getElementById('nPanel').classList.remove('open');}
+
+// ── MODALS ──
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function doEscalate(){
+  closeM('m-esc');
+  const card=document.getElementById('profile-card');
+  card.classList.add('esc-flash');
+  setTimeout(()=>card.classList.remove('esc-flash'),3200);
+  const s=document.getElementById('esc-stat');if(s)s.textContent=parseInt(s.textContent)+1;
+  showToast('⬆️','Call escalated','Supervisor notified — context transferred');
+}
+function callModal(name,type,status){
+  const msgs={active:`Active call with <strong>${name}</strong>.<br>Type: <strong>${type}</strong><br>You can monitor, mute, or transfer.`,queue:`<strong>${name}</strong> is in queue for <strong>${type}</strong>. Connect now?`,hold:`<strong>${name}</strong> is on hold for <strong>${type}</strong>. Resume?`,escalation:`⚠️ <strong>${name}</strong> flagged an escalation.<br><strong>${type}</strong> requires supervisor review.`};
+  document.getElementById('cm-title').textContent=`📞 ${name}`;
+  document.getElementById('cm-body').innerHTML=msgs[status]||msgs.queue;
+  openM('m-call');
+}
+function agentModal(name,score,aht,fcr,csat){
+  const c=score>85?'var(--accent3)':score>70?'var(--accent4)':'var(--accent5)';
+  document.getElementById('am-title').textContent=`👤 ${name}`;
+  document.getElementById('am-body').innerHTML=`Performance score: <strong style="color:${c};font-size:1.2rem">${score}/100</strong><br><br>AHT: <strong>${aht}</strong> · FCR: <strong>${fcr}</strong> · CSAT: <strong>${csat}</strong><br><br>Click "Send Coaching Note" to share feedback directly with this agent.`;
+  openM('m-agent');
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ── SLOT PICKER ──
+function pickSlot(el,label){
+  if(el.classList.contains('bk'))return;
+  document.querySelectorAll('.slot:not(.bk)').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  const c=document.getElementById('slot-confirm');
+  c.textContent=`✅ Callback confirmed for ${label}! SMS reminder 30 min before.`;
+  c.classList.add('show');
+  showToast('📅','Callback Booked!',label);
+}
+
+// ── ANIMATE FILLS ──
+function animFills(){
+  document.querySelectorAll('.pf[data-w],.srf[data-w]').forEach(el=>{
+    el.style.width='0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=el.dataset.w+'%';}));
+  });
+}
+setTimeout(animFills,450);
+
+// ── ANIMATE RINGS ──
+function animRings(){
+  document.querySelectorAll('.ring-fill[data-off]').forEach(el=>{
+    const da=parseFloat(el.getAttribute('stroke-dasharray'));
+    el.style.strokeDashoffset=da;
+    el.style.transition='none';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      el.style.transition='stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+      el.style.strokeDashoffset=el.dataset.off;
+    }));
+  });
+}
+setTimeout(animRings,650);
+
+// ── CALL VOLUME CHART ──
+const volData=[30,55,82,97,75,62,90,100,88,76,68,92];
+function buildChart(){
+  const c=document.getElementById('vol-chart');if(!c)return;
+  c.innerHTML='';
+  volData.forEach(h=>{
+    const b=document.createElement('div');b.className='mb';b.style.height='0%';
+    b.style.background=h>88?'var(--accent5)':h>70?'var(--accent)':'rgba(0,212,255,0.3)';
+    c.appendChild(b);setTimeout(()=>b.style.height=h+'%',100);
+  });
+}
+buildChart();
+setInterval(()=>{
+  const i=Math.floor(Math.random()*volData.length);
+  volData[i]=Math.min(100,Math.max(20,volData[i]+(Math.random()>.5?5:-5)));
+  buildChart();
+  const t=document.getElementById('vol-tot');if(t)t.textContent=parseInt(t.textContent)+Math.floor(Math.random()*3);
+},9000);
+
+// ── LIVE QUEUE SIMULATION ──
+let qv=5;
+const waits=['2m 10s','3m 42s','4m 05s','5m 18s','1m 50s','3m 00s'];
+setInterval(()=>{
+  const d=Math.random()>.5?1:-1;qv=Math.max(1,Math.min(12,qv+d));
+  const q=document.getElementById('q-num'),qb=document.getElementById('q-badge'),
+        mq=document.getElementById('mq-stat'),qt=document.getElementById('q-trend'),qw=document.getElementById('q-wait');
+  if(q)q.textContent=qv;if(qb)qb.textContent=qv+' waiting';if(mq)mq.textContent=qv;
+  if(qt)qt.textContent=d>0?'↑':'↓';if(qw)qw.textContent='Avg wait: '+waits[qv%waits.length];
+  if(qv>9)showToast('🕒','High Queue Alert',`${qv} customers waiting — reassign agents`);
+},13000);
+
+// ── FAB ──
+let fabOpen=false;
+function toggleFab(){
+  fabOpen=!fabOpen;
+  document.getElementById('fab-menu').classList.toggle('open',fabOpen);
+  const b=document.getElementById('fab-btn');b.textContent=fabOpen?'✕':'＋';
+  b.style.transform=fabOpen?'rotate(135deg)':'';
+}
+document.addEventListener('click',e=>{
+  if(nOpen&&!document.getElementById('nPanel').contains(e.target)&&!e.target.closest('.notif-btn'))closeNPanel();
+  if(fabOpen&&!e.target.closest('#fab-menu')&&!e.target.closest('#fab-btn')){fabOpen=false;document.getElementById('fab-menu').classList.remove('open');const b=document.getElementById('fab-btn');b.textContent='＋';b.style.transform='';}
+});
+
+// ── STARTUP TOAST ──
+setTimeout(()=>showToast('🚀','InsureDesk 360° Ready','All portals live — explore each tab above'),900);
+// ── INCOMING CALL SIMULATION ──
+setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal query');const b=document.getElementById('nbadge');if(b){b.textContent=parseInt(b.textContent)+1;b.style.display='flex';}},22000);
+</script>
+</body>
+</html>
