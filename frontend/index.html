@@ -257,7 +257,16 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 
 @media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){.g21,.g12{grid-template-columns:1fr}}
-@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.main{padding:1rem}.header{padding:0 1rem}.portal-tabs{display:none}}
+@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.main{padding:1rem 0.75rem 90px}.header{padding:0 1rem}.portal-tabs{display:none}.mobile-nav{display:flex !important;}}
+/* MOBILE BOTTOM NAV */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(10,14,26,0.97);backdrop-filter:blur(24px);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);}
+.mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;max-width:480px;margin:0 auto;}
+.mnav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 20px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.62rem;font-weight:500;border-radius:12px;transition:all 0.2s;min-width:80px;}
+.mnav-btn .micon{font-size:1.3rem;transition:transform 0.2s;}
+.mnav-btn.active{color:var(--accent);}
+.mnav-btn.active .micon{transform:scale(1.15);}
+.mnav-btn:not(.active):hover{color:var(--text);}
+.mnav-active-bar{position:absolute;bottom:0;height:3px;background:var(--accent);border-radius:3px 3px 0 0;transition:all 0.3s cubic-bezier(.4,0,.2,1);width:80px;}
 </style>
 </head>
 <body>
@@ -604,11 +613,18 @@ function tick(){document.getElementById('clock').textContent=new Date().toLocale
 tick();setInterval(tick,1000);
 
 // ── PORTAL TABS ──
-function switchTab(id,btn){
+function switchTab(id,btn,isMobile){
   document.querySelectorAll('.portal-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   btn.classList.add('active');
+  const mnavBtn = document.getElementById('mnav-'+id);
+  if(mnavBtn) mnavBtn.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  if(isMobile) window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{animFills();animRings();},120);
 }
 
@@ -761,5 +777,21 @@ setTimeout(()=>showToast('🚀','InsureDesk 360° Ready','All portals live — e
 // ── INCOMING CALL SIMULATION ──
 setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal query');const b=document.getElementById('nbadge');if(b){b.textContent=parseInt(b.textContent)+1;b.style.display='flex';}},22000);
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-inner">
+    <button class="mnav-btn active" id="mnav-agent" onclick="switchTab('agent',this,true)">
+      <span class="micon">🎧</span>Agent
+    </button>
+    <button class="mnav-btn" id="mnav-customer" onclick="switchTab('customer',this,true)">
+      <span class="micon">👤</span>Customer
+    </button>
+    <button class="mnav-btn" id="mnav-manager" onclick="switchTab('manager',this,true)">
+      <span class="micon">📊</span>Manager
+    </button>
+  </div>
+</nav>
+
 </body>
 </html>
