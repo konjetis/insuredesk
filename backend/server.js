@@ -26,6 +26,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use('/api/', limiter);
+app.use('/api/auth', require('./src/routes/password-reset'));
+app.use('/api/admin', require('./src/routes/admin-routes'));
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/customers', customerRoutes);
 app.use('/api/calls', callRoutes);

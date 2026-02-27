@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InsureDesk — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#222d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#00d4ff;--accent2:#7c3aed;--accent3:#10b981;--accent5:#ef4444;--text:#f0f4ff;--muted:#6b7a99;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 15% 10%,rgba(0,212,255,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 85% 85%,rgba(124,58,237,0.07) 0%,transparent 60%);pointer-events:none;}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite;}
+@keyframes gridMove{0%{transform:translateY(0)}100%{transform:translateY(60px)}}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);animation:float 8s ease-in-out infinite;}
+.orb1{width:400px;height:400px;background:rgba(0,212,255,0.05);top:-100px;left:-100px;}
+.orb2{width:300px;height:300px;background:rgba(124,58,237,0.06);bottom:-50px;right:-50px;animation-delay:3s;}
+.orb3{width:200px;height:200px;background:rgba(16,185,129,0.04);top:50%;left:50%;animation-delay:6s;}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+.login-card{position:relative;z-index:10;width:100%;max-width:420px;padding:2.5rem;background:rgba(17,24,39,0.8);border:1px solid var(--border2);border-radius:24px;backdrop-filter:blur(32px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:cardIn 0.6s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.logo-wrap{text-align:center;margin-bottom:2rem;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-1px;}
+.logo span{color:var(--accent);}
+.logo-sub{font-size:0.78rem;color:var(--muted);margin-top:4px;}
+.logo-icon{width:52px;height:52px;background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(124,58,237,0.15));border:1px solid rgba(0,212,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 1rem;box-shadow:0 0 30px rgba(0,212,255,0.1);}
+.role-label{font-size:0.72rem;color:var(--muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;}
+.role-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:3px;margin-bottom:1.5rem;}
+.role-btn{padding:7px 4px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.7rem;font-weight:500;transition:all 0.2s;background:transparent;color:var(--muted);text-align:center;}
+.role-btn.active{background:var(--accent);color:#000;font-weight:700;box-shadow:0 2px 12px rgba(0,212,255,0.3);}
+.role-btn:not(.active):hover{color:var(--text);background:var(--surface2);}
+.field{margin-bottom:1.2rem;}
+.field label{display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;}
+.field label a{color:var(--accent);text-decoration:none;font-size:0.72rem;text-transform:none;letter-spacing:0;font-weight:400;}
+.field label a:hover{text-decoration:underline;}
+.field input{width:100%;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;transition:all 0.2s;outline:none;}
+.field input:focus{border-color:rgba(0,212,255,0.4);background:var(--surface3);box-shadow:0 0 0 3px rgba(0,212,255,0.08);}
+.field input::placeholder{color:var(--muted);}
+.field input.error-input{border-color:rgba(239,68,68,0.5);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:44px;}
+.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;}
+.submit-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),#0099cc);border:none;border-radius:12px;color:#000;font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.25s;margin-top:0.5rem;}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,212,255,0.35);}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.msg{padding:10px 14px;border-radius:10px;font-size:0.82rem;margin-bottom:1rem;animation:msgIn 0.3s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.msg.error{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;display:flex;gap:8px;align-items:center;}
+.msg.success{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;display:flex;gap:8px;align-items:center;}
+.secure-badge{display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.7rem;color:var(--muted);margin-top:1.2rem;}
+.secure-badge span{color:var(--accent3);}
+.card-footer{text-align:center;margin-top:1rem;font-size:0.75rem;color:var(--muted);}
+.card-footer a{color:var(--accent);text-decoration:none;}
+.view{display:none;}
+.view.active{display:block;}
+.back-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.82rem;padding:0;margin-bottom:1.2rem;display:flex;align-items:center;gap:6px;}
+.back-btn:hover{text-decoration:underline;}
+.spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="login-card">
+  <div class="logo-wrap">
+    <div class="logo-icon">🛡️</div>
+    <div class="logo">Insure<span>Desk</span></div>
+    <div class="logo-sub">360° Insurance Command Center</div>
+  </div>
+
+  <!-- LOGIN VIEW -->
+  <div class="view active" id="loginView">
+    <div class="role-label">Sign in as</div>
+    <div class="role-tabs">
+      <button class="role-btn active" onclick="setRole('manager',this)">📊 Mgr</button>
+      <button class="role-btn" onclick="setRole('agent',this)">🎧 Agent</button>
+      <button class="role-btn" onclick="setRole('customer',this)">👤 Client</button>
+      <button class="role-btn" onclick="setRole('admin',this)">⚙️ Admin</button>
+    </div>
+    <div id="loginError" class="msg error" style="display:none">⚠️ <span id="loginErrorText"></span></div>
+    <div id="loginSuccess" class="msg success" style="display:none">✅ <span id="loginSuccessText"></span></div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@company.com"/>
+    </div>
+    <div class="field">
+      <label>Password <a href="#" onclick="showForgot(event)">Forgot password?</a></label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"/>
+        <button class="pw-toggle" onclick="togglePw()" id="pwToggle">👁</button>
+      </div>
+    </div>
+    <button class="submit-btn" id="loginBtn" onclick="login()">Sign In to Dashboard</button>
+    <div class="secure-badge"><span>🔒</span> Secured with JWT · Session expires in 8 hours</div>
+    <div class="card-footer">Need access? Contact your <a href="mailto:admin@insuredesk.com">InsureDesk Admin</a></div>
+  </div>
+
+  <!-- FORGOT PASSWORD VIEW -->
+  <div class="view" id="forgotView">
+    <button class="back-btn" onclick="showLogin()">← Back to Sign In</button>
+    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;">Forgot Password?</div>
+    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;">Enter your email and we'll send you a reset link valid for 1 hour.</div>
+    <div id="forgotError" class="msg error" style="display:none">⚠️ <span id="forgotErrorText"></span></div>
+    <div id="forgotSuccess" class="msg success" style="display:none">✅ <span id="forgotSuccessText"></span></div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="forgotEmail" placeholder="you@company.com" onkeydown="if(event.key==='Enter')forgotPassword()"/>
+    </div>
+    <button class="submit-btn" id="forgotBtn" onclick="forgotPassword()">Send Reset Link</button>
+    <div class="secure-badge"><span>🔒</span> Reset link expires in 1 hour</div>
+  </div>
+</div>
+
+<script>
+const API = 'https://insuredesk-production.up.railway.app';
+let currentRole = 'manager';
+
+function showForgot(e) { e.preventDefault(); document.getElementById('loginView').classList.remove('active'); document.getElementById('forgotView').classList.add('active'); }
+function showLogin() { document.getElementById('forgotView').classList.remove('active'); document.getElementById('loginView').classList.add('active'); }
+function setRole(role, btn) { currentRole = role; document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+function togglePw() { const pw = document.getElementById('password'); const btn = document.getElementById('pwToggle'); pw.type = pw.type === 'password' ? 'text' : 'password'; btn.textContent = pw.type === 'password' ? '👁' : '🙈'; }
+
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  if (!email) { showLoginError('Please enter your email address'); document.getElementById('email').classList.add('error-input'); return; }
+  if (!password) { showLoginError('Please enter your password'); document.getElementById('password').classList.add('error-input'); return; }
+  ['email','password'].forEach(id => document.getElementById(id).classList.remove('error-input'));
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  hideLoginMessages();
+  try {
+    const res = await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    const data = await res.json();
+    if (!res.ok) { showLoginError(data.error || 'Invalid email or password. Please try again.'); btn.disabled = false; btn.innerHTML = 'Sign In to Dashboard'; document.getElementById('password').classList.add('error-input'); return; }
+    localStorage.setItem('insuredesk_token', data.token);
+    localStorage.setItem('insuredesk_user', JSON.stringify(data.user));
+    showLoginSuccess(`Welcome back, ${data.user.name}! Redirecting...`);
+    setTimeout(() => window.location.href = 'index.html', 1000);
+  } catch(err) { showLoginError('Connection error. Please check your network.'); btn.disabled = false; btn.innerHTML = 'Sign In to Dashboard'; }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const btn = document.getElementById('forgotBtn');
+  if (!email) { showForgotError('Please enter your email address'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Sending...';
+  hideForgotMessages();
+  try {
+    const res = await fetch(`${API}/api/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if (!res.ok) { showForgotError(data.error); btn.disabled = false; btn.innerHTML = 'Send Reset Link'; return; }
+    showForgotSuccess('Reset link sent! Check your inbox (and spam folder).');
+    btn.innerHTML = '✅ Email Sent';
+  } catch(err) { showForgotError('Connection error. Please try again.'); btn.disabled = false; btn.innerHTML = 'Send Reset Link'; }
+}
+
+function showLoginError(m){document.getElementById('loginErrorText').textContent=m;document.getElementById('loginError').style.display='flex';document.getElementById('loginSuccess').style.display='none';}
+function showLoginSuccess(m){document.getElementById('loginSuccessText').textContent=m;document.getElementById('loginSuccess').style.display='flex';document.getElementById('loginError').style.display='none';}
+function hideLoginMessages(){document.getElementById('loginError').style.display='none';document.getElementById('loginSuccess').style.display='none';}
+function showForgotError(m){document.getElementById('forgotErrorText').textContent=m;document.getElementById('forgotError').style.display='flex';document.getElementById('forgotSuccess').style.display='none';}
+function showForgotSuccess(m){document.getElementById('forgotSuccessText').textContent=m;document.getElementById('forgotSuccess').style.display='flex';document.getElementById('forgotError').style.display='none';}
+function hideForgotMessages(){document.getElementById('forgotError').style.display='none';document.getElementById('forgotSuccess').style.display='none';}
+</script>
+</body>
+</html>
