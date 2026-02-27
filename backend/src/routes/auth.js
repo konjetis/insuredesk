@@ -58,24 +58,4 @@ router.get('/me', async (req, res) => {
 
 module.exports = router;
 
-// DEBUG route - remove after testing
-router.post('/test-login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const { Pool } = require('pg');
-    const pool = require('../config/db');
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) return res.json({ error: 'User not found' });
-    const user = result.rows[0];
-    const bcrypt = require('bcrypt');
-    const match = await bcrypt.compare(password, user.password_hash);
-    res.json({ 
-      userFound: true, 
-      isActive: user.is_active,
-      passwordMatch: match,
-      hashPreview: user.password_hash.substring(0, 20)
-    });
-  } catch(err) {
-    res.json({ error: err.message });
-  }
-});
+
