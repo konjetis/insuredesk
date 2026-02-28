@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>InsureDesk — 360° Live Dashboard</title>
+<meta name="description" content="InsureDesk 360° — Real-time insurance customer service dashboard for agents, managers, and customers. Live call control, claim tracking, and team analytics."/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#222d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#00d4ff;--accent2:#7c3aed;--accent3:#10b981;--accent4:#f59e0b;--accent5:#ef4444;--text:#f0f4ff;--muted:#6b7a99;}
@@ -31,6 +32,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
 .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;cursor:pointer;border:2px solid rgba(0,212,255,0.3);transition:all 0.2s;}
 .avatar:hover{border-color:var(--accent);box-shadow:0 0 12px rgba(0,212,255,0.3);}
+
+/* USER MENU DROPDOWN */
+.avatar-wrap{position:relative;}
+.user-menu{position:absolute;top:calc(100% + 10px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:1rem;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.45);z-index:400;opacity:0;pointer-events:none;transform:translateY(-8px);transition:opacity .2s,transform .2s cubic-bezier(.4,0,.2,1);}
+.user-menu.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.user-menu-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-menu-role{font-size:.72rem;color:var(--muted);margin-top:2px;text-transform:capitalize;}
+.user-menu-email{font-size:.7rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-menu-divider{border:none;border-top:1px solid var(--border);margin:.75rem 0;}
+.logout-btn{width:100%;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--accent5);border-radius:9px;cursor:pointer;font-size:.8rem;font-weight:600;text-align:left;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.logout-btn:hover{background:rgba(239,68,68,0.22);border-color:rgba(239,68,68,0.4);}
 
 /* TOAST */
 #toasts{position:fixed;top:74px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
@@ -256,8 +268,8 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
 
 @media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:900px){.g21,.g12{grid-template-columns:1fr}}
-@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.main{padding:1rem 0.75rem 90px}.header{padding:0 1rem}.portal-tabs{display:none}.mobile-nav{display:flex !important;}}
+@media(max-width:900px){.g21,.g12{grid-template-columns:1fr}.admin-grid{grid-template-columns:1fr !important;}}
+@media(max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.main{padding:1rem 0.75rem 90px}.header{padding:0 1rem}.portal-tabs{display:none}.mobile-nav{display:flex !important;}.at-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;}.at{min-width:480px;}.user-menu{right:-8px;min-width:180px;}.nPanel-inner{padding:.75rem;}}
 /* MOBILE BOTTOM NAV */
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(10,14,26,0.97);backdrop-filter:blur(24px);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);}
 .mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;max-width:480px;margin:0 auto;}
@@ -267,6 +279,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 .mnav-btn.active .micon{transform:scale(1.15);}
 .mnav-btn:not(.active):hover{color:var(--text);}
 .mnav-active-bar{position:absolute;bottom:0;height:3px;background:var(--accent);border-radius:3px 3px 0 0;transition:all 0.3s cubic-bezier(.4,0,.2,1);width:80px;}
+
 </style>
 </head>
 <body>
@@ -328,7 +341,16 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
     <div class="clock-wrap" id="clock">--:--:--</div>
     <button class="notif-btn" onclick="toggleNPanel()" title="Notifications">🔔<span class="notif-badge" id="nbadge">3</span></button>
-    <div class="avatar" title="Alex Johnson">AJ</div>
+    <div class="avatar-wrap">
+      <div class="avatar" id="user-avatar" onclick="toggleUserMenu()" title="Account Menu">AJ</div>
+      <div class="user-menu" id="user-menu">
+        <div class="user-menu-name" id="user-menu-name">Alex Johnson</div>
+        <div class="user-menu-role" id="user-menu-role">Agent</div>
+        <div class="user-menu-email" id="user-menu-email">agent@insuredesk.com</div>
+        <hr class="user-menu-divider"/>
+        <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -524,7 +546,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
   <div class="g21">
     <div class="card">
       <div class="ch"><div class="ct">Agent Performance Scorecards</div><span class="badge">Live Today</span></div>
-      <table class="at">
+      <div class="at-wrap"><table class="at">
         <thead><tr><th>Agent</th><th>Calls</th><th>AHT</th><th>FCR</th><th>CSAT</th><th>Score</th></tr></thead>
         <tbody>
           <tr onclick="agentModal('Alex Johnson',94,'4:32','87%','4.8')"><td><span class="adot" style="background:var(--accent3)"></span>Alex Johnson</td><td>24</td><td>4:32</td><td>87%</td><td>4.8</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">94</span></td></tr>
@@ -534,7 +556,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
           <tr onclick="agentModal('Jake Miller',61,'7:14','64%','3.2')"><td><span class="adot" style="background:var(--accent5)"></span>Jake Miller</td><td>11</td><td>7:14</td><td>64%</td><td>3.2</td><td><span class="spill" style="background:rgba(239,68,68,0.15);color:var(--accent5)">61</span></td></tr>
           <tr onclick="agentModal('Sofia Torres',89,'4:55','83%','4.7')"><td><span class="adot" style="background:var(--accent3)"></span>Sofia Torres</td><td>22</td><td>4:55</td><td>83%</td><td>4.7</td><td><span class="spill" style="background:rgba(16,185,129,0.15);color:var(--accent3)">89</span></td></tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
     <div class="col">
       <div class="card cb">
@@ -598,6 +620,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     </div>
   </div>
 </div>
+
 </main>
 
 <!-- FAB -->
@@ -771,15 +794,44 @@ function toggleFab(){
 document.addEventListener('click',e=>{
   if(nOpen&&!document.getElementById('nPanel').contains(e.target)&&!e.target.closest('.notif-btn'))closeNPanel();
   if(fabOpen&&!e.target.closest('#fab-menu')&&!e.target.closest('#fab-btn')){fabOpen=false;document.getElementById('fab-menu').classList.remove('open');const b=document.getElementById('fab-btn');b.textContent='＋';b.style.transform='';}
+  if(userMenuOpen&&!e.target.closest('#user-menu')&&!e.target.closest('#user-avatar')){userMenuOpen=false;document.getElementById('user-menu').classList.remove('open');}
 });
+
+// ── USER MENU & LOGOUT ──
+let userMenuOpen = false;
+function toggleUserMenu() {
+  userMenuOpen = !userMenuOpen;
+  document.getElementById('user-menu').classList.toggle('open', userMenuOpen);
+}
+function logout() {
+  localStorage.removeItem('insuredesk_token');
+  localStorage.removeItem('insuredesk_user');
+  window.location.href = 'login.html';
+}
+(function loadUserInfo() {
+  try {
+    const u = JSON.parse(localStorage.getItem('insuredesk_user') || '{}');
+    const av = document.getElementById('user-avatar');
+    const nameEl = document.getElementById('user-menu-name');
+    const roleEl = document.getElementById('user-menu-role');
+    const emailEl = document.getElementById('user-menu-email');
+    if (u.name) {
+      const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      if (av) av.textContent = initials;
+      if (nameEl) nameEl.textContent = u.name;
+    }
+    if (u.role && roleEl) roleEl.textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1);
+    if (u.email && emailEl) emailEl.textContent = u.email;
+  } catch(e) {}
+})();
 
 // ── STARTUP TOAST ──
 setTimeout(()=>showToast('🚀','InsureDesk 360° Ready','All portals live — explore each tab above'),900);
 // ── INCOMING CALL SIMULATION ──
 setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal query');const b=document.getElementById('nbadge');if(b){b.textContent=parseInt(b.textContent)+1;b.style.display='flex';}},22000);
+
 </script>
 
-<!-- ═══════════════ ADMIN PORTAL ═══════════════ -->
 <!-- ═══════════════ ADMIN PORTAL ═══════════════ -->
 <div class="portal-panel" id="panel-admin">
   <div class="section-title">⚙️ Admin Control Center</div>
@@ -794,7 +846,7 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
   </div>
 
   <!-- Two column layout: Add User + User List -->
-  <div style="display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start">
+  <div class="admin-grid" style="display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start">
 
     <!-- ADD USER CARD -->
     <div class="card" style="position:sticky;top:1rem">
