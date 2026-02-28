@@ -666,6 +666,16 @@ function timerTick(){
 }
 setInterval(timerTick,1000);
 
+// Next-in-queue caller pool (cycles through waiting customers)
+const queueCallers=[
+  {name:'Lisa Park',   ref:'Policy Renewal · Queue #2',    initials:'LP', claim:'POL-2024-1142'},
+  {name:'David Kim',   ref:'New Policy Quote · Queue #3',  initials:'DK', claim:'POL-2025-0088'},
+  {name:'James Turner',ref:'Billing Dispute · Queue #4',   initials:'JT', claim:'CLM-5503'},
+  {name:'Maria Chen',  ref:'Claim Follow-up · Queue #5',   initials:'MC', claim:'CLM-4892'},
+  {name:'Robert Hayes',ref:'Coverage Inquiry · Queue #6',  initials:'RH', claim:'POL-2023-3391'},
+];
+let queueIndex=0;
+
 function endCall(){
   running=false;
   const t=document.getElementById('call-timer');
@@ -673,7 +683,30 @@ function endCall(){
   const b=document.getElementById('call-badge');
   if(b){b.textContent='✓ COMPLETED';b.className='badge bg';}
   showToast('✅','Call ended',`Duration: ${Math.floor(cs/60)}m ${cs%60}s`);
-  setTimeout(()=>{cs=0;running=true;if(t)t.style.color='';if(b){b.textContent='🔴 LIVE CALL';b.className='badge br';}},6000);
+
+  // After 2.5s show "connecting" state, then load next caller at 4s
+  setTimeout(()=>{
+    const lct=document.querySelector('.lct');
+    if(lct) lct.innerHTML='<span style="color:var(--muted)">⏳ Connecting next caller...</span>';
+    if(b){b.textContent='⏳ CONNECTING';b.className='badge ba';}
+  }, 2500);
+
+  setTimeout(()=>{
+    const next = queueCallers[queueIndex % queueCallers.length];
+    queueIndex++;
+    // Reset timer
+    cs=0; running=true;
+    if(t){t.textContent='00:00';t.style.color='';}
+    if(b){b.textContent='🔴 LIVE CALL';b.className='badge br';}
+    // Update live call bar
+    const lct=document.querySelector('.lct');
+    if(lct) lct.innerHTML=`Active call with <strong>${next.name}</strong> — ${next.ref}`;
+    // Decrement queue count
+    const q=document.getElementById('q-num'), qb2=document.getElementById('q-badge');
+    if(q) q.textContent=Math.max(0,parseInt(q.textContent)-1);
+    if(qb2) qb2.textContent=Math.max(0,parseInt(qb2.textContent)-1)+' waiting';
+    showToast('📞','Next caller connected',next.name+' — '+next.ref);
+  }, 4000);
 }
 
 // ── TOAST ──
@@ -737,7 +770,6 @@ function animFills(){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=el.dataset.w+'%';}));
   });
 }
-setTimeout(animFills,450);
 
 // ── ANIMATE RINGS ──
 function animRings(){
@@ -751,18 +783,28 @@ function animRings(){
     }));
   });
 }
-setTimeout(animRings,650);
+// Note: animFills/animRings are triggered by the auto-tab-click IIFE below — no extra setTimeout needed
 
 // ── CALL VOLUME CHART ──
 const volData=[30,55,82,97,75,62,90,100,88,76,68,92];
 function buildChart(){
   const c=document.getElementById('vol-chart');if(!c)return;
-  c.innerHTML='';
-  volData.forEach(h=>{
-    const b=document.createElement('div');b.className='mb';b.style.height='0%';
-    b.style.background=h>88?'var(--accent5)':h>70?'var(--accent)':'rgba(0,212,255,0.3)';
-    c.appendChild(b);setTimeout(()=>b.style.height=h+'%',100);
-  });
+  const existing=c.querySelectorAll('.mb');
+  if(existing.length===volData.length){
+    // Update in-place — no flash/rebuild
+    existing.forEach((b,i)=>{
+      b.style.height=volData[i]+'%';
+      b.style.background=volData[i]>88?'var(--accent5)':volData[i]>70?'var(--accent)':'rgba(0,212,255,0.3)';
+    });
+  } else {
+    // First render only
+    c.innerHTML='';
+    volData.forEach(h=>{
+      const b=document.createElement('div');b.className='mb';b.style.height='0%';
+      b.style.background=h>88?'var(--accent5)':h>70?'var(--accent)':'rgba(0,212,255,0.3)';
+      c.appendChild(b);setTimeout(()=>b.style.height=h+'%',100);
+    });
+  }
 }
 buildChart();
 setInterval(()=>{
@@ -774,6 +816,7 @@ setInterval(()=>{
 
 // ── LIVE QUEUE SIMULATION ──
 let qv=5;
+let lastQueueAlertTime=0;
 const waits=['2m 10s','3m 42s','4m 05s','5m 18s','1m 50s','3m 00s'];
 setInterval(()=>{
   const d=Math.random()>.5?1:-1;qv=Math.max(1,Math.min(12,qv+d));
@@ -781,7 +824,12 @@ setInterval(()=>{
         mq=document.getElementById('mq-stat'),qt=document.getElementById('q-trend'),qw=document.getElementById('q-wait');
   if(q)q.textContent=qv;if(qb)qb.textContent=qv+' waiting';if(mq)mq.textContent=qv;
   if(qt)qt.textContent=d>0?'↑':'↓';if(qw)qw.textContent='Avg wait: '+waits[qv%waits.length];
-  if(qv>9)showToast('🕒','High Queue Alert',`${qv} customers waiting — reassign agents`);
+  // Only show alert once every 2 minutes to avoid toast spam
+  const now=Date.now();
+  if(qv>9 && now-lastQueueAlertTime>120000){
+    showToast('🕒','High Queue Alert',`${qv} customers waiting — reassign agents`);
+    lastQueueAlertTime=now;
+  }
 },13000);
 
 // ── FAB ──
@@ -1287,6 +1335,9 @@ function showAdminMsg(el, msg, type){
   el.style.background = type==='success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
   el.style.border = '1px solid '+(type==='success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)');
   el.style.color = type==='success' ? '#6ee7b7' : '#fca5a5';
+  // Auto-hide: success after 3.5s, errors after 5s
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(()=>{ el.style.display='none'; }, type==='success' ? 3500 : 5000);
 }
 
 // ── AUTO-LOAD WHEN ADMIN TAB OPENED ──
