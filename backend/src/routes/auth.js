@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const logger = require('../config/logger');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken: authMiddleware } = require('../middleware/auth');
 
 // Allowed roles for self-registration (admin can only be created via db-setup)
 const ALLOWED_ROLES = ['agent', 'manager', 'customer', 'admin'];
