@@ -650,6 +650,7 @@ function switchTab(id,btn,isMobile){
   });
   if(isMobile) window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{animFills();animRings();},120);
+  if(id === 'admin') loadUsers();
 }
 
 // ── LIVE CALL TIMER ──
@@ -1040,16 +1041,35 @@ const API = 'https://insuredesk-production.up.railway.app';
 let allUsers = [];
 let currentFilter = 'all';
 
-// ── SHOW ADMIN TAB ONLY FOR ADMIN ROLE ──
+// ── SHOW TABS BASED ON USER ROLE ──
 (function(){
   try {
     const user = JSON.parse(localStorage.getItem('insuredesk_user') || '{}');
-    if (user.role === 'admin') {
-      const t = document.getElementById('admin-tab');
-      const m = document.getElementById('mnav-admin');
-      if(t) t.style.display = '';
-      if(m) m.style.display = '';
-    }
+    const role = user.role;
+    // Which header tabs to show per role
+    const roleTabMap = {
+      admin:    ['tab-agent','tab-customer','tab-manager','admin-tab'],
+      manager:  ['tab-agent','tab-customer','tab-manager'],
+      agent:    ['tab-agent'],
+      customer: ['tab-customer']
+    };
+    // Which mobile nav buttons to show per role
+    const mnavMap = {
+      admin:    ['mnav-agent','mnav-customer','mnav-manager','mnav-admin'],
+      manager:  ['mnav-agent','mnav-customer','mnav-manager'],
+      agent:    ['mnav-agent'],
+      customer: ['mnav-customer']
+    };
+    const tabs  = roleTabMap[role]  || ['tab-agent'];
+    const mnavs = mnavMap[role]     || ['mnav-agent'];
+    tabs.forEach(id  => { const el = document.getElementById(id);  if(el) el.style.display = ''; });
+    mnavs.forEach(id => { const el = document.getElementById(id);  if(el) el.style.display = ''; });
+    // Auto-activate the default tab for this role
+    const defaultTabId = role === 'customer' ? 'tab-customer'
+                       : role === 'admin'    ? 'admin-tab'
+                       : 'tab-agent';
+    const defaultTab = document.getElementById(defaultTabId);
+    if(defaultTab) defaultTab.click();
   } catch(e){}
 })();
 
@@ -1156,7 +1176,7 @@ async function addUser(){
   const msg = document.getElementById('addUserMsg');
   if(!name){ showAdminMsg(msg,'Please enter a full name','error'); return; }
   if(!email){ showAdminMsg(msg,'Please enter an email address','error'); return; }
-  if(!password||password.length<6){ showAdminMsg(msg,'Password must be at least 6 characters','error'); return; }
+  if(!password||password.length<8){ showAdminMsg(msg,'Password must be at least 8 characters','error'); return; }
   btn.disabled=true; btn.textContent='Adding...';
   try {
     const res = await fetch(API+'/api/admin/users', {
@@ -1209,7 +1229,7 @@ async function saveUser(){
   const msg = document.getElementById('editUserMsg');
   if(!full_name){ showAdminMsg(msg,'Name is required','error'); return; }
   const body = {full_name, role, is_active: editIsActive};
-  if(password) { if(password.length<6){ showAdminMsg(msg,'Password must be at least 6 characters','error'); return; } body.password = password; }
+  if(password) { if(password.length<8){ showAdminMsg(msg,'Password must be at least 8 characters','error'); return; } body.password = password; }
   try {
     const res = await fetch(API+'/api/admin/users/'+id, {
       method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
@@ -1273,4 +1293,3 @@ function showAdminMsg(el, msg, type){
 </script>
 
 </html>
-staging test
