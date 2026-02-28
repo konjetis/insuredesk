@@ -319,9 +319,9 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 <header class="header">
   <div class="logo">Insure<span>Desk</span><em>360° LIVE</em></div>
   <div class="portal-tabs">
-    <button class="tab-btn active" onclick="switchTab('agent',this)">🎧 Agent</button>
-    <button class="tab-btn" onclick="switchTab('customer',this)">👤 Customer</button>
-    <button class="tab-btn" onclick="switchTab('manager',this)">📊 Manager</button>
+    <button class="tab-btn" id="tab-agent" onclick="switchTab('agent',this)" style="display:none">🎧 Agent</button>
+    <button class="tab-btn" id="tab-customer" onclick="switchTab('customer',this)" style="display:none">👤 Customer</button>
+    <button class="tab-btn" id="tab-manager" onclick="switchTab('manager',this)" style="display:none">📊 Manager</button>
     <button class="tab-btn" onclick="switchTab('admin',this)" id="admin-tab" style="display:none">⚙️ Admin</button>
   </div>
   <div class="header-right">
@@ -872,7 +872,7 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
 </div>
 
 <!-- EDIT USER MODAL -->
-<div class="modal-overlay" id="m-edituser" onclick="if(event.target===this)closeM('m-edituser')">
+<div class="overlay" id="m-edituser" onclick="if(event.target===this)closeM('m-edituser')">
   <div class="modal" style="max-width:480px">
     <div class="modal-title">✏️ Edit User</div>
     <input type="hidden" id="edit-id"/>
@@ -1218,11 +1218,6 @@ function showAdminMsg(el, msg, type){
 }
 
 // ── AUTO-LOAD WHEN ADMIN TAB OPENED ──
-const _origSwitchTab = switchTab;
-function switchTab(id, btn, isMobile){
-  _origSwitchTab(id, btn, isMobile);
-  if(id === 'admin') loadUsers();
-}
 </script>
 
 </html>
