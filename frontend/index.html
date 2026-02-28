@@ -322,6 +322,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     <button class="tab-btn active" onclick="switchTab('agent',this)">🎧 Agent</button>
     <button class="tab-btn" onclick="switchTab('customer',this)">👤 Customer</button>
     <button class="tab-btn" onclick="switchTab('manager',this)">📊 Manager</button>
+    <button class="tab-btn" onclick="switchTab('admin',this)" id="admin-tab" style="display:none">⚙️ Admin</button>
   </div>
   <div class="header-right">
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -778,6 +779,191 @@ setTimeout(()=>showToast('🚀','InsureDesk 360° Ready','All portals live — e
 setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal query');const b=document.getElementById('nbadge');if(b){b.textContent=parseInt(b.textContent)+1;b.style.display='flex';}},22000);
 </script>
 
+<!-- ═══════════════ ADMIN PORTAL ═══════════════ -->
+<!-- ═══════════════ ADMIN PORTAL ═══════════════ -->
+<div class="portal-panel" id="panel-admin">
+  <div class="section-title">⚙️ Admin Control Center</div>
+  <div class="section-sub">Manage users, roles, and permissions for your InsureDesk team</div>
+
+  <!-- Stats -->
+  <div class="g4" style="margin-bottom:1.5rem">
+    <div class="card cb"><div class="sl">Total Users</div><div class="sv" style="color:var(--accent)" id="stat-total">—</div><div class="sc">All roles</div><div class="si" style="background:rgba(0,212,255,0.1)">👥</div></div>
+    <div class="card cg"><div class="sl">Agents</div><div class="sv" style="color:var(--accent3)" id="stat-agents">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(16,185,129,0.1)">🎧</div></div>
+    <div class="card ca"><div class="sl">Managers</div><div class="sv" style="color:var(--accent4)" id="stat-managers">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(245,158,11,0.1)">📊</div></div>
+    <div class="card" style="background:rgba(124,58,237,0.08);border-color:rgba(124,58,237,0.2)"><div class="sl">Customers</div><div class="sv" style="color:#a78bfa" id="stat-customers">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(124,58,237,0.1)">👤</div></div>
+  </div>
+
+  <!-- Two column layout: Add User + User List -->
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start">
+
+    <!-- ADD USER CARD -->
+    <div class="card" style="position:sticky;top:1rem">
+      <div class="ch" style="margin-bottom:1.25rem">
+        <div class="ct">➕ Add New User</div>
+      </div>
+
+      <div style="margin-bottom:1rem">
+        <label class="admin-label">Full Name</label>
+        <input id="nu-name" type="text" placeholder="Jane Smith" class="admin-input"/>
+      </div>
+      <div style="margin-bottom:1rem">
+        <label class="admin-label">Email Address</label>
+        <input id="nu-email" type="email" placeholder="jane@company.com" class="admin-input"/>
+      </div>
+      <div style="margin-bottom:1rem">
+        <label class="admin-label">Password</label>
+        <input id="nu-password" type="password" placeholder="Min. 6 characters" class="admin-input"/>
+      </div>
+
+      <!-- ROLE SELECTOR -->
+      <div style="margin-bottom:1.25rem">
+        <label class="admin-label">Role & Permissions</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px">
+          <div class="role-card active" data-role="agent" onclick="selectRole(this,'agent')">
+            <div style="font-size:1.3rem">🎧</div>
+            <div style="font-weight:600;font-size:0.82rem">Agent</div>
+            <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">Handle calls & claims</div>
+          </div>
+          <div class="role-card" data-role="manager" onclick="selectRole(this,'manager')">
+            <div style="font-size:1.3rem">📊</div>
+            <div style="font-weight:600;font-size:0.82rem">Manager</div>
+            <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">Team oversight & reports</div>
+          </div>
+          <div class="role-card" data-role="customer" onclick="selectRole(this,'customer')">
+            <div style="font-size:1.3rem">👤</div>
+            <div style="font-weight:600;font-size:0.82rem">Customer</div>
+            <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">View own policies</div>
+          </div>
+          <div class="role-card" data-role="admin" onclick="selectRole(this,'admin')">
+            <div style="font-size:1.3rem">⚙️</div>
+            <div style="font-weight:600;font-size:0.82rem">Admin</div>
+            <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">Full system access</div>
+          </div>
+        </div>
+        <input type="hidden" id="nu-role" value="agent"/>
+      </div>
+
+      <div id="addUserMsg" style="font-size:0.82rem;display:none;padding:9px 12px;border-radius:9px;margin-bottom:10px"></div>
+      <button onclick="addUser()" id="addUserBtn" style="width:100%;padding:11px;background:var(--accent);color:#000;border:none;border-radius:11px;font-weight:700;cursor:pointer;font-size:0.9rem;font-family:inherit;transition:all 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+        ➕ Add User
+      </button>
+    </div>
+
+    <!-- USERS LIST CARD -->
+    <div class="card">
+      <div class="ch" style="margin-bottom:1rem">
+        <div class="ct">👥 Team Members</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="display:flex;gap:4px" id="roleFilterBtns">
+            <button onclick="filterUsers('all',this)" class="filter-btn active-filter">All</button>
+            <button onclick="filterUsers('agent',this)" class="filter-btn">Agents</button>
+            <button onclick="filterUsers('manager',this)" class="filter-btn">Managers</button>
+            <button onclick="filterUsers('customer',this)" class="filter-btn">Customers</button>
+          </div>
+          <button onclick="loadUsers()" style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit">🔄</button>
+        </div>
+      </div>
+
+      <div id="usersGrid" style="display:grid;gap:10px">
+        <div style="padding:32px;text-align:center;color:var(--muted)">Loading team members...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="m-edituser" onclick="if(event.target===this)closeM('m-edituser')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">✏️ Edit User</div>
+    <input type="hidden" id="edit-id"/>
+    <div style="display:grid;gap:14px;margin-top:1.25rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="admin-label">Full Name</label>
+          <input id="edit-name" type="text" class="admin-input"/>
+        </div>
+        <div>
+          <label class="admin-label">Email (read only)</label>
+          <input id="edit-email" type="email" disabled class="admin-input" style="opacity:0.5"/>
+        </div>
+      </div>
+
+      <!-- Role cards in edit modal -->
+      <div>
+        <label class="admin-label">Role & Permissions</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">
+          <div class="role-card-sm" data-role="agent" onclick="selectEditRole(this,'agent')">
+            <div style="font-size:1.1rem">🎧</div>
+            <div style="font-size:0.75rem;font-weight:600">Agent</div>
+          </div>
+          <div class="role-card-sm" data-role="manager" onclick="selectEditRole(this,'manager')">
+            <div style="font-size:1.1rem">📊</div>
+            <div style="font-size:0.75rem;font-weight:600">Manager</div>
+          </div>
+          <div class="role-card-sm" data-role="customer" onclick="selectEditRole(this,'customer')">
+            <div style="font-size:1.1rem">👤</div>
+            <div style="font-size:0.75rem;font-weight:600">Customer</div>
+          </div>
+          <div class="role-card-sm" data-role="admin" onclick="selectEditRole(this,'admin')">
+            <div style="font-size:1.1rem">⚙️</div>
+            <div style="font-size:0.75rem;font-weight:600">Admin</div>
+          </div>
+        </div>
+        <input type="hidden" id="edit-role" value="agent"/>
+      </div>
+
+      <div>
+        <label class="admin-label">New Password <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(leave blank to keep current)</span></label>
+        <input id="edit-password" type="password" placeholder="Enter new password..." class="admin-input"/>
+      </div>
+
+      <!-- Active toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);padding:12px 14px;border-radius:10px;border:1px solid var(--border)">
+        <div>
+          <div style="font-size:0.88rem;font-weight:500">Account Status</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px">Deactivated users cannot log in</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="toggle-label" style="font-size:0.82rem;color:var(--accent3)">Active</span>
+          <div id="toggle-wrap" onclick="toggleActive()" style="width:44px;height:24px;background:var(--accent3);border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s">
+            <div id="toggle-thumb" style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:23px;transition:left 0.2s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset password button -->
+      <button onclick="sendResetEmail()" id="resetEmailBtn" style="width:100%;padding:9px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-size:0.85rem;font-family:inherit;transition:all 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        📧 Send Password Reset Email
+      </button>
+    </div>
+    <div id="editUserMsg" style="margin-top:10px;font-size:0.82rem;display:none;padding:9px 12px;border-radius:9px"></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeM('m-edituser')">Cancel</button>
+      <button class="btn btn-p" onclick="saveUser()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN STYLES -->
+<style>
+.admin-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;font-weight:500}
+.admin-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.88rem;outline:none;font-family:inherit;transition:border-color 0.2s}
+.admin-input:focus{border-color:rgba(0,212,255,0.4);box-shadow:0 0 0 3px rgba(0,212,255,0.07)}
+.role-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:all 0.18s}
+.role-card:hover{border-color:var(--accent);background:rgba(0,212,255,0.05)}
+.role-card.active{border-color:var(--accent);background:rgba(0,212,255,0.08);box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+.role-card-sm{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.18s}
+.role-card-sm:hover{border-color:var(--accent)}
+.role-card-sm.active{border-color:var(--accent);background:rgba(0,212,255,0.08)}
+.filter-btn{padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-size:0.72rem;font-family:inherit;transition:all 0.15s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active-filter{background:rgba(0,212,255,0.12);border-color:var(--accent);color:var(--accent)}
+.user-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all 0.18s}
+.user-card:hover{border-color:rgba(0,212,255,0.25);background:var(--surface3)}
+.user-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.95rem;flex-shrink:0}
+@media(max-width:900px){#panel-admin>div:last-of-type{grid-template-columns:1fr}}
+</style>
+
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
   <div class="mobile-nav-inner">
@@ -790,9 +976,254 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
     <button class="mnav-btn" id="mnav-manager" onclick="switchTab('manager',this,true)">
       <span class="micon">📊</span>Manager
     </button>
+    <button class="mnav-btn" id="mnav-admin" onclick="switchTab('admin',this,true)" style="display:none">
+      <span class="micon">⚙️</span>Admin
+    </button>
   </div>
 </nav>
 
-</body>
+
+<script>
+const API = 'https://insuredesk-production.up.railway.app';
+let allUsers = [];
+let currentFilter = 'all';
+
+// ── SHOW ADMIN TAB ONLY FOR ADMIN ROLE ──
+(function(){
+  try {
+    const user = JSON.parse(localStorage.getItem('insuredesk_user') || '{}');
+    if (user.role === 'admin') {
+      const t = document.getElementById('admin-tab');
+      const m = document.getElementById('mnav-admin');
+      if(t) t.style.display = '';
+      if(m) m.style.display = '';
+    }
+  } catch(e){}
+})();
+
+function getToken(){ return localStorage.getItem('insuredesk_token') || ''; }
+
+// ── ROLE SELECTOR (add form) ──
+function selectRole(el, role){
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('nu-role').value = role;
+}
+
+// ── ROLE SELECTOR (edit modal) ──
+function selectEditRole(el, role){
+  document.querySelectorAll('.role-card-sm').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('edit-role').value = role;
+}
+
+// ── ACTIVE TOGGLE ──
+let editIsActive = true;
+function toggleActive(){
+  editIsActive = !editIsActive;
+  const wrap = document.getElementById('toggle-wrap');
+  const thumb = document.getElementById('toggle-thumb');
+  const label = document.getElementById('toggle-label');
+  wrap.style.background = editIsActive ? 'var(--accent3)' : 'rgba(239,68,68,0.5)';
+  thumb.style.left = editIsActive ? '23px' : '3px';
+  label.textContent = editIsActive ? 'Active' : 'Inactive';
+  label.style.color = editIsActive ? 'var(--accent3)' : '#fca5a5';
+}
+
+// ── FILTER USERS ──
+function filterUsers(role, btn){
+  currentFilter = role;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+  btn.classList.add('active-filter');
+  renderUsers();
+}
+
+// ── LOAD USERS FROM API ──
+async function loadUsers(){
+  document.getElementById('usersGrid').innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">Loading team members...</div>';
+  try {
+    const res = await fetch(API+'/api/admin/users', { headers: { 'Authorization': 'Bearer '+getToken() } });
+    const data = await res.json();
+    if(!res.ok){ document.getElementById('usersGrid').innerHTML = '<div style="padding:32px;text-align:center;color:#fca5a5">'+(data.error||'Failed to load')+'</div>'; return; }
+    allUsers = data.users;
+    updateStats();
+    renderUsers();
+  } catch(e){
+    document.getElementById('usersGrid').innerHTML = '<div style="padding:32px;text-align:center;color:#fca5a5">Connection error. Check your network.</div>';
+  }
+}
+
+// ── UPDATE STAT CARDS ──
+function updateStats(){
+  document.getElementById('stat-total').textContent = allUsers.length;
+  document.getElementById('stat-agents').textContent = allUsers.filter(u=>u.role==='agent'&&u.is_active).length;
+  document.getElementById('stat-managers').textContent = allUsers.filter(u=>u.role==='manager'&&u.is_active).length;
+  document.getElementById('stat-customers').textContent = allUsers.filter(u=>u.role==='customer'&&u.is_active).length;
+}
+
+// ── RENDER USER CARDS ──
+function renderUsers(){
+  const filtered = currentFilter === 'all' ? allUsers : allUsers.filter(u => u.role === currentFilter);
+  if(!filtered.length){
+    document.getElementById('usersGrid').innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">No users found</div>';
+    return;
+  }
+  const roleColors = {agent:'var(--accent3)',manager:'var(--accent4)',customer:'#a78bfa',admin:'var(--accent)'};
+  const roleLabels = {agent:'🎧 Agent',manager:'📊 Manager',customer:'👤 Customer',admin:'⚙️ Admin'};
+  const avatarColors = {agent:'rgba(16,185,129,0.2)',manager:'rgba(245,158,11,0.2)',customer:'rgba(124,58,237,0.2)',admin:'rgba(0,212,255,0.2)'};
+
+  document.getElementById('usersGrid').innerHTML = filtered.map(u => {
+    const initials = u.full_name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Never';
+    return `
+    <div class="user-card">
+      <div class="user-avatar" style="background:${avatarColors[u.role]||'rgba(0,212,255,0.2)'};color:${roleColors[u.role]||'var(--accent)'}">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:600;font-size:0.9rem">${u.full_name}</span>
+          <span style="background:${roleColors[u.role]||'var(--accent)'}22;color:${roleColors[u.role]||'var(--accent)'};padding:2px 9px;border-radius:20px;font-size:0.7rem;font-weight:600">${roleLabels[u.role]||u.role}</span>
+          ${u.is_active ? '' : '<span style="background:rgba(239,68,68,0.15);color:#fca5a5;padding:2px 9px;border-radius:20px;font-size:0.7rem;font-weight:600">Inactive</span>'}
+        </div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:3px">${u.email} · Last login: ${lastLogin}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="openEditUser(${u.id},'${u.full_name.replace(/'/g,"\'")}','${u.email}','${u.role}',${u.is_active})" style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">✏️ Edit</button>
+        <button onclick="deleteUser(${u.id},'${u.full_name.replace(/'/g,"\'")}',${u.is_active})" style="padding:6px 12px;background:${u.is_active?'rgba(239,68,68,0.1)':'rgba(16,185,129,0.1)'};border:1px solid ${u.is_active?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)'};border-radius:8px;color:${u.is_active?'#fca5a5':'var(--accent3)'};cursor:pointer;font-size:0.75rem;font-family:inherit">${u.is_active?'🚫 Deactivate':'✅ Activate'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADD USER ──
+async function addUser(){
+  const name = document.getElementById('nu-name').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const password = document.getElementById('nu-password').value;
+  const role = document.getElementById('nu-role').value;
+  const btn = document.getElementById('addUserBtn');
+  const msg = document.getElementById('addUserMsg');
+  if(!name){ showAdminMsg(msg,'Please enter a full name','error'); return; }
+  if(!email){ showAdminMsg(msg,'Please enter an email address','error'); return; }
+  if(!password||password.length<6){ showAdminMsg(msg,'Password must be at least 6 characters','error'); return; }
+  btn.disabled=true; btn.textContent='Adding...';
+  try {
+    const res = await fetch(API+'/api/admin/users', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+      body: JSON.stringify({email, password, full_name:name, role})
+    });
+    const data = await res.json();
+    if(!res.ok){ showAdminMsg(msg, data.error||'Failed to create user','error'); btn.disabled=false; btn.textContent='➕ Add User'; return; }
+    showAdminMsg(msg, '✅ '+name+' added as '+role+'!','success');
+    document.getElementById('nu-name').value='';
+    document.getElementById('nu-email').value='';
+    document.getElementById('nu-password').value='';
+    btn.disabled=false; btn.textContent='➕ Add User';
+    loadUsers();
+  } catch(e){ showAdminMsg(msg,'Connection error','error'); btn.disabled=false; btn.textContent='➕ Add User'; }
+}
+
+// ── OPEN EDIT MODAL ──
+function openEditUser(id, name, email, role, isActive){
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-name').value = name;
+  document.getElementById('edit-email').value = email;
+  document.getElementById('edit-role').value = role;
+  document.getElementById('edit-password').value = '';
+  document.getElementById('editUserMsg').style.display = 'none';
+  // Set role cards
+  document.querySelectorAll('.role-card-sm').forEach(c => {
+    c.classList.toggle('active', c.dataset.role === role);
+  });
+  // Set toggle
+  editIsActive = isActive;
+  const wrap = document.getElementById('toggle-wrap');
+  const thumb = document.getElementById('toggle-thumb');
+  const label = document.getElementById('toggle-label');
+  wrap.style.background = isActive ? 'var(--accent3)' : 'rgba(239,68,68,0.5)';
+  thumb.style.left = isActive ? '23px' : '3px';
+  label.textContent = isActive ? 'Active' : 'Inactive';
+  label.style.color = isActive ? 'var(--accent3)' : '#fca5a5';
+  // Store email for reset
+  document.getElementById('resetEmailBtn').dataset.email = email;
+  document.getElementById('m-edituser').classList.add('open');
+}
+
+// ── SAVE USER ──
+async function saveUser(){
+  const id = document.getElementById('edit-id').value;
+  const full_name = document.getElementById('edit-name').value.trim();
+  const role = document.getElementById('edit-role').value;
+  const password = document.getElementById('edit-password').value;
+  const msg = document.getElementById('editUserMsg');
+  if(!full_name){ showAdminMsg(msg,'Name is required','error'); return; }
+  const body = {full_name, role, is_active: editIsActive};
+  if(password) { if(password.length<6){ showAdminMsg(msg,'Password must be at least 6 characters','error'); return; } body.password = password; }
+  try {
+    const res = await fetch(API+'/api/admin/users/'+id, {
+      method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(!res.ok){ showAdminMsg(msg, data.error||'Failed to update','error'); return; }
+    showAdminMsg(msg,'✅ User updated successfully!','success');
+    setTimeout(()=>{ closeM('m-edituser'); loadUsers(); }, 900);
+  } catch(e){ showAdminMsg(msg,'Connection error','error'); }
+}
+
+// ── DEACTIVATE / ACTIVATE USER ──
+async function deleteUser(id, name, isActive){
+  const action = isActive ? 'deactivate' : 're-activate';
+  if(!confirm((isActive?'Deactivate ':'Re-activate ')+name+'?')) return;
+  try {
+    if(isActive){
+      const res = await fetch(API+'/api/admin/users/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+getToken()} });
+      const data = await res.json();
+      if(!res.ok){ showToast('❌','Error', data.error||'Failed'); return; }
+      showToast('🚫','User deactivated', name+' can no longer log in');
+    } else {
+      const res = await fetch(API+'/api/admin/users/'+id, {
+        method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+        body: JSON.stringify({full_name:name, role: allUsers.find(u=>u.id===id)?.role||'agent', is_active:true})
+      });
+      const data = await res.json();
+      if(!res.ok){ showToast('❌','Error', data.error||'Failed'); return; }
+      showToast('✅','User activated', name+' can now log in');
+    }
+    loadUsers();
+  } catch(e){ showToast('❌','Error','Connection error'); }
+}
+
+// ── SEND PASSWORD RESET EMAIL ──
+async function sendResetEmail(){
+  const email = document.getElementById('resetEmailBtn').dataset.email;
+  const btn = document.getElementById('resetEmailBtn');
+  btn.textContent = '📧 Sending...'; btn.disabled = true;
+  try {
+    const res = await fetch(API+'/api/auth/forgot-password', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    btn.textContent = '✅ Reset Email Sent!'; btn.style.color = 'var(--accent3)';
+    setTimeout(()=>{ btn.textContent='📧 Send Password Reset Email'; btn.disabled=false; btn.style.color='var(--text)'; }, 3000);
+  } catch(e){ btn.textContent='❌ Failed'; btn.disabled=false; setTimeout(()=>{ btn.textContent='📧 Send Password Reset Email'; },2000); }
+}
+
+// ── HELPER ──
+function showAdminMsg(el, msg, type){
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = type==='success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  el.style.border = '1px solid '+(type==='success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)');
+  el.style.color = type==='success' ? '#6ee7b7' : '#fca5a5';
+}
+
+// ── AUTO-LOAD WHEN ADMIN TAB OPENED ──
+const _origSwitchTab = switchTab;
+function switchTab(id, btn, isMobile){
+  _origSwitchTab(id, btn, isMobile);
+  if(id === 'admin') loadUsers();
+}
+</script>
+
 </html>
 staging test
