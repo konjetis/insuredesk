@@ -18,6 +18,30 @@ async function audit(userId, action, entityType, entityId, details, req) {
     );
   } catch (e) { /* audit failure must never break the main response */ }
 }
+// GET /api/admin/agents — agents list with today's performance stats
+router.get('/agents', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const result = await pool.query(`
+      SELECT
+        u.id, u.full_name, u.email, u.is_active,
+        COALESCE(p.calls_handled, 0)          AS calls_handled,
+        COALESCE(p.avg_handle_time, 0)        AS avg_handle_time,
+        COALESCE(p.first_call_resolution, 0)  AS first_call_resolution,
+        COALESCE(p.csat_score, 0)             AS csat_score,
+        COALESCE(p.escalations, 0)            AS escalations
+      FROM users u
+      LEFT JOIN agent_performance p
+        ON p.user_id = u.id AND p.date = $1
+      WHERE u.role = 'agent' AND u.is_active = true
+      ORDER BY u.full_name ASC
+    `, [today]);
+    res.json({ agents: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch agent performance' });
+  }
+});
+
 router.get('/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, email, full_name, role, is_active, last_login, created_at FROM users ORDER BY created_at DESC');
