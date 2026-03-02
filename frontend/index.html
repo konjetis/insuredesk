@@ -384,7 +384,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
         <div class="lctimer" id="call-timer">00:00</div>
         <button class="btn btn-d" onclick="endCall()" style="font-size:.68rem;padding:4px 9px;margin-left:4px;">End</button>
       </div>
-      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div id="profile-content" style="display:flex;gap:1.5rem;flex-wrap:wrap;">
         <div style="min-width:160px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
             <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(124,58,237,0.18));display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:var(--accent);border:1px solid rgba(0,212,255,0.2)">SA</div>
@@ -404,14 +404,26 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
           <div class="pr"><span class="pk">Renewal</span><span class="pv" style="color:var(--accent4)">Mar 15, 2026</span></div>
           <div class="pr"><span class="pk">Payment</span><span class="pv" style="color:var(--accent3)">✓ Up to date</span></div>
         </div>
-        <div style="flex:1;min-width:155px;">
-          <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Open Claim #CLM-4471</div>
-          <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Auto Collision · Jan 28, 2026</div>
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Claims</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:3px;">Open Claim <span style="color:var(--accent4);font-weight:600">CLM-4471</span></div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:9px;">Auto Collision · Filed Jan 28, 2026</div>
           <div class="stepper">
             <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Filed</div><div class="sd">Jan 28 · Confirmed</div></div></div>
-            <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Assessed</div><div class="sd">Feb 1 · Approved</div></div></div>
-            <div class="step-row"><div class="step-col"><div class="step-n n-cur">●</div><div class="step-l l-pend"></div></div><div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review</div><div class="sd">Est. Feb 22</div></div></div>
+            <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Assessed</div><div class="sd">Feb 1 · $4,200 approved</div></div></div>
+            <div class="step-row"><div class="step-col"><div class="step-n n-cur">●</div><div class="step-l l-pend"></div></div><div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review</div><div class="sd">In Progress · Est. Mar 22</div></div></div>
             <div class="step-row"><div class="step-col"><div class="step-n n-pend">4</div></div><div class="step-info"><div class="st">Settlement</div><div class="sd">Pending</div></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;">Previous Claims</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-size:.74rem;font-weight:600;color:var(--text)">CLM-3901</div><div style="font-size:.67rem;color:var(--muted)">Home Water Damage · Aug 2023</div></div>
+              <div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:.7rem;color:var(--accent3);font-weight:600">Settled</div><div style="font-size:.67rem;color:var(--muted)">$2,800</div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;">
+              <div><div style="font-size:.74rem;font-weight:600;color:var(--text)">CLM-2744</div><div style="font-size:.67rem;color:var(--muted)">Auto Theft · Jan 2022</div></div>
+              <div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:.7rem;color:var(--accent3);font-weight:600">Settled</div><div style="font-size:.67rem;color:var(--muted)">$11,400</div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -425,9 +437,9 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
         <div class="qi"><div class="ql">Customers waiting</div><div class="qs" id="q-wait">Avg wait: 3m 42s</div></div>
         <span style="font-size:1.4rem" id="q-trend">→</span>
       </div>
-      <div class="ci" onclick="callModal('Sarah Anderson','Claim Inquiry #CLM-4471','active')"><div class="cav" style="background:rgba(16,185,129,0.15);color:var(--accent3)">SA</div><div class="cinfo"><div class="cname">Sarah Anderson</div><div class="ctype">Claim Inquiry #CLM-4471</div></div><span class="cst sa" id="active-badge">Active 0:00</span></div>
-      <div class="ci" onclick="callModal('Marcus Roberts','Billing Dispute','queue')"><div class="cav" style="background:rgba(245,158,11,0.15);color:var(--accent4)">MR</div><div class="cinfo"><div class="cname">Marcus Roberts</div><div class="ctype">Billing Dispute</div></div><span class="cst sq">Queue #1</span></div>
-      <div class="ci" onclick="callModal('Lisa Park','Policy Renewal','queue')"><div class="cav" style="background:rgba(124,58,237,0.15);color:#a78bfa">LP</div><div class="cinfo"><div class="cname">Lisa Park</div><div class="ctype">Policy Renewal</div></div><span class="cst sq">Queue #2</span></div>
+      <div class="ci" id="qi-active" onclick="callModal('Sarah Anderson','Claim Inquiry #CLM-4471','active')"><div class="cav" style="background:rgba(16,185,129,0.15);color:var(--accent3)">SA</div><div class="cinfo"><div class="cname">Sarah Anderson</div><div class="ctype">Claim Inquiry #CLM-4471</div></div><span class="cst sa" id="active-badge">Active 0:00</span></div>
+      <div class="ci" id="qi-1" onclick="callModal('Marcus Roberts','Billing Dispute','queue')"><div class="cav" style="background:rgba(245,158,11,0.15);color:var(--accent4)">MR</div><div class="cinfo"><div class="cname">Marcus Roberts</div><div class="ctype">Billing Dispute</div></div><span class="cst sq" id="qi-1-badge">Queue #1</span></div>
+      <div class="ci" id="qi-2" onclick="callModal('Lisa Park','Policy Renewal','queue')"><div class="cav" style="background:rgba(124,58,237,0.15);color:#a78bfa">LP</div><div class="cinfo"><div class="cname">Lisa Park</div><div class="ctype">Policy Renewal</div></div><span class="cst sq" id="qi-2-badge">Queue #2</span></div>
       <div class="ci" onclick="callModal('David Kim','New Policy Quote','hold')"><div class="cav" style="background:rgba(0,212,255,0.1);color:var(--accent)">DK</div><div class="cinfo"><div class="cname">David Kim</div><div class="ctype">New Policy Quote</div></div><span class="cst sh">On Hold</span></div>
       <div class="ci" onclick="callModal('James Turner','Escalation Request','escalation')"><div class="cav" style="background:rgba(239,68,68,0.1);color:var(--accent5)">JT</div><div class="cinfo"><div class="cname">James Turner</div><div class="ctype">🚨 Escalation</div></div><span class="cst sh">Escalated</span></div>
     </div>
@@ -493,8 +505,14 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
       <div class="stepper">
         <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Claim Filed</div><div class="sd">Jan 28 · Confirmed</div></div></div>
         <div class="step-row"><div class="step-col"><div class="step-n n-done">✓</div><div class="step-l l-done"></div></div><div class="step-info"><div class="st" style="color:var(--accent3)">Damage Assessed</div><div class="sd">Feb 1 · $4,200 approved</div></div></div>
-        <div class="step-row"><div class="step-col"><div class="step-n n-cur">3</div><div class="step-l l-pend"></div></div><div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review</div><div class="sd">In Progress · Est. Feb 22</div></div></div>
-        <div class="step-row"><div class="step-col"><div class="step-n n-pend">4</div></div><div class="step-info"><div class="st">Settlement Issued</div><div class="sd">Pending</div></div></div>
+        <div class="step-row" style="cursor:pointer" onclick="requestClaimUpdate('Adjuster Review')" title="Click to request a status update">
+          <div class="step-col"><div class="step-n n-cur">●</div><div class="step-l l-pend"></div></div>
+          <div class="step-info"><div class="st" style="color:var(--accent)">Adjuster Review <span style="font-size:.65rem;opacity:.7">· tap for update</span></div><div class="sd">In Progress · Est. Mar 22, 2026</div></div>
+        </div>
+        <div class="step-row" style="cursor:pointer" onclick="requestClaimUpdate('Settlement')" title="Click to request a status update">
+          <div class="step-col"><div class="step-n n-pend">4</div></div>
+          <div class="step-info"><div class="st">Settlement Issued</div><div class="sd">Pending</div></div>
+        </div>
       </div>
       <div style="margin-top:14px;padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);">
         <div style="font-size:.68rem;color:var(--muted)">Assigned Adjuster</div>
@@ -520,12 +538,12 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
       <div class="card cg">
         <div class="ch"><div class="ct">📅 Schedule Callback</div><span class="badge bg">Pick a slot</span></div>
         <div class="slot-grid">
-          <div class="slot" onclick="pickSlot(this,'Feb 20 · 9:00 AM')">Feb 20 · 9:00 AM</div>
-          <div class="slot" onclick="pickSlot(this,'Feb 20 · 11:00 AM')">Feb 20 · 11:00 AM</div>
-          <div class="slot bk">Feb 21 · 10:00 AM<br><span style="font-size:.64rem;">Booked</span></div>
-          <div class="slot" onclick="pickSlot(this,'Feb 21 · 2:00 PM')">Feb 21 · 2:00 PM</div>
-          <div class="slot" onclick="pickSlot(this,'Feb 21 · 4:00 PM')">Feb 21 · 4:00 PM</div>
-          <div class="slot" onclick="pickSlot(this,'Feb 22 · 9:30 AM')">Feb 22 · 9:30 AM</div>
+          <div class="slot" onclick="pickSlot(this,'Mar 5 · 9:00 AM')">Mar 5 · 9:00 AM</div>
+          <div class="slot" onclick="pickSlot(this,'Mar 5 · 11:30 AM')">Mar 5 · 11:30 AM</div>
+          <div class="slot bk">Mar 6 · 10:00 AM<br><span style="font-size:.64rem;">Booked</span></div>
+          <div class="slot" onclick="pickSlot(this,'Mar 6 · 2:00 PM')">Mar 6 · 2:00 PM</div>
+          <div class="slot" onclick="pickSlot(this,'Mar 7 · 9:30 AM')">Mar 7 · 9:30 AM</div>
+          <div class="slot" onclick="pickSlot(this,'Mar 7 · 3:00 PM')">Mar 7 · 3:00 PM</div>
         </div>
         <div class="confirm" id="slot-confirm"></div>
       </div>
@@ -666,15 +684,117 @@ function timerTick(){
 }
 setInterval(timerTick,1000);
 
-// Next-in-queue caller pool (cycles through waiting customers)
-const queueCallers=[
-  {name:'Lisa Park',   ref:'Policy Renewal · Queue #2',    initials:'LP', claim:'POL-2024-1142'},
-  {name:'David Kim',   ref:'New Policy Quote · Queue #3',  initials:'DK', claim:'POL-2025-0088'},
-  {name:'James Turner',ref:'Billing Dispute · Queue #4',   initials:'JT', claim:'CLM-5503'},
-  {name:'Maria Chen',  ref:'Claim Follow-up · Queue #5',   initials:'MC', claim:'CLM-4892'},
-  {name:'Robert Hayes',ref:'Coverage Inquiry · Queue #6',  initials:'RH', claim:'POL-2023-3391'},
+// ── QUEUE: ordered list matching the Live Call Queue display ──
+// On Hold / Escalated are intentionally excluded — agent must manually resume those
+const queueCallers = [
+  {
+    queueId: 'qi-1', name: 'Marcus Roberts', initials: 'MR', type: 'Billing Dispute',
+    avatarBg: 'rgba(245,158,11,0.15)', avatarColor: 'var(--accent4)',
+    policy: '#INS-2023-4418', since: '2023',
+    phone: '+1 (555) 178-4418', location: 'Dallas, TX',
+    risk: 'Medium', riskColor: 'var(--accent4)', ltv: '$12,850',
+    policyType: 'Auto', premium: '$198/mo', deductible: '$1,500',
+    coverage: '$250,000', renewal: 'Jun 10, 2026', payment: '✓ Up to date',
+    aiInsight: "Marcus is frustrated about a billing discrepancy. Review his last 3 invoices and offer a credit if there's an error.",
+    openClaim: null,
+    prevClaims: [
+      { id:'CLM-3302', type:'Auto Rear-End Collision', status:'Settled', date:'Sep 2024', amount:'$3,100' },
+      { id:'CLM-2891', type:'Windshield Damage',       status:'Settled', date:'Mar 2023', amount:'$680'   }
+    ]
+  },
+  {
+    queueId: 'qi-2', name: 'Lisa Park', initials: 'LP', type: 'Policy Renewal',
+    avatarBg: 'rgba(124,58,237,0.15)', avatarColor: '#a78bfa',
+    policy: '#INS-2022-7731', since: '2022',
+    phone: '+1 (555) 312-7731', location: 'Seattle, WA',
+    risk: 'Low', riskColor: 'var(--accent3)', ltv: '$21,340',
+    policyType: 'Auto + Home Bundle', premium: '$347/mo', deductible: '$750',
+    coverage: '$500,000', renewal: 'Apr 1, 2026', payment: '✓ Up to date',
+    aiInsight: "Lisa wants to renew her policy expiring next month. Long-standing customer — consider offering a loyalty discount.",
+    openClaim: null,
+    prevClaims: [
+      { id:'CLM-4102', type:'Home Burglary',       status:'Settled', date:'Jul 2024', amount:'$8,200' },
+      { id:'CLM-3455', type:'Auto Fender Bender',  status:'Settled', date:'Jan 2024', amount:'$1,900' }
+    ]
+  }
 ];
-let queueIndex=0;
+let queueIndex = 0;
+
+// ── CLAIM TRACKER RENDERER ──
+function renderClaimTracker(caller) {
+  if (!caller.openClaim) {
+    return `<div style="font-size:.76rem;color:var(--muted);padding:10px;background:rgba(16,185,129,0.06);border-radius:9px;border:1px solid rgba(16,185,129,0.15);text-align:center;">✅ No open claims</div>`;
+  }
+  const c = caller.openClaim;
+  const steps = c.steps.map((s, i) => {
+    const isLast = i === c.steps.length - 1;
+    const nodeClass = s.done ? 'n-done' : s.current ? 'n-cur' : 'n-pend';
+    const nodeContent = s.done ? '✓' : s.current ? '●' : (i + 1);
+    const nodeColor = s.done ? 'color:var(--accent3)' : s.current ? 'color:var(--accent)' : '';
+    const lineHtml = isLast ? '' : `<div class="step-l ${s.done ? 'l-done' : 'l-pend'}"></div>`;
+    return `<div class="step-row"><div class="step-col"><div class="step-n ${nodeClass}">${nodeContent}</div>${lineHtml}</div><div class="step-info"><div class="st" style="${nodeColor}">${s.label}</div><div class="sd">${s.detail}</div></div></div>`;
+  }).join('');
+  return `
+    <div style="font-size:.68rem;color:var(--muted);margin-bottom:3px;">Open Claim <span style="color:var(--accent4);font-weight:600">${c.id}</span></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:9px;">${c.type} · Filed ${c.filed}</div>
+    <div class="stepper">${steps}</div>`;
+}
+
+// ── PREVIOUS CLAIMS RENDERER ──
+function renderPrevClaims(caller) {
+  if (!caller.prevClaims || !caller.prevClaims.length) return '';
+  const items = caller.prevClaims.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:.74rem;font-weight:600;color:var(--text)">${p.id}</div>
+        <div style="font-size:.67rem;color:var(--muted)">${p.type} · ${p.date}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:8px">
+        <div style="font-size:.7rem;color:var(--accent3);font-weight:600">${p.status}</div>
+        <div style="font-size:.67rem;color:var(--muted)">${p.amount}</div>
+      </div>
+    </div>`).join('');
+  return `
+    <div style="margin-top:12px;">
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;">Previous Claims</div>
+      ${items}
+    </div>`;
+}
+
+// ── PROFILE CARD UPDATER ──
+function updateProfileCard(caller) {
+  const pc = document.getElementById('profile-content');
+  if (!pc) return;
+  pc.innerHTML = `
+    <div style="min-width:160px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,${caller.avatarBg},rgba(124,58,237,0.18));display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:${caller.avatarColor};border:1px solid rgba(0,212,255,0.2)">${caller.initials}</div>
+        <div><div style="font-weight:600;font-size:.9rem;">${caller.name}</div><div style="font-size:.7rem;color:var(--muted)">Policy ${caller.policy}</div><div style="font-size:.68rem;color:var(--accent3);margin-top:2px">● Member since ${caller.since}</div></div>
+      </div>
+      <div class="pr"><span class="pk">Phone</span><span class="pv">${caller.phone}</span></div>
+      <div class="pr"><span class="pk">Location</span><span class="pv">${caller.location}</span></div>
+      <div class="pr"><span class="pk">Risk Level</span><span class="pv" style="color:${caller.riskColor}">${caller.risk} ●</span></div>
+      <div class="pr"><span class="pk">LTV</span><span class="pv" style="color:var(--accent4)">${caller.ltv}</span></div>
+    </div>
+    <div style="flex:1;min-width:155px;">
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Policy</div>
+      <div class="pr"><span class="pk">Type</span><span class="pv">${caller.policyType}</span></div>
+      <div class="pr"><span class="pk">Premium</span><span class="pv">${caller.premium}</span></div>
+      <div class="pr"><span class="pk">Deductible</span><span class="pv">${caller.deductible}</span></div>
+      <div class="pr"><span class="pk">Coverage</span><span class="pv">${caller.coverage}</span></div>
+      <div class="pr"><span class="pk">Renewal</span><span class="pv" style="color:var(--accent4)">${caller.renewal}</span></div>
+      <div class="pr"><span class="pk">Payment</span><span class="pv" style="color:var(--accent3)">${caller.payment}</span></div>
+      <div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,0.08);border-radius:9px;border:1px solid rgba(16,185,129,0.18);">
+        <div style="font-size:.67rem;color:var(--muted);margin-bottom:2px;">🤖 AI Insight</div>
+        <div style="font-size:.74rem;">${caller.aiInsight}</div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:180px;">
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Claims</div>
+      ${renderClaimTracker(caller)}
+      ${renderPrevClaims(caller)}
+    </div>`;
+}
 
 function endCall(){
   running=false;
@@ -684,28 +804,55 @@ function endCall(){
   if(b){b.textContent='✓ COMPLETED';b.className='badge bg';}
   showToast('✅','Call ended',`Duration: ${Math.floor(cs/60)}m ${cs%60}s`);
 
-  // After 2.5s show "connecting" state, then load next caller at 4s
+  const hasNext = queueIndex < queueCallers.length;
+
+  // 2.5s: show connecting or idle state
   setTimeout(()=>{
     const lct=document.querySelector('.lct');
-    if(lct) lct.innerHTML='<span style="color:var(--muted)">⏳ Connecting next caller...</span>';
-    if(b){b.textContent='⏳ CONNECTING';b.className='badge ba';}
+    if(hasNext){
+      if(lct) lct.innerHTML='<span style="color:var(--muted)">⏳ Connecting next caller in queue...</span>';
+      if(b){b.textContent='⏳ CONNECTING';b.className='badge ba';}
+    } else {
+      if(lct) lct.innerHTML='<span style="color:var(--muted)">✅ Queue empty — no new callers waiting</span>';
+      if(b){b.textContent='⏸ IDLE';b.className='badge';}
+      if(t){t.textContent='--:--';t.style.color='var(--muted)';}
+      showToast('🎉','Queue cleared','No more callers waiting. Unhold manually if needed.');
+    }
   }, 2500);
 
+  if(!hasNext) return; // Queue empty — do NOT auto-connect On Hold or Escalated
+
+  // 4s: connect Queue #1 (next in line)
   setTimeout(()=>{
-    const next = queueCallers[queueIndex % queueCallers.length];
+    const next = queueCallers[queueIndex];
     queueIndex++;
     // Reset timer
     cs=0; running=true;
     if(t){t.textContent='00:00';t.style.color='';}
     if(b){b.textContent='🔴 LIVE CALL';b.className='badge br';}
-    // Update live call bar
+    // Update live call bar text
     const lct=document.querySelector('.lct');
-    if(lct) lct.innerHTML=`Active call with <strong>${next.name}</strong> — ${next.ref}`;
+    if(lct) lct.innerHTML=`Active call with <strong>${next.name}</strong> — ${next.type}`;
+    // Update Customer 360° Profile card
+    updateProfileCard(next);
+    // Mark this caller's queue row as Active, clear old active row
+    const oldActive=document.getElementById('qi-active');
+    if(oldActive) oldActive.style.opacity='0.45'; // visually mark as completed
+    const activeBadge=document.getElementById('active-badge');
+    if(activeBadge) activeBadge.textContent='Active 0:00';
+    const callerBadge=document.getElementById(next.queueId+'-badge');
+    if(callerBadge){callerBadge.textContent='🔴 Active';callerBadge.className='cst sa';}
+    // Promote remaining queue items (Queue #2 → Queue #1 if applicable)
+    const remaining=queueCallers.slice(queueIndex);
+    remaining.forEach((c,i)=>{
+      const badge=document.getElementById(c.queueId+'-badge');
+      if(badge) badge.textContent='Queue #'+(i+1);
+    });
     // Decrement queue count
     const q=document.getElementById('q-num'), qb2=document.getElementById('q-badge');
     if(q) q.textContent=Math.max(0,parseInt(q.textContent)-1);
     if(qb2) qb2.textContent=Math.max(0,parseInt(qb2.textContent)-1)+' waiting';
-    showToast('📞','Next caller connected',next.name+' — '+next.ref);
+    showToast('📞','Next caller connected',next.name+' — '+next.type);
   }, 4000);
 }
 
@@ -1338,6 +1485,11 @@ function showAdminMsg(el, msg, type){
   // Auto-hide: success after 3.5s, errors after 5s
   clearTimeout(el._hideTimer);
   el._hideTimer = setTimeout(()=>{ el.style.display='none'; }, type==='success' ? 3500 : 5000);
+}
+
+// ── CUSTOMER CLAIM STATUS REQUEST ──
+function requestClaimUpdate(stage){
+  showToast('📋','Status Update Requested',`Your agent has been notified about the "${stage}" stage. You'll receive an update within 24 hours.`);
 }
 
 // ── AUTO-LOAD WHEN ADMIN TAB OPENED ──
