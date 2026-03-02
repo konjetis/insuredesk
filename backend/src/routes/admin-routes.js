@@ -6,6 +6,18 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 const logger = require('../config/logger');
 router.use(authenticateToken);
 router.use(requireRole(['admin', 'manager']));
+
+// Helper: write to audit_logs (fire-and-forget — never blocks the response)
+async function audit(userId, action, entityType, entityId, details, req) {
+  try {
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [userId, action, entityType, entityId ? String(entityId) : null,
+       JSON.stringify(details), req.ip, req.get('user-agent') || null]
+    );
+  } catch (e) { /* audit failure must never break the main response */ }
+}
 router.get('/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, email, full_name, role, is_active, last_login, created_at FROM users ORDER BY created_at DESC');
@@ -21,6 +33,7 @@ router.post('/users', async (req, res) => {
   try {
     const password_hash = await bcrypt.hash(password, 10);
     const result = await pool.query('INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role, is_active, created_at', [email.toLowerCase(), password_hash, full_name, role]);
+    audit(req.user.userId, 'CREATE_USER', 'user', result.rows[0].id, { email, full_name, role }, req);
     res.status(201).json({ user: result.rows[0] });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'Email already exists' });
@@ -37,6 +50,7 @@ router.put('/users/:id', async (req, res) => {
     }
     const result = await pool.query('UPDATE users SET full_name = $1, role = $2, is_active = $3, updated_at = NOW() WHERE id = $4 RETURNING id, email, full_name, role, is_active', [full_name, role, is_active, id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    audit(req.user.userId, 'UPDATE_USER', 'user', id, { full_name, role, is_active, password_changed: !!password }, req);
     res.json({ user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update user' });
@@ -48,6 +62,7 @@ router.delete('/users/:id', async (req, res) => {
   try {
     const result = await pool.query('UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id, email', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    audit(req.user.userId, 'DEACTIVATE_USER', 'user', id, { email: result.rows[0].email }, req);
     res.json({ message: 'User deactivated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete user' });

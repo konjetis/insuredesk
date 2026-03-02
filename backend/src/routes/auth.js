@@ -36,6 +36,13 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
+    // Audit log the login event
+    pool.query(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent)
+       VALUES ($1,'LOGIN','user',$2,$3,$4,$5)`,
+      [user.id, String(user.id), JSON.stringify({ email: user.email, role: user.role }),
+       req.ip, req.get('user-agent') || null]
+    ).catch(() => {});
     logger.info('User logged in: ' + user.email);
     res.json({
       token,
