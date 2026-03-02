@@ -1033,11 +1033,12 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
   <div class="section-sub">Manage users, roles, and permissions for your InsureDesk team</div>
 
   <!-- Stats -->
-  <div class="g4" style="margin-bottom:1.5rem">
+  <div class="g4" style="margin-bottom:1.5rem;grid-template-columns:repeat(5,1fr)">
     <div class="card cb"><div class="sl">Total Users</div><div class="sv" style="color:var(--accent)" id="stat-total">—</div><div class="sc">All roles</div><div class="si" style="background:rgba(0,212,255,0.1)">👥</div></div>
     <div class="card cg"><div class="sl">Agents</div><div class="sv" style="color:var(--accent3)" id="stat-agents">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(16,185,129,0.1)">🎧</div></div>
     <div class="card ca"><div class="sl">Managers</div><div class="sv" style="color:var(--accent4)" id="stat-managers">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(245,158,11,0.1)">📊</div></div>
     <div class="card" style="background:rgba(124,58,237,0.08);border-color:rgba(124,58,237,0.2)"><div class="sl">Customers</div><div class="sv" style="color:#a78bfa" id="stat-customers">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(124,58,237,0.1)">👤</div></div>
+    <div class="card cr"><div class="sl">Admins</div><div class="sv" style="color:var(--accent5)" id="stat-admins">—</div><div class="sc">Active members</div><div class="si" style="background:rgba(239,68,68,0.1)">⚙️</div></div>
   </div>
 
   <!-- Two column layout: Add User + User List -->
@@ -1106,6 +1107,7 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
             <button onclick="filterUsers('agent',this)" class="filter-btn">Agents</button>
             <button onclick="filterUsers('manager',this)" class="filter-btn">Managers</button>
             <button onclick="filterUsers('customer',this)" class="filter-btn">Customers</button>
+            <button onclick="filterUsers('admin',this)" class="filter-btn">Admins</button>
           </div>
           <button onclick="loadUsers()" style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit">🔄</button>
         </div>
@@ -1360,6 +1362,7 @@ function updateStats(){
   document.getElementById('stat-agents').textContent = allUsers.filter(u=>u.role==='agent'&&u.is_active).length;
   document.getElementById('stat-managers').textContent = allUsers.filter(u=>u.role==='manager'&&u.is_active).length;
   document.getElementById('stat-customers').textContent = allUsers.filter(u=>u.role==='customer'&&u.is_active).length;
+  document.getElementById('stat-admins').textContent = allUsers.filter(u=>u.role==='admin'&&u.is_active).length;
 }
 
 // ── RENDER USER CARDS ──
