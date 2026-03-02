@@ -342,11 +342,11 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     <div class="clock-wrap" id="clock">--:--:--</div>
     <button class="notif-btn" onclick="toggleNPanel()" title="Notifications">🔔<span class="notif-badge" id="nbadge">3</span></button>
     <div class="avatar-wrap">
-      <div class="avatar" id="user-avatar" onclick="toggleUserMenu()" title="Account Menu">AJ</div>
+      <div class="avatar" id="user-avatar" onclick="toggleUserMenu()" title="Account Menu">–</div>
       <div class="user-menu" id="user-menu">
-        <div class="user-menu-name" id="user-menu-name">Alex Johnson</div>
-        <div class="user-menu-role" id="user-menu-role">Agent</div>
-        <div class="user-menu-email" id="user-menu-email">agent@insuredesk.com</div>
+        <div class="user-menu-name" id="user-menu-name">Loading…</div>
+        <div class="user-menu-role" id="user-menu-role"></div>
+        <div class="user-menu-email" id="user-menu-email"></div>
         <hr class="user-menu-divider"/>
         <button class="logout-btn" onclick="logout()">🚪 Sign Out</button>
       </div>
@@ -449,10 +449,10 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     <div class="card">
       <div class="ch"><div class="ct">Call History</div><span class="badge">Last 7 Days</span></div>
       <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Today 9:14</div><div><div class="tldesc">Claim status inquiry</div><div class="tlsub">Resolved · 5:12 · ⭐ 4.0</div></div></div>
-      <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt">Feb 17 2:30</div><div><div class="tldesc">Billing question</div><div class="tlsub">Escalated · 8:45 · ⭐ 3.0</div></div></div>
-      <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Feb 15 11:02</div><div><div class="tldesc">Policy update request</div><div class="tlsub">Resolved · 3:20 · ⭐ 5.0</div></div></div>
-      <div class="tli"><div class="tld" style="background:var(--accent5)"></div><div class="tlt">Feb 12 4:15</div><div><div class="tldesc">Claim filing CLM-4471</div><div class="tlsub">Filed · 12:04 · ⭐ 4.0</div></div></div>
-      <div class="tli"><div class="tld" style="background:var(--accent)"></div><div class="tlt">Feb 10 10:44</div><div><div class="tldesc">Coverage inquiry</div><div class="tlsub">Resolved · 4:50 · ⭐ 5.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt" id="ch-d1">–</div><div><div class="tldesc">Billing question</div><div class="tlsub">Escalated · 8:45 · ⭐ 3.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt" id="ch-d2">–</div><div><div class="tldesc">Policy update request</div><div class="tlsub">Resolved · 3:20 · ⭐ 5.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent5)"></div><div class="tlt" id="ch-d3">–</div><div><div class="tldesc">Claim filing CLM-4471</div><div class="tlsub">Filed · 12:04 · ⭐ 4.0</div></div></div>
+      <div class="tli"><div class="tld" style="background:var(--accent)"></div><div class="tlt" id="ch-d4">–</div><div><div class="tldesc">Coverage inquiry</div><div class="tlsub">Resolved · 4:50 · ⭐ 5.0</div></div></div>
     </div>
     <div class="card cg">
       <div class="ch"><div class="ct">Customer Sentiment</div><span class="badge">This Month</span></div>
@@ -467,9 +467,9 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
     </div>
     <div class="card ca">
       <div class="ch"><div class="ct">Billing & Payments</div><span class="badge bg">Good Standing</span></div>
-      <div class="pr"><span class="pk">Next Due</span><span class="pv">Mar 1, 2026</span></div>
+      <div class="pr"><span class="pk">Next Due</span><span class="pv" id="pay-due-agent">–</span></div>
       <div class="pr"><span class="pk">Amount</span><span class="pv">$284.00</span></div>
-      <div class="pr"><span class="pk">Last Payment</span><span class="pv" style="color:var(--accent3)">✓ Feb 1 — $284</span></div>
+      <div class="pr"><span class="pk">Last Payment</span><span class="pv" style="color:var(--accent3)" id="last-pay-agent">–</span></div>
       <div class="pr"><span class="pk">Method</span><span class="pv">Visa ···4892</span></div>
       <div class="pr"><span class="pk">Status</span><span class="pv" style="color:var(--accent3)">Good Standing</span></div>
       <div style="margin-top:12px;">
@@ -493,9 +493,9 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
   <div class="section-title">My Insurance 360° View</div>
   <div class="section-sub" id="customer-greeting">Hi there 👋 — Everything about your policy, claims &amp; support in one place</div>
   <div class="g4">
-    <div class="card cg"><div class="sl">Policy Status</div><div class="sv" style="color:var(--accent3);font-size:1.3rem;margin-top:4px;">Active ✓</div><div class="sc" style="color:var(--muted)">Renews Mar 15, 2026</div><div class="si" style="background:rgba(16,185,129,0.12)">🛡</div></div>
+    <div class="card cg"><div class="sl">Policy Status</div><div class="sv" style="color:var(--accent3);font-size:1.3rem;margin-top:4px;">Active ✓</div><div class="sc" style="color:var(--muted)" id="renew-cust-badge">Renews –</div><div class="si" style="background:rgba(16,185,129,0.12)">🛡</div></div>
     <div class="card ca"><div class="sl">Open Claims</div><div class="sv" style="color:var(--accent4)">1</div><div class="sc" style="color:var(--muted)">CLM-4471 in review</div><div class="si" style="background:rgba(245,158,11,0.1)">📋</div></div>
-    <div class="card cb"><div class="sl">Next Payment</div><div class="sv" style="color:var(--accent);font-size:1.5rem;">$284</div><div class="sc" style="color:var(--muted)">Due Mar 1, 2026</div><div class="si" style="background:rgba(0,212,255,0.1)">💳</div></div>
+    <div class="card cb"><div class="sl">Next Payment</div><div class="sv" style="color:var(--accent);font-size:1.5rem;">$284</div><div class="sc" style="color:var(--muted)" id="pay-due-cust-badge">Due –</div><div class="si" style="background:rgba(0,212,255,0.1)">💳</div></div>
     <div class="card cp"><div class="sl">My Support Rating</div><div class="sv" style="color:#a78bfa">4.6 ⭐</div><div class="sc" style="color:var(--muted)">Last 5 calls avg</div><div class="si" style="background:rgba(124,58,237,0.1)">⭐</div></div>
   </div>
   <div class="g12">
@@ -524,8 +524,8 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
       <div class="card">
         <div class="ch"><div class="ct">My Call History</div><span class="badge">Recent</span></div>
         <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Today 9:14</div><div><div class="tldesc">Claim status inquiry — Resolved ✓</div><div class="tlsub">Agent AJ · 5:12 min · ⭐ 4.0</div></div></div>
-        <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt">Feb 17</div><div><div class="tldesc">Billing question — Escalated</div><div class="tlsub">Agent MC · 8:45 min · ⭐ 3.0</div></div></div>
-        <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt">Feb 15</div><div><div class="tldesc">Policy update — Resolved ✓</div><div class="tlsub">Agent AJ · 3:20 min · ⭐ 5.0</div></div></div>
+        <div class="tli"><div class="tld" style="background:var(--accent4)"></div><div class="tlt" id="mh-d1">–</div><div><div class="tldesc">Billing question — Escalated</div><div class="tlsub">Agent MC · 8:45 min · ⭐ 3.0</div></div></div>
+        <div class="tli"><div class="tld" style="background:var(--accent3)"></div><div class="tlt" id="mh-d2">–</div><div><div class="tldesc">Policy update — Resolved ✓</div><div class="tlsub">Agent AJ · 3:20 min · ⭐ 5.0</div></div></div>
       </div>
       <div class="card cb">
         <div class="ch"><div class="ct">My Policy</div><span class="badge bg">Active</span></div>
@@ -533,18 +533,11 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
         <div class="pr"><span class="pk">Coverage Amount</span><span class="pv">$500,000</span></div>
         <div class="pr"><span class="pk">Monthly Premium</span><span class="pv">$284.00</span></div>
         <div class="pr"><span class="pk">Deductible</span><span class="pv">$1,000</span></div>
-        <div class="pr"><span class="pk">Renewal Date</span><span class="pv" style="color:var(--accent4)">Mar 15, 2026</span></div>
+        <div class="pr"><span class="pk">Renewal Date</span><span class="pv" style="color:var(--accent4)" id="renew-cust-policy">–</span></div>
       </div>
       <div class="card cg">
         <div class="ch"><div class="ct">📅 Schedule Callback</div><span class="badge bg">Pick a slot</span></div>
-        <div class="slot-grid">
-          <div class="slot" onclick="pickSlot(this,'Mar 5 · 9:00 AM')">Mar 5 · 9:00 AM</div>
-          <div class="slot" onclick="pickSlot(this,'Mar 5 · 11:30 AM')">Mar 5 · 11:30 AM</div>
-          <div class="slot bk">Mar 6 · 10:00 AM<br><span style="font-size:.64rem;">Booked</span></div>
-          <div class="slot" onclick="pickSlot(this,'Mar 6 · 2:00 PM')">Mar 6 · 2:00 PM</div>
-          <div class="slot" onclick="pickSlot(this,'Mar 7 · 9:30 AM')">Mar 7 · 9:30 AM</div>
-          <div class="slot" onclick="pickSlot(this,'Mar 7 · 3:00 PM')">Mar 7 · 3:00 PM</div>
-        </div>
+        <div class="slot-grid" id="slot-grid"></div>
         <div class="confirm" id="slot-confirm"></div>
       </div>
     </div>
@@ -598,7 +591,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
       <div class="pw"><div class="pl"><span>Avg Resolution Time</span><span>4.2 days</span></div><div class="pb"><div class="pf" data-w="70" style="background:var(--accent3)"></div></div></div>
     </div>
     <div class="card cp">
-      <div class="ch"><div class="ct">Policy & Billing Health</div><span class="badge">Feb 2026</span></div>
+      <div class="ch"><div class="ct">Policy & Billing Health</div><span class="badge" id="billing-month-badge">–</span></div>
       <div class="krow"><div class="ki"><div class="kv" style="color:#a78bfa">4,821</div><div class="kn">Active Policies</div></div><div class="ki"><div class="kv" style="color:var(--accent3)">97%</div><div class="kn">On-Time</div></div></div>
       <div class="pw"><div class="pl"><span>Renewal Conversion</span><span>91%</span></div><div class="pb"><div class="pf" data-w="91" style="background:#7c3aed"></div></div></div>
       <div class="pw"><div class="pl"><span>Late Payments</span><span>3%</span></div><div class="pb"><div class="pf" data-w="3" style="background:var(--accent5)"></div></div></div>
@@ -1018,6 +1011,80 @@ function logout() {
     const agentGreet = document.getElementById('agent-greeting');
     if (agentGreet && u.name) agentGreet.textContent = `Live customer profile & call control — ${u.name} on shift`;
   } catch(e) {}
+})();
+
+// ── DYNAMIC DATES — replace all hardcoded dates with relative ones ──
+(function initDynamicDates(){
+  const now  = new Date();
+  const MON  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtDate(d){ return MON[d.getMonth()] + ' ' + d.getDate(); }
+  function fmtDateFull(d){ return MON[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+  function daysAgo(n){ const d=new Date(now); d.setDate(d.getDate()-n); return d; }
+
+  // 1. Call history dates (agent tab) — 1,3,6,8 days ago
+  const chTimes = ['2:30','11:02','4:15','10:44'];
+  [1,3,6,8].forEach((n,i)=>{
+    const el=document.getElementById('ch-d'+(i+1));
+    if(el) el.textContent=fmtDate(daysAgo(n))+' '+chTimes[i];
+  });
+
+  // 2. Customer call history (2,4 days ago)
+  const mhTimes = ['',''];
+  [2,4].forEach((n,i)=>{
+    const el=document.getElementById('mh-d'+(i+1));
+    if(el) el.textContent=fmtDate(daysAgo(n));
+  });
+
+  // 3. Payment due = 1st of next month
+  const nextFirst = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const payDueStr = fmtDateFull(nextFirst);
+  const agentPay  = document.getElementById('pay-due-agent');
+  if(agentPay) agentPay.textContent = payDueStr;
+  const custPayBadge = document.getElementById('pay-due-cust-badge');
+  if(custPayBadge) custPayBadge.textContent = 'Due ' + payDueStr;
+
+  // 4. Last payment = 1st of this month
+  const thisFirst = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastPayEl = document.getElementById('last-pay-agent');
+  if(lastPayEl) lastPayEl.textContent = '✓ ' + MON[thisFirst.getMonth()] + ' 1 — $284';
+
+  // 5. Policy renewal = 15th of next month
+  const renewDate    = new Date(now.getFullYear(), now.getMonth()+1, 15);
+  const renewStr     = fmtDateFull(renewDate);
+  const renewBadge   = document.getElementById('renew-cust-badge');
+  const renewPolicy  = document.getElementById('renew-cust-policy');
+  if(renewBadge)  renewBadge.textContent  = 'Renews ' + renewStr;
+  if(renewPolicy) renewPolicy.textContent = renewStr;
+
+  // 6. Manager "Policy & Billing Health" badge — current month
+  const billingBadge = document.getElementById('billing-month-badge');
+  if(billingBadge) billingBadge.textContent = MON[now.getMonth()] + ' ' + now.getFullYear();
+
+  // 7. Callback slots — next 3 weekdays, 2 slots each
+  const slotTimes = [['9:00 AM','11:30 AM'],['10:00 AM','2:00 PM'],['9:30 AM','3:00 PM']];
+  const weekdays  = [];
+  const cur = new Date(now);
+  cur.setDate(cur.getDate()+1);
+  while(weekdays.length < 3){
+    if(cur.getDay()!==0 && cur.getDay()!==6) weekdays.push(new Date(cur));
+    cur.setDate(cur.getDate()+1);
+  }
+  const grid = document.getElementById('slot-grid');
+  if(grid){
+    let html='';
+    weekdays.forEach((day,di)=>{
+      const ds = MON[day.getMonth()]+' '+day.getDate();
+      slotTimes[di].forEach((t,ti)=>{
+        const label=ds+' · '+t;
+        const booked=(di===1&&ti===0); // Day 2 first slot = booked for demo realism
+        html += booked
+          ? `<div class="slot bk">${label}<br><span style="font-size:.64rem;">Booked</span></div>`
+          : `<div class="slot" onclick="pickSlot(this,'${label}')">${label}</div>`;
+      });
+    });
+    grid.innerHTML=html;
+  }
 })();
 
 // ── STARTUP TOAST ──
