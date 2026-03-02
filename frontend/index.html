@@ -643,11 +643,20 @@ function tick(){document.getElementById('clock').textContent=new Date().toLocale
 tick();setInterval(tick,1000);
 
 // ── PORTAL TABS ──
+const _visitedPanels = new Set();
 function switchTab(id,btn,isMobile){
   document.querySelectorAll('.portal-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
+  const panel = document.getElementById('panel-'+id);
+  panel.classList.add('active');
+  // Only play fadeUp animation on FIRST visit — suppresses number juggling on revisit
+  if(_visitedPanels.has(id)){
+    panel.style.animation='none';
+  } else {
+    _visitedPanels.add(id);
+    panel.style.animation='';
+  }
   btn.classList.add('active');
   const mnavBtn = document.getElementById('mnav-'+id);
   if(mnavBtn) mnavBtn.classList.add('active');
