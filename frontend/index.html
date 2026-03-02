@@ -359,7 +359,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 <!-- ═══════════════ AGENT PORTAL ═══════════════ -->
 <div class="portal-panel active" id="panel-agent">
   <div class="section-title">Agent 360° Dashboard</div>
-  <div class="section-sub">Live customer profile & call control — Alex Johnson on shift</div>
+  <div class="section-sub" id="agent-greeting">Live customer profile & call control — on shift</div>
 
   <div class="g4">
     <div class="card cg"><div class="sl">Calls Today</div><div class="sv" style="color:var(--accent3)">24</div><div class="sc up">↑ 4 vs yesterday</div><div class="si" style="background:rgba(16,185,129,0.12)">📞</div></div>
@@ -491,7 +491,7 @@ select.msel{width:100%;background:var(--surface2);border:1px solid var(--border2
 <!-- ═══════════════ CUSTOMER PORTAL ═══════════════ -->
 <div class="portal-panel" id="panel-customer">
   <div class="section-title">My Insurance 360° View</div>
-  <div class="section-sub">Hi Sarah 👋 — Everything about your policy, claims & support in one place</div>
+  <div class="section-sub" id="customer-greeting">Hi there 👋 — Everything about your policy, claims &amp; support in one place</div>
   <div class="g4">
     <div class="card cg"><div class="sl">Policy Status</div><div class="sv" style="color:var(--accent3);font-size:1.3rem;margin-top:4px;">Active ✓</div><div class="sc" style="color:var(--muted)">Renews Mar 15, 2026</div><div class="si" style="background:rgba(16,185,129,0.12)">🛡</div></div>
     <div class="card ca"><div class="sl">Open Claims</div><div class="sv" style="color:var(--accent4)">1</div><div class="sc" style="color:var(--muted)">CLM-4471 in review</div><div class="si" style="background:rgba(245,158,11,0.1)">📋</div></div>
@@ -667,7 +667,7 @@ function switchTab(id,btn,isMobile){
     if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
   });
   if(isMobile) window.scrollTo({top:0,behavior:'smooth'});
-  setTimeout(()=>{animFills();animRings();},120);
+  setTimeout(()=>animActivePanelFills(id),120);
   if(id === 'admin') loadUsers();
 }
 
@@ -910,17 +910,19 @@ function pickSlot(el,label){
   showToast('📅','Callback Booked!',label);
 }
 
-// ── ANIMATE FILLS ──
-function animFills(){
-  document.querySelectorAll('.pf[data-w],.srf[data-w]').forEach(el=>{
+// ── ANIMATE FILLS & RINGS (scoped per panel, runs once per panel) ──
+const _animatedPanels = new Set();
+function animActivePanelFills(panelId){
+  // Only animate once per panel to prevent "juggling" on every tab switch
+  if(_animatedPanels.has(panelId)) return;
+  _animatedPanels.add(panelId);
+  const panel = document.getElementById('panel-'+panelId);
+  if(!panel) return;
+  panel.querySelectorAll('.pf[data-w],.srf[data-w]').forEach(el=>{
     el.style.width='0';
     requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=el.dataset.w+'%';}));
   });
-}
-
-// ── ANIMATE RINGS ──
-function animRings(){
-  document.querySelectorAll('.ring-fill[data-off]').forEach(el=>{
+  panel.querySelectorAll('.ring-fill[data-off]').forEach(el=>{
     const da=parseFloat(el.getAttribute('stroke-dasharray'));
     el.style.strokeDashoffset=da;
     el.style.transition='none';
@@ -930,7 +932,9 @@ function animRings(){
     }));
   });
 }
-// Note: animFills/animRings are triggered by the auto-tab-click IIFE below — no extra setTimeout needed
+// Keep legacy names as no-ops for safety (in case called elsewhere)
+function animFills(){}
+function animRings(){}
 
 // ── CALL VOLUME CHART ──
 const volData=[30,55,82,97,75,62,90,100,88,76,68,92];
@@ -955,29 +959,21 @@ function buildChart(){
 }
 buildChart();
 setInterval(()=>{
+  // Only animate chart bars — never change vol-tot or other stat numbers
   const i=Math.floor(Math.random()*volData.length);
   volData[i]=Math.min(100,Math.max(20,volData[i]+(Math.random()>.5?5:-5)));
   buildChart();
-  const t=document.getElementById('vol-tot');if(t)t.textContent=parseInt(t.textContent)+Math.floor(Math.random()*3);
 },9000);
 
-// ── LIVE QUEUE SIMULATION ──
+// ── QUEUE COUNT — managed by endCall(), not randomly simulated ──
+// 5 callers: 1 active (Sarah) + 2 in queue (Marcus, Lisa) + 1 on hold (David) + 1 escalated (James)
 let qv=5;
 let lastQueueAlertTime=0;
-const waits=['2m 10s','3m 42s','4m 05s','5m 18s','1m 50s','3m 00s'];
-setInterval(()=>{
-  const d=Math.random()>.5?1:-1;qv=Math.max(1,Math.min(12,qv+d));
-  const q=document.getElementById('q-num'),qb=document.getElementById('q-badge'),
-        mq=document.getElementById('mq-stat'),qt=document.getElementById('q-trend'),qw=document.getElementById('q-wait');
+// Initialize queue display to match the actual 5 callers in the list
+(function(){
+  const q=document.getElementById('q-num'),qb=document.getElementById('q-badge'),mq=document.getElementById('mq-stat');
   if(q)q.textContent=qv;if(qb)qb.textContent=qv+' waiting';if(mq)mq.textContent=qv;
-  if(qt)qt.textContent=d>0?'↑':'↓';if(qw)qw.textContent='Avg wait: '+waits[qv%waits.length];
-  // Only show alert once every 2 minutes to avoid toast spam
-  const now=Date.now();
-  if(qv>9 && now-lastQueueAlertTime>120000){
-    showToast('🕒','High Queue Alert',`${qv} customers waiting — reassign agents`);
-    lastQueueAlertTime=now;
-  }
-},13000);
+})();
 
 // ── FAB ──
 let fabOpen=false;
@@ -1011,6 +1007,7 @@ function logout() {
     const nameEl = document.getElementById('user-menu-name');
     const roleEl = document.getElementById('user-menu-role');
     const emailEl = document.getElementById('user-menu-email');
+    const firstName = u.name ? u.name.split(' ')[0] : '';
     if (u.name) {
       const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
       if (av) av.textContent = initials;
@@ -1018,6 +1015,12 @@ function logout() {
     }
     if (u.role && roleEl) roleEl.textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1);
     if (u.email && emailEl) emailEl.textContent = u.email;
+    // Dynamic greeting for customer tab
+    const custGreet = document.getElementById('customer-greeting');
+    if (custGreet && firstName) custGreet.textContent = `Hi ${firstName} 👋 — Everything about your policy, claims & support in one place`;
+    // Dynamic shift label for agent tab
+    const agentGreet = document.getElementById('agent-greeting');
+    if (agentGreet && u.name) agentGreet.textContent = `Live customer profile & call control — ${u.name} on shift`;
   } catch(e) {}
 })();
 
