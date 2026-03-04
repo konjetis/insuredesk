@@ -1,205 +1,217 @@
 /**
- * E2E TESTS — Admin Tab
- * Covers: users table, filter buttons (All/Admins/Managers/Agents/Customers),
- *         Add User modal, deactivate user, stat cards
+ * E2E TESTS — Admin Tab (index.html)
  *
- * Run: npx playwright test tests/e2e/admin.spec.js
+ * Confirmed selectors from source:
+ *   Tab button    : #admin-tab  (NOT #tab-admin!)
+ *   Panel         : #panel-admin
+ *   Users table   : #users-tbody (populated by loadUsers())
+ *   Filter btns   : data-filter="all|agents|managers|customers|admins"
+ *   Add User btn  : opens overlay #m-adduser
+ *   Stat IDs      : #stat-total, #stat-agents, #stat-managers, #stat-customers, #stat-admins
+ *
+ * Run: npx playwright test tests/e2e/admin.spec.js --project=chromium
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect }              = require('@playwright/test');
+const { loginViaStorage, switchTab } = require('./helpers/auth');
 
-async function loginAsAdmin(page) {
-  await page.goto('/');
-  await page.fill('#email', 'admin@insuredesk.com');
-  await page.fill('#password', 'Admin@123');
-  await page.click('#login-btn');
-  await expect(page.locator('#portal, .portal, #dashboard, main').first()).toBeVisible({ timeout: 10000 });
-}
+const ADMIN_EMAIL = 'admin@insuredesk.com';
+const ADMIN_PASS  = 'Admin@123';
 
-async function switchToAdminTab(page) {
-  const tab = page.locator('[data-tab="admin"], #tab-admin, button:has-text("Admin"), a:has-text("Admin")').first();
-  await expect(tab).toBeVisible({ timeout: 5000 });
-  await tab.click();
-  await page.waitForTimeout(600);
-}
-
-test.describe('Admin tab', () => {
+test.describe('Admin tab — admin role', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await switchToAdminTab(page);
+    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
+    await switchTab(page, 'admin-tab'); // real ID from HTML
+    // loadUsers() fires on tab switch — wait for API
+    await page.waitForTimeout(2500);
   });
 
-  // ── Access control ────────────────────────────────────────────────────────
+  // ── Panel ─────────────────────────────────────────────────────────────────
 
-  test('admin tab is visible for admin role', async ({ page }) => {
-    const panel = page.locator('#panel-admin, [data-panel="admin"], .admin-panel').first();
-    await expect(panel).toBeVisible({ timeout: 5000 });
+  test('admin panel is visible', async ({ page }) => {
+    await expect(page.locator('#panel-admin')).toBeVisible();
+  });
+
+  test('admin-tab button has active class', async ({ page }) => {
+    const cls = await page.locator('#admin-tab').getAttribute('class');
+    expect(cls).toContain('active');
   });
 
   // ── Users table ───────────────────────────────────────────────────────────
 
-  test('users table renders with headers', async ({ page }) => {
-    const headers = page.locator('table th, thead td');
-    await expect(headers.first()).toBeVisible({ timeout: 5000 });
+  test('users table body is in the DOM', async ({ page }) => {
+    await expect(page.locator('#users-tbody')).toBeAttached();
+  });
+
+  test('users table contains at least one row (when API is up)', async ({ page }) => {
+    const rows = page.locator('#users-tbody tr');
+    const count = await rows.count();
+    if (count > 0) {
+      await expect(rows.first()).toBeVisible();
+      // Row should show an email address
+      const text = await rows.first().textContent();
+      expect(text).toMatch(/@/);
+    }
+  });
+
+  test('users table headers are visible', async ({ page }) => {
+    const headers = page.locator('#panel-admin table th');
     const count = await headers.count();
     expect(count).toBeGreaterThanOrEqual(3);
   });
 
-  test('users table contains at least one data row', async ({ page }) => {
-    const rows = page.locator('tbody tr');
-    await expect(rows.first()).toBeVisible({ timeout: 6000 });
-    const count = await rows.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+  // ── Stat cards ────────────────────────────────────────────────────────────
+
+  test('Total Users stat card is visible', async ({ page }) => {
+    const el = page.locator('#stat-total');
+    await expect(el).toBeVisible({ timeout: 5000 });
   });
 
-  test('user rows contain email addresses', async ({ page }) => {
-    const rows = page.locator('tbody tr');
-    await expect(rows.first()).toBeVisible({ timeout: 6000 });
-    const text = await rows.first().textContent();
-    expect(text).toMatch(/@/); // should contain email
+  test('all 5 stat cards render', async ({ page }) => {
+    for (const id of ['stat-total', 'stat-agents', 'stat-managers', 'stat-customers', 'stat-admins']) {
+      await expect(page.locator(`#${id}`)).toBeAttached();
+    }
+  });
+
+  test('stat card values are numbers after data loads', async ({ page }) => {
+    await page.waitForTimeout(3000); // allow DB response
+    const total = await page.locator('#stat-total').textContent();
+    // Should be a number or "—" placeholder
+    expect(total?.trim()).toMatch(/^[\d—]+$/);
   });
 
   // ── Filter buttons ────────────────────────────────────────────────────────
 
-  const filters = ['All', 'Agents', 'Managers', 'Customers', 'Admins'];
+  const FILTERS = [
+    { label: 'All',       filter: 'all' },
+    { label: 'Agents',    filter: 'agents' },
+    { label: 'Managers',  filter: 'managers' },
+    { label: 'Customers', filter: 'customers' },
+    { label: 'Admins',    filter: 'admins' },
+  ];
 
-  for (const filter of filters) {
-    test(`filter button "${filter}" is clickable`, async ({ page }) => {
-      const btn = page.locator(`button:has-text("${filter}"), [data-filter="${filter.toLowerCase()}"]`).first();
-      if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await btn.click();
-        await page.waitForTimeout(300);
-        // After clicking, something should change (active state or row count)
-        // Just verifying no errors thrown
-        await expect(page.locator('body')).not.toContainText('Error');
-      }
+  for (const { label, filter } of FILTERS) {
+    test(`"${label}" filter button is visible and clickable`, async ({ page }) => {
+      const btn = page.locator(`button[data-filter="${filter}"], button:has-text("${label}")`).first();
+      await expect(btn).toBeVisible({ timeout: 5000 });
+      await btn.click();
+      await page.waitForTimeout(300);
+      // No crash — page should still be intact
+      await expect(page.locator('#panel-admin')).toBeVisible();
     });
   }
 
-  test('Agents filter shows only agent rows', async ({ page }) => {
-    const agentBtn = page.locator('button:has-text("Agents"), [data-filter="agents"]').first();
-    if (await agentBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await agentBtn.click();
-      await page.waitForTimeout(400);
-      // Visible rows should only contain "agent" role text
-      const rows = page.locator('tbody tr:visible');
-      const count = await rows.count();
-      if (count > 0) {
-        const text = await rows.first().textContent();
+  test('Agents filter hides non-agent rows', async ({ page }) => {
+    await page.locator('button[data-filter="agents"], button:has-text("Agents")').first().click();
+    await page.waitForTimeout(400);
+    // All VISIBLE rows should have "agent" somewhere in the role cell
+    const rows = page.locator('#users-tbody tr:visible');
+    const count = await rows.count();
+    if (count > 0) {
+      for (let i = 0; i < Math.min(count, 5); i++) {
+        const text = await rows.nth(i).textContent();
         expect(text?.toLowerCase()).toMatch(/agent/);
       }
     }
   });
 
-  test('All filter restores full user list', async ({ page }) => {
-    const agentBtn = page.locator('button:has-text("Agents")').first();
-    const allBtn   = page.locator('button:has-text("All")').first();
-    if (await agentBtn.isVisible({ timeout: 3000 }).catch(() => false) && await allBtn.isVisible()) {
-      const initialCount = await page.locator('tbody tr').count();
-      await agentBtn.click();
-      await page.waitForTimeout(300);
-      await allBtn.click();
-      await page.waitForTimeout(300);
-      const restoredCount = await page.locator('tbody tr').count();
-      expect(restoredCount).toBe(initialCount);
+  test('Admins filter shows admin rows', async ({ page }) => {
+    await page.locator('button[data-filter="admins"], button:has-text("Admins")').first().click();
+    await page.waitForTimeout(400);
+    const rows = page.locator('#users-tbody tr:visible');
+    const count = await rows.count();
+    if (count > 0) {
+      const text = await rows.first().textContent();
+      expect(text?.toLowerCase()).toMatch(/admin/);
     }
   });
 
-  // ── Stat cards ────────────────────────────────────────────────────────────
+  test('All filter restores full list after filtering', async ({ page }) => {
+    await page.waitForTimeout(2000); // let initial load settle
+    const initialCount = await page.locator('#users-tbody tr:visible').count();
 
-  test('admin stat cards show numeric values', async ({ page }) => {
-    const statVals = page.locator('.sv, .stat-value, [id^="stat-"]');
-    const count = await statVals.count();
-    if (count > 0) {
-      for (let i = 0; i < Math.min(count, 3); i++) {
-        const text = await statVals.nth(i).textContent();
-        expect(text?.trim()).toMatch(/[\d—]/);
-      }
-    }
+    await page.locator('button[data-filter="agents"], button:has-text("Agents")').first().click();
+    await page.waitForTimeout(400);
+
+    await page.locator('button[data-filter="all"], button:has-text("All")').first().click();
+    await page.waitForTimeout(400);
+
+    const restoredCount = await page.locator('#users-tbody tr:visible').count();
+    expect(restoredCount).toBe(initialCount);
   });
 
   // ── Add User modal ────────────────────────────────────────────────────────
 
-  test('Add User button opens a modal or form', async ({ page }) => {
-    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add"), [id*="add-user"]').first();
-    if (await addBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await addBtn.click();
-      await page.waitForTimeout(400);
-      // Modal should appear
-      const modal = page.locator('.modal, [role="dialog"], [class*="modal"], form[id*="user"]').first();
-      await expect(modal).toBeVisible({ timeout: 4000 });
+  test('Add User button is present', async ({ page }) => {
+    const btn = page.locator('button:has-text("Add User"), button:has-text("Add Agent"), #add-user-btn').first();
+    await expect(btn).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Add User opens a modal overlay', async ({ page }) => {
+    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add Agent")').first();
+    await addBtn.click();
+    await page.waitForTimeout(400);
+    // The new user modal overlay
+    const modal = page.locator('#m-adduser, .overlay.show, .overlay[style*="flex"]').first();
+    await expect(modal).toBeVisible({ timeout: 4000 });
+  });
+
+  test('Add User modal has email and password fields', async ({ page }) => {
+    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add Agent")').first();
+    await addBtn.click();
+    await page.waitForTimeout(400);
+    await expect(page.locator('#nu-email')).toBeVisible({ timeout: 4000 });
+    await expect(page.locator('#nu-password')).toBeVisible({ timeout: 4000 });
+  });
+
+  test('Add User modal closes on Cancel/Escape', async ({ page }) => {
+    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add Agent")').first();
+    await addBtn.click();
+    await page.waitForTimeout(400);
+    // Close via Escape
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    const modal = page.locator('#m-adduser');
+    if (await modal.isAttached()) {
+      const display = await modal.evaluate(el => el.style.display);
+      expect(display).not.toBe('flex');
     }
   });
 
-  test('Add User form has required fields', async ({ page }) => {
-    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add"), [id*="add-user"]').first();
-    if (await addBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await addBtn.click();
-      await page.waitForTimeout(400);
-      // Should have email, name, password, role fields
-      const emailField = page.locator('input[type="email"], input[name="email"], #user-email').first();
-      const pwdField   = page.locator('input[type="password"], input[name="password"]').first();
-      if (await emailField.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await expect(emailField).toBeVisible();
-      }
-      if (await pwdField.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await expect(pwdField).toBeVisible();
-      }
-    }
-  });
+  // ── Animation stability ───────────────────────────────────────────────────
 
-  test('closing the Add User modal restores the table view', async ({ page }) => {
-    const addBtn = page.locator('button:has-text("Add User"), button:has-text("Add")').first();
-    if (await addBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await addBtn.click();
-      await page.waitForTimeout(400);
-      // Close modal
-      const closeBtn = page.locator('button:has-text("Cancel"), button:has-text("Close"), [aria-label="Close"], .modal-close').first();
-      if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await closeBtn.click();
-        await page.waitForTimeout(300);
-      } else {
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
-      }
-      // Table should still be visible
-      await expect(page.locator('tbody tr').first()).toBeVisible({ timeout: 3000 });
-    }
-  });
+  test('admin panel animation is suppressed on revisit', async ({ page }) => {
+    await switchTab(page, 'tab-agent');
+    await page.waitForTimeout(300);
+    await switchTab(page, 'admin-tab');
+    await page.waitForTimeout(500);
 
-  // ── Deactivate user ───────────────────────────────────────────────────────
-
-  test('deactivate button is present in user rows', async ({ page }) => {
-    const deactivateBtn = page.locator('button:has-text("Deactivate"), button:has-text("Delete"), [class*="deactivate"], [class*="delete"]').first();
-    if (await deactivateBtn.isVisible({ timeout: 4000 }).catch(() => false)) {
-      await expect(deactivateBtn).toBeVisible();
-    }
-    // Deactivate may be in a kebab menu or edit modal — just verifying no crash
+    const anim = await page.locator('#panel-admin').evaluate(el => el.style.animation);
+    expect(anim).toBe('none');
   });
 });
 
-// ── Access denied for agent ───────────────────────────────────────────────
+// ── Access control for non-admin roles ────────────────────────────────────
 
-test.describe('Admin tab access control', () => {
-  test('admin tab is not visible (or disabled) for agent role', async ({ page }) => {
-    await page.goto('/');
-    await page.fill('#email', 'alex@insuredesk.com');
-    await page.fill('#password', 'Agent@123');
-    await page.click('#login-btn');
-    await expect(page.locator('#portal, .portal, main').first()).toBeVisible({ timeout: 10000 });
+test.describe('Admin tab — access control', () => {
+  test('admin tab button is hidden for agent role', async ({ page }) => {
+    await loginViaStorage(page, 'alex@insuredesk.com', 'Agent@123', 'agent');
+    // Admin tab button should be display:none for agents
+    const tab = page.locator('#admin-tab');
+    const visible = await tab.isVisible({ timeout: 2000 }).catch(() => false);
+    expect(visible).toBe(false);
+  });
 
-    // Admin tab should either be hidden or not present for agents
-    const adminTab = page.locator('[data-tab="admin"], #tab-admin, button:has-text("Admin")').first();
-    const visible = await adminTab.isVisible({ timeout: 2000 }).catch(() => false);
-    if (visible) {
-      // If visible, clicking should not reveal admin panel content (role-gated)
-      await adminTab.click();
-      await page.waitForTimeout(500);
-      // The users management table should not load
-      const userMgmtTable = page.locator('table th:has-text("Role"), table th:has-text("Email")').first();
-      const tableVisible = await userMgmtTable.isVisible({ timeout: 2000 }).catch(() => false);
-      // Just log this — some apps hide via CSS only
-      console.log('Admin table visible for agent:', tableVisible);
-    }
+  test('admin tab button is hidden for customer role', async ({ page }) => {
+    await loginViaStorage(page, 'john.smith@email.com', 'Customer@123', 'customer');
+    const tab = page.locator('#admin-tab');
+    const visible = await tab.isVisible({ timeout: 2000 }).catch(() => false);
+    expect(visible).toBe(false);
+  });
+
+  test('manager can see the admin tab', async ({ page }) => {
+    await loginViaStorage(page, 'sarah.manager@insuredesk.com', 'Manager@123', 'manager');
+    const tab = page.locator('#admin-tab');
+    await expect(tab).toBeVisible({ timeout: 5000 });
   });
 });

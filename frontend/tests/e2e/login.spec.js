@@ -1,47 +1,69 @@
 /**
- * E2E TESTS — Login Page
- * Covers: form validation, failed login, successful login, redirect, logout
+ * E2E TESTS — Login Page (login.html)
  *
- * Requires: BASE_URL env var pointing at the InsureDesk frontend
- * Run: npx playwright test tests/e2e/login.spec.js
+ * Actual element IDs confirmed from source:
+ *   email field  : #email
+ *   password     : #password
+ *   submit btn   : #loginBtn
+ *   error banner : #loginError / #loginErrorText
+ *   success msg  : #loginSuccess
+ *   Token stored : localStorage key "insuredesk_token"
+ *   After login  : 1s delay then redirects to index.html
+ *
+ * Run: npx playwright test tests/e2e/login.spec.js --project=chromium
  */
 
 const { test, expect } = require('@playwright/test');
 
-// ── Shared helpers ─────────────────────────────────────────────────────────
+// ── Shared helper ──────────────────────────────────────────────────────────
 
-async function fillAndSubmitLogin(page, email, password) {
+async function fillLogin(page, email, password) {
   await page.fill('#email', email);
   await page.fill('#password', password);
-  await page.click('#login-btn');
 }
 
-// ── Login page smoke test ──────────────────────────────────────────────────
+// ── Login page renders ─────────────────────────────────────────────────────
 
-test.describe('Login page', () => {
+test.describe('Login page — UI rendering', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login.html');
   });
 
-  test('displays the login form on load', async ({ page }) => {
+  test('shows the login card with all required fields', async ({ page }) => {
     await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('#password')).toBeVisible();
-    await expect(page.locator('#login-btn')).toBeVisible();
+    await expect(page.locator('#loginBtn')).toBeVisible();
+  });
+
+  test('login button reads "Sign In to Dashboard"', async ({ page }) => {
+    const text = await page.locator('#loginBtn').textContent();
+    expect(text?.toLowerCase()).toMatch(/sign in/i);
+  });
+
+  test('password field masks input', async ({ page }) => {
+    expect(await page.locator('#password').getAttribute('type')).toBe('password');
+  });
+
+  test('email field type is email', async ({ page }) => {
+    expect(await page.locator('#email').getAttribute('type')).toBe('email');
   });
 
   test('shows InsureDesk branding', async ({ page }) => {
     await expect(page.locator('body')).toContainText('InsureDesk');
   });
 
-  test('login button is labeled Sign In or similar', async ({ page }) => {
-    const btn = page.locator('#login-btn');
-    const text = await btn.textContent();
-    expect(text?.toLowerCase()).toMatch(/sign in|log in|login/);
+  test('role selector buttons are visible (Manager/Agent/Client/Admin)', async ({ page }) => {
+    const roles = page.locator('.role-btn');
+    expect(await roles.count()).toBeGreaterThanOrEqual(3);
   });
 
-  test('password field masks input', async ({ page }) => {
-    const type = await page.locator('#password').getAttribute('type');
-    expect(type).toBe('password');
+  test('Forgot password link is present', async ({ page }) => {
+    const link = page.locator('a:has-text("Forgot"), button:has-text("Forgot"), text=Forgot').first();
+    await expect(link).toBeVisible();
+  });
+
+  test('error banner is hidden on initial load', async ({ page }) => {
+    await expect(page.locator('#loginError')).not.toBeVisible();
   });
 });
 
@@ -49,115 +71,159 @@ test.describe('Login page', () => {
 
 test.describe('Login validation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login.html');
   });
 
-  test('shows error when both fields empty', async ({ page }) => {
-    await page.click('#login-btn');
-    // Either native HTML5 validation or a custom error element
-    const emailValid = await page.locator('#email').evaluate(el => el.validity.valid);
-    expect(emailValid).toBe(false);
+  test('blocks submit when email is empty', async ({ page }) => {
+    await page.fill('#password', 'anything');
+    await page.click('#loginBtn');
+    await expect(page.locator('#loginError')).toBeVisible({ timeout: 3000 });
+    const msg = await page.locator('#loginErrorText').textContent();
+    expect(msg?.toLowerCase()).toMatch(/email/i);
   });
 
-  test('shows error on invalid email format', async ({ page }) => {
+  test('blocks submit when email is malformed', async ({ page }) => {
     await page.fill('#email', 'notanemail');
     await page.fill('#password', 'anything');
-    await page.click('#login-btn');
-    const emailValid = await page.locator('#email').evaluate(el => el.validity.valid);
-    expect(emailValid).toBe(false);
+    await page.click('#loginBtn');
+    await expect(page.locator('#loginError')).toBeVisible({ timeout: 3000 });
+    const msg = await page.locator('#loginErrorText').textContent();
+    expect(msg?.toLowerCase()).toMatch(/email/i);
   });
 
-  test('shows error when password is empty', async ({ page }) => {
+  test('blocks submit when password is empty', async ({ page }) => {
     await page.fill('#email', 'admin@insuredesk.com');
-    await page.click('#login-btn');
-    const pwdValid = await page.locator('#password').evaluate(el => el.validity.valid);
-    expect(pwdValid).toBe(false);
+    await page.click('#loginBtn');
+    await expect(page.locator('#loginError')).toBeVisible({ timeout: 3000 });
+    const msg = await page.locator('#loginErrorText').textContent();
+    expect(msg?.toLowerCase()).toMatch(/password/i);
+  });
+
+  test('email field gets error-input class on empty submit', async ({ page }) => {
+    await page.click('#loginBtn');
+    const cls = await page.locator('#email').getAttribute('class');
+    expect(cls).toContain('error-input');
   });
 });
 
 // ── Failed login ───────────────────────────────────────────────────────────
 
-test.describe('Failed login', () => {
+test.describe('Failed login (live API)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login.html');
   });
 
-  test('shows error message on wrong credentials', async ({ page }) => {
-    await fillAndSubmitLogin(page, 'wrong@insuredesk.com', 'WrongPwd@1');
-    // Wait for error feedback — either a visible element or alert text
-    const errorSelector = '#login-error, .error-message, [role="alert"]';
-    await expect(page.locator(errorSelector).first()).toBeVisible({ timeout: 8000 });
+  test('shows error banner on wrong credentials', async ({ page }) => {
+    await fillLogin(page, 'nobody@insuredesk.com', 'WrongPass@1');
+    await page.click('#loginBtn');
+    await expect(page.locator('#loginError')).toBeVisible({ timeout: 10000 });
+    const msg = await page.locator('#loginErrorText').textContent();
+    expect(msg?.trim().length).toBeGreaterThan(0);
   });
 
-  test('does not navigate away on failed login', async ({ page }) => {
-    await fillAndSubmitLogin(page, 'nobody@insuredesk.com', 'BadPass@99');
-    await page.waitForTimeout(3000);
-    // Should still show the login form
-    await expect(page.locator('#login-btn')).toBeVisible();
+  test('stays on login.html after failed attempt', async ({ page }) => {
+    await fillLogin(page, 'nobody@insuredesk.com', 'WrongPass@1');
+    await page.click('#loginBtn');
+    await page.waitForTimeout(4000);
+    expect(page.url()).toContain('login.html');
+  });
+
+  test('button re-enables after failed login', async ({ page }) => {
+    await fillLogin(page, 'nobody@insuredesk.com', 'WrongPass@1');
+    await page.click('#loginBtn');
+    // Wait for API response
+    await page.waitForTimeout(5000);
+    const disabled = await page.locator('#loginBtn').getAttribute('disabled');
+    expect(disabled).toBeNull(); // button re-enabled
   });
 });
 
 // ── Successful login ───────────────────────────────────────────────────────
 
-test.describe('Successful login', () => {
-  test('admin login hides login screen and shows dashboard', async ({ page }) => {
-    await page.goto('/');
-    await fillAndSubmitLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    // After login the portal/dashboard should become visible
-    await expect(page.locator('#portal, .portal, #dashboard, main').first()).toBeVisible({ timeout: 10000 });
-    // Login form should no longer be visible
-    await expect(page.locator('#login-btn')).not.toBeVisible();
+test.describe('Successful login (live API)', () => {
+  test('admin login redirects to index.html', async ({ page }) => {
+    await page.goto('/login.html');
+    // Select Admin role tab first
+    await page.locator('.role-btn:has-text("Admin")').click();
+    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
+    await page.click('#loginBtn');
+    // App shows success message then redirects after 1s
+    await page.waitForURL('**/index.html', { timeout: 12000 });
+    expect(page.url()).toContain('index.html');
   });
 
-  test('JWT token is stored in localStorage after login', async ({ page }) => {
-    await page.goto('/');
-    await fillAndSubmitLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.waitForTimeout(3000);
-    const token = await page.evaluate(() => localStorage.getItem('token') || localStorage.getItem('jwt') || localStorage.getItem('insuredesk_token'));
+  test('token is stored in localStorage after successful login', async ({ page }) => {
+    await page.goto('/login.html');
+    await page.locator('.role-btn:has-text("Admin")').click();
+    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
+    await page.click('#loginBtn');
+    await page.waitForURL('**/index.html', { timeout: 12000 });
+    const token = await page.evaluate(() => localStorage.getItem('insuredesk_token'));
     expect(token).not.toBeNull();
+    expect(token?.length).toBeGreaterThan(20);
+  });
+
+  test('user data is stored in localStorage after login', async ({ page }) => {
+    await page.goto('/login.html');
+    await page.locator('.role-btn:has-text("Admin")').click();
+    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
+    await page.click('#loginBtn');
+    await page.waitForURL('**/index.html', { timeout: 12000 });
+    const raw = await page.evaluate(() => localStorage.getItem('insuredesk_user'));
+    expect(raw).not.toBeNull();
+    const user = JSON.parse(raw);
+    expect(user.role).toBe('admin');
+  });
+
+  test('dashboard loads correctly after admin login', async ({ page }) => {
+    await page.goto('/login.html');
+    await page.locator('.role-btn:has-text("Admin")').click();
+    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
+    await page.click('#loginBtn');
+    await page.waitForURL('**/index.html', { timeout: 12000 });
+    // Header should be visible
+    await expect(page.locator('.header, .logo').first()).toBeVisible({ timeout: 5000 });
+    // Login button should NOT be present
+    await expect(page.locator('#loginBtn')).not.toBeAttached();
   });
 });
 
 // ── Logout ─────────────────────────────────────────────────────────────────
 
 test.describe('Logout', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await fillAndSubmitLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.waitForTimeout(3000);
-  });
+  test('logout clears localStorage and redirects to login.html', async ({ page }) => {
+    // Set up session via login
+    await page.goto('/login.html');
+    await page.locator('.role-btn:has-text("Admin")').click();
+    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
+    await page.click('#loginBtn');
+    await page.waitForURL('**/index.html', { timeout: 12000 });
 
-  test('logout button clears session and returns to login', async ({ page }) => {
-    const logoutBtn = page.locator('#logout-btn, [data-action="logout"], button:has-text("Logout"), button:has-text("Sign out")').first();
-    if (await logoutBtn.isVisible()) {
-      await logoutBtn.click();
-      await expect(page.locator('#login-btn')).toBeVisible({ timeout: 5000 });
-    } else {
-      // Trigger logout via menu if direct button not visible
-      const avatar = page.locator('#user-avatar, .avatar').first();
-      if (await avatar.isVisible()) {
-        await avatar.click();
-        const menuLogout = page.locator('text=Logout, text=Sign Out').first();
-        await menuLogout.click({ timeout: 3000 }).catch(() => {});
-      }
-      test.skip();
-    }
+    // Open user menu and click logout
+    await page.locator('.avatar, #user-avatar').first().click();
+    await page.waitForTimeout(300);
+    await page.locator('.logout-btn, button:has-text("Sign Out"), button:has-text("Logout")').first().click();
+
+    // Should navigate back to login.html
+    await page.waitForURL('**/login.html', { timeout: 5000 });
+    expect(page.url()).toContain('login.html');
+
+    // Token should be cleared
+    const token = await page.evaluate(() => localStorage.getItem('insuredesk_token'));
+    expect(token).toBeNull();
   });
 });
 
-// ── Token expiry / page refresh ────────────────────────────────────────────
+// ── Password visibility toggle ─────────────────────────────────────────────
 
-test.describe('Session persistence', () => {
-  test('dashboard is still visible after page reload with valid session', async ({ page }) => {
-    await page.goto('/');
-    await fillAndSubmitLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.waitForTimeout(3000);
-    await page.reload();
-    await page.waitForTimeout(2000);
-    // Should auto-restore session — login form should NOT reappear
-    const loginVisible = await page.locator('#login-btn').isVisible();
-    // This may be false if auto-restore is implemented
-    // Just assert we have a DOM (test is informational)
-    expect(typeof loginVisible).toBe('boolean');
+test.describe('Password toggle', () => {
+  test('eye button toggles password visibility', async ({ page }) => {
+    await page.goto('/login.html');
+    await page.fill('#password', 'testpass');
+    expect(await page.locator('#password').getAttribute('type')).toBe('password');
+    await page.locator('#pwToggle').click();
+    expect(await page.locator('#password').getAttribute('type')).toBe('text');
+    await page.locator('#pwToggle').click();
+    expect(await page.locator('#password').getAttribute('type')).toBe('password');
   });
 });

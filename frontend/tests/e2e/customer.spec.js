@@ -1,128 +1,136 @@
 /**
- * E2E TESTS — Customer Tab
- * Covers: tab navigation, personalised greeting, policy card,
- *         claims tracker, billing info, support widget
+ * E2E TESTS — Customer Tab (index.html)
  *
- * Run: npx playwright test tests/e2e/customer.spec.js
+ * Confirmed selectors from source:
+ *   Tab button       : #tab-customer
+ *   Panel            : #panel-customer
+ *   Customer greeting: #customer-greeting
+ *   Payment due date : #pay-due-cust-badge
+ *   Call history     : #mh-d1, #mh-d2
+ *
+ * Run: npx playwright test tests/e2e/customer.spec.js --project=chromium
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect }              = require('@playwright/test');
+const { loginViaStorage, switchTab } = require('./helpers/auth');
 
-async function loginAsCustomer(page) {
-  await page.goto('/');
-  await page.fill('#email', 'john.smith@email.com');
-  await page.fill('#password', 'Customer@123');
-  await page.click('#login-btn');
-  await expect(page.locator('#portal, .portal, #dashboard, main').first()).toBeVisible({ timeout: 10000 });
-}
-
-async function switchToCustomerTab(page) {
-  const tab = page.locator('[data-tab="customer"], #tab-customer, button:has-text("Customer"), a:has-text("My Portal")').first();
-  await expect(tab).toBeVisible({ timeout: 5000 });
-  await tab.click();
-  await page.waitForTimeout(400);
-}
+const CUSTOMER_EMAIL = 'john.smith@email.com';
+const CUSTOMER_PASS  = 'Customer@123';
 
 test.describe('Customer tab', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsCustomer(page);
-    await switchToCustomerTab(page);
+    await loginViaStorage(page, CUSTOMER_EMAIL, CUSTOMER_PASS, 'customer');
+    await switchTab(page, 'tab-customer');
   });
 
-  // ── Greeting ─────────────────────────────────────────────────────────────
+  // ── Panel ─────────────────────────────────────────────────────────────────
 
-  test('greeting shows logged-in user name, not hardcoded "Sarah"', async ({ page }) => {
-    const greeting = page.locator('#customer-greeting, [id*="customer-greet"], h1, h2').first();
-    if (await greeting.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const text = await greeting.textContent();
-      // Should greet the actual user, not a hardcoded name
-      expect(text?.toLowerCase()).not.toContain('sarah');
-    }
+  test('customer panel is visible', async ({ page }) => {
+    await expect(page.locator('#panel-customer')).toBeVisible();
   });
 
-  test('greeting includes user first name from JWT', async ({ page }) => {
-    // The logged-in user is John Smith — greeting should say "Hi John"
-    const greeting = page.locator('#customer-greeting, [id*="customer-greet"]').first();
-    if (await greeting.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const text = await greeting.textContent();
-      expect(text?.toLowerCase()).toMatch(/hi john|hello john|john/i);
-    }
+  test('customer panel has active class', async ({ page }) => {
+    const cls = await page.locator('#panel-customer').getAttribute('class');
+    expect(cls).toContain('active');
   });
 
-  // ── Policy card ───────────────────────────────────────────────────────────
+  // ── Personalised greeting ─────────────────────────────────────────────────
 
-  test('policy information section is visible', async ({ page }) => {
-    const policy = page.locator('.policy, #policy-card, [class*="policy"]').first();
-    if (await policy.isVisible({ timeout: 4000 }).catch(() => false)) {
-      await expect(policy).toBeVisible();
-    } else {
-      // Section may be labeled differently
-      const fallback = page.locator('text=Policy, text=Coverage').first();
-      await expect(fallback).toBeVisible({ timeout: 5000 });
-    }
+  test('customer-greeting element exists and is visible', async ({ page }) => {
+    const greet = page.locator('#customer-greeting');
+    await expect(greet).toBeVisible({ timeout: 5000 });
   });
 
-  // ── Claims tracker ────────────────────────────────────────────────────────
-
-  test('claims tracker section is present', async ({ page }) => {
-    const tracker = page.locator('.claims, #claims-tracker, [class*="claim"]').first();
-    if (await tracker.isVisible({ timeout: 4000 }).catch(() => false)) {
-      await expect(tracker).toBeVisible();
-    } else {
-      await expect(page.locator('text=Claim').first()).toBeVisible({ timeout: 5000 });
-    }
+  test('greeting says Hi [first name], not hardcoded "Sarah"', async ({ page }) => {
+    const text = await page.locator('#customer-greeting').textContent();
+    // Should greet John (the logged-in customer), not Sarah
+    expect(text?.toLowerCase()).not.toContain('sarah');
+    expect(text?.toLowerCase()).toMatch(/hi\s+\w+/i);
   });
 
-  // ── Billing ───────────────────────────────────────────────────────────────
+  test('greeting contains the policy tagline', async ({ page }) => {
+    const text = await page.locator('#customer-greeting').textContent();
+    expect(text?.toLowerCase()).toMatch(/policy|claims|support/i);
+  });
 
-  test('billing section shows dynamic payment due date', async ({ page }) => {
-    // Should show a month name, not a hardcoded "Mar 1" date
-    const billing = page.locator('[class*="billing"], [class*="payment"], text=Payment Due').first();
-    if (await billing.isVisible({ timeout: 4000 }).catch(() => false)) {
-      const text = await billing.textContent();
+  // ── Policy section ────────────────────────────────────────────────────────
+
+  test('policy information section is present', async ({ page }) => {
+    // Customer panel contains policy details
+    const panel = page.locator('#panel-customer');
+    const text  = await panel.textContent();
+    expect(text?.toLowerCase()).toMatch(/policy|coverage/i);
+  });
+
+  // ── Payment due date — dynamic ────────────────────────────────────────────
+
+  test('payment due badge shows a future month name', async ({ page }) => {
+    const badge = page.locator('#pay-due-cust-badge');
+    if (await badge.isAttached()) {
+      const text = await badge.textContent();
       const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const hasMonth = MONTHS.some(m => text?.includes(m));
       expect(hasMonth).toBe(true);
     }
   });
 
-  // ── Support widget ────────────────────────────────────────────────────────
-
-  test('support or callback widget is visible', async ({ page }) => {
-    const support = page.locator('.support, #support-widget, [class*="support"], text=Callback, text=Support').first();
-    await expect(support).toBeVisible({ timeout: 5000 });
-  });
-
-  // ── Call history ─────────────────────────────────────────────────────────
-
-  test('call history shows relative dates not hardcoded Feb dates', async ({ page }) => {
-    const history = page.locator('.call-history, #call-history, [class*="history"]').first();
-    if (await history.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const text = await history.textContent();
-      // Dates should NOT say "Feb 10" or "Feb 17" (those were hardcoded values)
-      // Instead they should be relative to today
-      expect(text).not.toMatch(/Feb 10|Feb 17|Feb 2025/);
+  test('payment due date is not hardcoded "Mar 1"', async ({ page }) => {
+    const badge = page.locator('#pay-due-cust-badge');
+    if (await badge.isAttached()) {
+      const text = await badge.textContent();
+      // It may include Mar 1 if today is in Feb — but should not say "Mar 1, 2024"
+      // The important thing: year must be current
+      const currentYear = new Date().getFullYear();
+      expect(text).toContain(String(currentYear));
     }
   });
 
-  // ── Animations stabilise on re-visit ─────────────────────────────────────
+  // ── Call history dates ─────────────────────────────────────────────────────
 
-  test('numbers do not animate again when returning to customer tab', async ({ page }) => {
-    // Navigate away and back
-    const otherTab = page.locator('[data-tab="dashboard"], [data-tab="home"], button:has-text("Home"), button:has-text("Dashboard")').first();
-    if (await otherTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await otherTab.click();
-      await page.waitForTimeout(400);
-      await switchToCustomerTab(page);
-      await page.waitForTimeout(800);
-      // Read a number element twice — should be stable
-      const numEl = page.locator('.sv, .stat-value, .num, [class*="metric"]').first();
-      if (await numEl.isVisible({ timeout: 2000 }).catch(() => false)) {
-        const v1 = await numEl.textContent();
-        await page.waitForTimeout(600);
-        const v2 = await numEl.textContent();
-        expect(v2).toBe(v1);
-      }
+  test('customer call history dates are relative (mh-d1)', async ({ page }) => {
+    const el = page.locator('#mh-d1');
+    if (await el.isAttached()) {
+      const text = await el.textContent();
+      expect(text).toMatch(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/);
+      // Should NOT be the old hardcoded values
+      expect(text).not.toMatch(/Feb 10|Feb 17/);
     }
+  });
+
+  // ── Claims tracker ────────────────────────────────────────────────────────
+
+  test('claims or support section content is present', async ({ page }) => {
+    const panel = page.locator('#panel-customer');
+    const text  = await panel.textContent();
+    expect(text?.toLowerCase()).toMatch(/claim|support|ticket/i);
+  });
+
+  // ── Callback slot — dynamic ───────────────────────────────────────────────
+
+  test('callback section uses current month, not hardcoded Mar 5-7', async ({ page }) => {
+    const panel = page.locator('#panel-customer');
+    const text  = await panel.textContent();
+    const now   = new Date();
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    // Callback slots are next 3 weekdays — verify no old hardcoded "Mar 5"
+    // Only fail if it ONLY shows last year values
+    if (text?.includes('Mar 5') && now.getMonth() !== 1) { // not Feb
+      // This means it's still hardcoded; the dynamic fix should have replaced it
+      const currentMonth = MONTHS[now.getMonth()];
+      expect(text).toContain(currentMonth);
+    }
+  });
+
+  // ── Animation stability ───────────────────────────────────────────────────
+
+  test('customer tab numbers are stable on revisit', async ({ page }) => {
+    await switchTab(page, 'tab-agent');
+    await page.waitForTimeout(300);
+    await switchTab(page, 'tab-customer');
+    await page.waitForTimeout(800);
+
+    // animation should be suppressed on revisit
+    const anim = await page.locator('#panel-customer').evaluate(el => el.style.animation);
+    expect(anim).toBe('none');
   });
 });

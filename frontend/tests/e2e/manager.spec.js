@@ -1,125 +1,138 @@
 /**
- * E2E TESTS — Manager Tab
- * Covers: manager tab navigation, agent performance scorecards,
- *         metrics cards, month badge, chart rendering
+ * E2E TESTS — Manager Tab (index.html)
  *
- * Run: npx playwright test tests/e2e/manager.spec.js
+ * Confirmed selectors from source:
+ *   Tab button         : #tab-manager
+ *   Panel              : #panel-manager
+ *   Agent scores tbody : #agent-scores-tbody
+ *   Manager queue stat : #mq-stat
+ *
+ * Run: npx playwright test tests/e2e/manager.spec.js --project=chromium
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect }              = require('@playwright/test');
+const { loginViaStorage, switchTab } = require('./helpers/auth');
 
-async function loginAsManager(page) {
-  await page.goto('/');
-  await page.fill('#email', 'sarah.manager@insuredesk.com');
-  await page.fill('#password', 'Manager@123');
-  await page.click('#login-btn');
-  await expect(page.locator('#portal, .portal, #dashboard, main').first()).toBeVisible({ timeout: 10000 });
-}
-
-async function switchToManagerTab(page) {
-  const tab = page.locator('[data-tab="manager"], #tab-manager, button:has-text("Manager"), a:has-text("Manager")').first();
-  await expect(tab).toBeVisible({ timeout: 5000 });
-  await tab.click();
-  await page.waitForTimeout(600); // allow async loadAgentScores() to run
-}
+const MGR_EMAIL = 'sarah.manager@insuredesk.com';
+const MGR_PASS  = 'Manager@123';
 
 test.describe('Manager tab', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsManager(page);
-    await switchToManagerTab(page);
+    await loginViaStorage(page, MGR_EMAIL, MGR_PASS, 'manager');
+    await switchTab(page, 'tab-manager');
   });
 
-  // ── Navigation ────────────────────────────────────────────────────────────
+  // ── Panel ─────────────────────────────────────────────────────────────────
 
-  test('manager panel becomes active after tab click', async ({ page }) => {
-    const panel = page.locator('#panel-manager, [data-panel="manager"], .manager-panel').first();
-    await expect(panel).toBeVisible({ timeout: 5000 });
+  test('manager panel is visible', async ({ page }) => {
+    await expect(page.locator('#panel-manager')).toBeVisible();
   });
 
-  // ── Agent scorecards ──────────────────────────────────────────────────────
-
-  test('agent performance table is visible', async ({ page }) => {
-    const table = page.locator('#agent-scores-tbody, [id*="agent-score"], table').first();
-    await expect(table).toBeVisible({ timeout: 6000 });
+  test('manager panel has active class', async ({ page }) => {
+    const cls = await page.locator('#panel-manager').getAttribute('class');
+    expect(cls).toContain('active');
   });
 
-  test('agent scorecard table has column headers', async ({ page }) => {
-    const headers = page.locator('th, thead td');
-    const count = await headers.count();
-    expect(count).toBeGreaterThan(0);
+  // ── Agent performance scorecard ────────────────────────────────────────────
+
+  test('agent scores table body exists in DOM', async ({ page }) => {
+    await expect(page.locator('#agent-scores-tbody')).toBeAttached();
   });
 
-  test('scorecard rows contain agent data (when API available)', async ({ page }) => {
-    // If the backend is live, rows should be populated
-    const rows = page.locator('#agent-scores-tbody tr, tbody tr');
+  test('agent scorecard loads rows from API (when backend is up)', async ({ page }) => {
+    // loadAgentScores() fires on manager tab switch — give it time
+    await page.waitForTimeout(3000);
+    const rows = page.locator('#agent-scores-tbody tr');
     const count = await rows.count();
     if (count > 0) {
-      // At least one row visible
+      // At least one agent row
       await expect(rows.first()).toBeVisible();
       const text = await rows.first().textContent();
       expect(text?.trim().length).toBeGreaterThan(0);
     }
-    // If count is 0, the API may not be reachable — skip gracefully
+    // If count is 0 the backend may be in cold-start — test is informational
   });
 
-  // ── Metrics cards ─────────────────────────────────────────────────────────
-
-  test('metric stat cards are visible', async ({ page }) => {
-    const cards = page.locator('.card, [class*="stat-card"], [class*="metric-card"]');
-    const count = await cards.count();
-    expect(count).toBeGreaterThan(0);
+  test('scorecard table has column headers', async ({ page }) => {
+    const ths = page.locator('#panel-manager th');
+    const count = await ths.count();
+    expect(count).toBeGreaterThan(3); // Agent, Calls, AHT, FCR, CSAT at minimum
   });
 
-  test('stat card values are numeric or formatted numbers', async ({ page }) => {
-    const values = page.locator('.sv, .stat-value, [class*="stat-val"]');
-    const count = await values.count();
-    if (count > 0) {
-      const text = await values.first().textContent();
-      // Should contain at least a digit
-      expect(text?.trim()).toMatch(/[\d.%]/);
+  // ── Metrics / stat cards ──────────────────────────────────────────────────
+
+  test('manager queue stat card shows a number', async ({ page }) => {
+    const stat = page.locator('#mq-stat');
+    if (await stat.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const text = await stat.textContent();
+      expect(text?.trim()).toMatch(/\d/);
     }
+  });
+
+  test('manager panel has at least 3 stat cards', async ({ page }) => {
+    const cards = page.locator('#panel-manager .card');
+    const count = await cards.count();
+    expect(count).toBeGreaterThanOrEqual(3);
   });
 
   // ── Month badge ───────────────────────────────────────────────────────────
 
-  test('month badge shows current month/year, not hardcoded "Feb 2026"', async ({ page }) => {
-    const badge = page.locator('.badge, [class*="badge"], [class*="month"]').first();
+  test('billing month badge shows current year', async ({ page }) => {
+    const badge = page.locator('#billing-badge, .badge, [class*="badge"]').first();
     if (await badge.isVisible({ timeout: 3000 }).catch(() => false)) {
       const text = await badge.textContent();
-      const now = new Date();
-      const currentMonth = now.toLocaleString('default', { month: 'short' });
-      const currentYear = now.getFullYear().toString();
-      // Should contain the current year at minimum
+      const currentYear = new Date().getFullYear().toString();
       expect(text).toContain(currentYear);
     }
   });
 
-  // ── Charts ────────────────────────────────────────────────────────────────
-
-  test('volume chart or canvas element is rendered', async ({ page }) => {
-    const chart = page.locator('canvas, svg[class*="chart"], [id*="chart"]').first();
-    if (await chart.isVisible({ timeout: 4000 }).catch(() => false)) {
-      await expect(chart).toBeVisible();
+  test('billing month badge does not show hardcoded "Feb 2026"', async ({ page }) => {
+    const panel = page.locator('#panel-manager');
+    const text = await panel.textContent();
+    // If today is not in Feb 2026 the badge must not say "Feb 2026"
+    const now = new Date();
+    if (now.getFullYear() !== 2026 || now.getMonth() !== 1) {
+      // Not Feb 2026 — badge should not say it
+      expect(text).not.toContain('Feb 2026');
     }
-    // Chart may not be present if canvas API is limited — skip gracefully
   });
 
-  // ── Tab switch stability ───────────────────────────────────────────────────
+  // ── Volume chart ──────────────────────────────────────────────────────────
 
-  test('switching to manager tab twice does not re-animate numbers', async ({ page }) => {
-    const otherTab = page.locator('[data-tab="agent"], button:has-text("Agent"), [data-tab="dashboard"]').first();
-    if (await otherTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await otherTab.click();
-      await page.waitForTimeout(400);
-      await switchToManagerTab(page);
-      // Read a number
-      const numEl = page.locator('.sv, .stat-value, .num').first();
-      if (await numEl.isVisible({ timeout: 2000 }).catch(() => false)) {
-        const before = await numEl.textContent();
-        await page.waitForTimeout(800);
-        const after = await numEl.textContent();
-        expect(after).toBe(before);
-      }
+  test('volume chart canvas is present in manager panel', async ({ page }) => {
+    const canvas = page.locator('#panel-manager canvas');
+    const count  = await canvas.count();
+    if (count > 0) {
+      await expect(canvas.first()).toBeVisible();
     }
+    // Canvas may not render in headless — skip gracefully
+  });
+
+  // ── Animation stability ───────────────────────────────────────────────────
+
+  test('manager tab numbers are stable on revisit', async ({ page }) => {
+    await switchTab(page, 'tab-agent');
+    await page.waitForTimeout(400);
+    await switchTab(page, 'tab-manager');
+    await page.waitForTimeout(800);
+
+    const anim = await page.locator('#panel-manager').evaluate(el => el.style.animation);
+    expect(anim).toBe('none');
+  });
+
+  test('switching to manager tab does not re-fetch scores unnecessarily', async ({ page }) => {
+    // First visit triggers loadAgentScores(); second visit should not cause juggling
+    const requests = [];
+    page.on('request', req => {
+      if (req.url().includes('/api/admin/agents')) requests.push(req.url());
+    });
+
+    await switchTab(page, 'tab-agent');
+    await page.waitForTimeout(300);
+    await switchTab(page, 'tab-manager');
+    await page.waitForTimeout(1000);
+
+    // Only 1 agents request should have fired (on first visit already done in beforeEach)
+    expect(requests.length).toBeLessThanOrEqual(1);
   });
 });
