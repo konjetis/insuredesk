@@ -1,72 +1,111 @@
 /**
  * API INTEGRATION TESTS — /api/auth
- * Uses Supertest against a real Express app with a mocked DB pool.
- * Run: npm test -- --testPathPattern=auth.api
+ *
+ * Uses Node's built-in http + fetch (Node 18+) — no supertest required.
+ * DB is mocked; no real database connection needed.
+ *
+ * Run: npm run test:api -- --testPathPattern=auth.api
  */
 
-process.env.JWT_SECRET  = 'test-secret-key-insuredesk';
-process.env.NODE_ENV    = 'test';
+process.env.JWT_SECRET = 'test-secret-key-insuredesk';
+process.env.NODE_ENV   = 'test';
 
 const mockQuery = jest.fn();
 jest.mock('../../src/config/db',     () => ({ query: mockQuery }));
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
 
-const bcrypt     = require('bcrypt');
-const request    = require('supertest');
-const express    = require('express');
-const jwt        = require('jsonwebtoken');
+const http    = require('http');
+const express = require('express');
+const bcrypt  = require('bcrypt');
+const jwt     = require('jsonwebtoken');
+
 const authRouter = require('../../src/routes/auth');
+
+// ── Minimal Express app ────────────────────────────────────────────────────
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', authRouter);
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Server lifecycle ───────────────────────────────────────────────────────
 
-function token(role = 'admin', userId = 1) {
-  return jwt.sign({ userId, email: `${role}@insuredesk.com`, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+let server, baseURL;
+
+beforeAll(done => {
+  server = http.createServer(app).listen(0, '127.0.0.1', () => {
+    const { port } = server.address();
+    baseURL = `http://127.0.0.1:${port}`;
+    done();
+  });
+});
+
+afterAll(done => server.close(done));
+beforeEach(() => mockQuery.mockReset());
+
+// ── HTTP helpers ───────────────────────────────────────────────────────────
+
+async function post(path, body, token) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${baseURL}${path}`, {
+    method: 'POST', headers, body: JSON.stringify(body),
+  });
+  return { status: res.status, body: await res.json() };
 }
 
-beforeEach(() => mockQuery.mockReset());
+async function get(path, token) {
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${baseURL}${path}`, { headers });
+  return { status: res.status, body: await res.json() };
+}
+
+function makeToken(role = 'admin', userId = 1) {
+  return jwt.sign({ userId, email: `${role}@test.com`, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
 
 // ── POST /api/auth/login ───────────────────────────────────────────────────
 
 describe('POST /api/auth/login', () => {
-  test('400 when email or password missing', async () => {
-    const res = await request(app).post('/api/auth/login').send({ email: 'x@y.com' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/required/i);
+  test('400 when email missing', async () => {
+    const { status, body } = await post('/api/auth/login', { password: 'any' });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/required/i);
+  });
+
+  test('400 when password missing', async () => {
+    const { status, body } = await post('/api/auth/login', { email: 'a@b.com' });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/required/i);
   });
 
   test('401 when user does not exist', async () => {
-    mockQuery.mockResolvedValueOnce({ rows: [] }); // no user found
-    const res = await request(app).post('/api/auth/login').send({ email: 'ghost@x.com', password: 'any' });
-    expect(res.status).toBe(401);
-    expect(res.body.error).toMatch(/invalid credentials/i);
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const { status, body } = await post('/api/auth/login', { email: 'ghost@x.com', password: 'any' });
+    expect(status).toBe(401);
+    expect(body.error).toMatch(/invalid credentials/i);
   });
 
   test('401 when password is wrong', async () => {
     const hash = await bcrypt.hash('CorrectPwd@1', 10);
     mockQuery.mockResolvedValueOnce({
-      rows: [{ id: 1, email: 'admin@insuredesk.com', password_hash: hash, role: 'admin', full_name: 'Admin User' }],
+      rows: [{ id: 1, email: 'admin@test.com', password_hash: hash, role: 'admin', full_name: 'Admin' }],
     });
-    // bcrypt.compare will return false for wrong password; no need to stub it
-    const res = await request(app).post('/api/auth/login').send({ email: 'admin@insuredesk.com', password: 'WrongPwd@1' });
-    expect(res.status).toBe(401);
+    const { status } = await post('/api/auth/login', { email: 'admin@test.com', password: 'WrongPwd@1' });
+    expect(status).toBe(401);
   });
 
   test('200 returns token on valid credentials', async () => {
     const hash = await bcrypt.hash('Admin@123', 10);
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 1, email: 'admin@insuredesk.com', password_hash: hash, role: 'admin', full_name: 'Admin User' }] })
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE last_login
-      .mockResolvedValueOnce({ rows: [] }); // audit log INSERT
-    const res = await request(app).post('/api/auth/login').send({ email: 'admin@insuredesk.com', password: 'Admin@123' });
-    expect(res.status).toBe(200);
-    expect(res.body.token).toBeDefined();
-    expect(res.body.user.role).toBe('admin');
-    // Token should be decodable
-    const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET);
+      .mockResolvedValueOnce({ rows: [{ id: 1, email: 'admin@test.com', password_hash: hash, role: 'admin', full_name: 'Admin' }] })
+      .mockResolvedValueOnce({ rows: [] })   // UPDATE last_login
+      .mockResolvedValueOnce({ rows: [] });  // audit log INSERT
+    const { status, body } = await post('/api/auth/login', { email: 'admin@test.com', password: 'Admin@123' });
+    expect(status).toBe(200);
+    expect(body.token).toBeDefined();
+    expect(body.user.role).toBe('admin');
+    const decoded = jwt.verify(body.token, process.env.JWT_SECRET);
     expect(decoded.userId).toBe(1);
   });
 });
@@ -74,85 +113,75 @@ describe('POST /api/auth/login', () => {
 // ── POST /api/auth/register ────────────────────────────────────────────────
 
 describe('POST /api/auth/register', () => {
-  const newUser = { email: 'new@insuredesk.com', password: 'NewUser@123', full_name: 'New User', role: 'agent' };
+  const newUser = { email: 'new@test.com', password: 'NewUser@123', full_name: 'New User', role: 'agent' };
 
   test('401 without auth token', async () => {
-    const res = await request(app).post('/api/auth/register').send(newUser);
-    expect(res.status).toBe(401);
+    const { status } = await post('/api/auth/register', newUser);
+    expect(status).toBe(401);
   });
 
   test('403 when caller is a customer', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('customer')}`)
-      .send(newUser);
-    expect(res.status).toBe(403);
+    const { status } = await post('/api/auth/register', newUser, makeToken('customer'));
+    expect(status).toBe(403);
   });
 
   test('403 when caller is an agent', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('agent')}`)
-      .send(newUser);
-    expect(res.status).toBe(403);
+    const { status } = await post('/api/auth/register', newUser, makeToken('agent'));
+    expect(status).toBe(403);
   });
 
-  test('400 when required fields missing', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('admin')}`)
-      .send({ email: 'x@y.com', password: 'Pwd@1234', role: 'agent' }); // missing full_name
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/required/i);
+  test('400 when full_name is missing', async () => {
+    const { status, body } = await post('/api/auth/register',
+      { email: 'x@y.com', password: 'Pwd@1234', role: 'agent' },
+      makeToken('admin')
+    );
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/required/i);
   });
 
   test('400 when role is invalid', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('admin')}`)
-      .send({ ...newUser, role: 'superuser' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/invalid role/i);
+    const { status, body } = await post('/api/auth/register', { ...newUser, role: 'superuser' }, makeToken('admin'));
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/invalid role/i);
   });
 
   test('400 when password is too short', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('admin')}`)
-      .send({ ...newUser, password: 'short' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/8 characters/i);
+    const { status, body } = await post('/api/auth/register', { ...newUser, password: 'short' }, makeToken('admin'));
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/8 characters/i);
   });
 
-  test('403 when non-admin tries to create admin', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('manager')}`)
-      .send({ ...newUser, role: 'admin' });
-    expect(res.status).toBe(403);
+  test('403 when non-admin tries to create admin user', async () => {
+    const { status } = await post('/api/auth/register', { ...newUser, role: 'admin' }, makeToken('manager'));
+    expect(status).toBe(403);
   });
 
-  test('201 creates user successfully (admin caller)', async () => {
+  test('201 creates user successfully', async () => {
     mockQuery.mockResolvedValueOnce({
-      rows: [{ id: 11, email: 'new@insuredesk.com', full_name: 'New User', role: 'agent' }],
+      rows: [{ id: 11, email: 'new@test.com', full_name: 'New User', role: 'agent', is_active: true, created_at: new Date() }],
     });
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('admin')}`)
-      .send(newUser);
-    expect(res.status).toBe(201);
-    expect(res.body.user.email).toBe('new@insuredesk.com');
+    const { status, body } = await post('/api/auth/register', newUser, makeToken('admin'));
+    expect(status).toBe(201);
+    expect(body.user.email).toBe('new@test.com');
+    expect(body.user.role).toBe('agent');
   });
 
-  test('409 when email already exists', async () => {
+  test('409 when email already exists (duplicate key)', async () => {
     const err = new Error('dup'); err.code = '23505';
     mockQuery.mockRejectedValueOnce(err);
-    const res = await request(app)
-      .post('/api/auth/register')
-      .set('Authorization', `Bearer ${token('admin')}`)
-      .send(newUser);
-    expect(res.status).toBe(409);
-    expect(res.body.error).toMatch(/already exists/i);
+    const { status, body } = await post('/api/auth/register', newUser, makeToken('admin'));
+    expect(status).toBe(409);
+    expect(body.error).toMatch(/already exists/i);
+  });
+
+  test('all four valid roles are accepted by admin', async () => {
+    for (const role of ['agent', 'manager', 'customer', 'admin']) {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 20, email: `r_${role}@x.com`, full_name: 'X', role, is_active: true, created_at: new Date() }],
+      });
+      const { status } = await post('/api/auth/register', { ...newUser, role }, makeToken('admin'));
+      expect(status).toBe(201);
+    }
   });
 });
 
@@ -160,38 +189,32 @@ describe('POST /api/auth/register', () => {
 
 describe('GET /api/auth/me', () => {
   test('401 without auth token', async () => {
-    const res = await request(app).get('/api/auth/me');
-    expect(res.status).toBe(401);
+    const { status } = await get('/api/auth/me');
+    expect(status).toBe(401);
   });
 
   test('401 when user not found in DB', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] });
-    const res = await request(app)
-      .get('/api/auth/me')
-      .set('Authorization', `Bearer ${token('admin', 1)}`);
-    expect(res.status).toBe(401);
-    expect(res.body.error).toMatch(/not found|deactivated/i);
+    const { status, body } = await get('/api/auth/me', makeToken('admin', 1));
+    expect(status).toBe(401);
+    expect(body.error).toMatch(/not found|deactivated/i);
   });
 
   test('401 when account is deactivated', async () => {
     mockQuery.mockResolvedValueOnce({
-      rows: [{ id: 1, email: 'admin@insuredesk.com', is_active: false }],
+      rows: [{ id: 1, email: 'admin@test.com', is_active: false }],
     });
-    const res = await request(app)
-      .get('/api/auth/me')
-      .set('Authorization', `Bearer ${token('admin', 1)}`);
-    expect(res.status).toBe(401);
+    const { status } = await get('/api/auth/me', makeToken('admin', 1));
+    expect(status).toBe(401);
   });
 
   test('200 returns current user data', async () => {
     mockQuery.mockResolvedValueOnce({
-      rows: [{ id: 1, email: 'admin@insuredesk.com', full_name: 'Admin User', role: 'admin', is_active: true, last_login: new Date() }],
+      rows: [{ id: 1, email: 'admin@test.com', full_name: 'Admin User', role: 'admin', is_active: true, last_login: new Date() }],
     });
-    const res = await request(app)
-      .get('/api/auth/me')
-      .set('Authorization', `Bearer ${token('admin', 1)}`);
-    expect(res.status).toBe(200);
-    expect(res.body.user.email).toBe('admin@insuredesk.com');
-    expect(res.body.user.role).toBe('admin');
+    const { status, body } = await get('/api/auth/me', makeToken('admin', 1));
+    expect(status).toBe(200);
+    expect(body.user.email).toBe('admin@test.com');
+    expect(body.user.role).toBe('admin');
   });
 });
