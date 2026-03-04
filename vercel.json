@@ -1,5 +1,15 @@
 {
   "version": 2,
-  "outputDirectory": "frontend",
-  "public": false
+  "builds": [
+    {
+      "src": "frontend/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
 }
