@@ -1,7 +1,8 @@
 /**
  * API INTEGRATION TESTS — /api/auth
  *
- * Uses Node's built-in http + fetch (Node 18+) — no supertest required.
+ * Uses Node's built-in http module only — no supertest, no fetch polyfill.
+ * Compatible with Jest 25 + Node 18+.
  * DB is mocked; no real database connection needed.
  *
  * Run: npm run test:api -- --testPathPattern=auth.api
@@ -33,8 +34,7 @@ let server, baseURL;
 
 beforeAll(done => {
   server = http.createServer(app).listen(0, '127.0.0.1', () => {
-    const { port } = server.address();
-    baseURL = `http://127.0.0.1:${port}`;
+    baseURL = `http://127.0.0.1:${server.address().port}`;
     done();
   });
 });
@@ -42,23 +42,35 @@ beforeAll(done => {
 afterAll(done => server.close(done));
 beforeEach(() => mockQuery.mockReset());
 
-// ── HTTP helpers ───────────────────────────────────────────────────────────
+// ── HTTP helper (http.request, no fetch) ───────────────────────────────────
 
-async function post(path, body, token) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${baseURL}${path}`, {
-    method: 'POST', headers, body: JSON.stringify(body),
+function apiRequest(method, path, body, token) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(baseURL + path);
+    const payload = body ? JSON.stringify(body) : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (payload) headers['Content-Length'] = Buffer.byteLength(payload);
+
+    const req = http.request(
+      { hostname: url.hostname, port: url.port, path: url.pathname, method, headers },
+      res => {
+        let raw = '';
+        res.on('data', c => { raw += c; });
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
+          catch (e) { resolve({ status: res.statusCode, body: raw }); }
+        });
+      }
+    );
+    req.on('error', reject);
+    if (payload) req.write(payload);
+    req.end();
   });
-  return { status: res.status, body: await res.json() };
 }
 
-async function get(path, token) {
-  const headers = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${baseURL}${path}`, { headers });
-  return { status: res.status, body: await res.json() };
-}
+const post = (path, body, token) => apiRequest('POST', path, body, token);
+const get  = (path, token)       => apiRequest('GET',  path, null, token);
 
 function makeToken(role = 'admin', userId = 1) {
   return jwt.sign({ userId, email: `${role}@test.com`, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -99,8 +111,8 @@ describe('POST /api/auth/login', () => {
     const hash = await bcrypt.hash('Admin@123', 10);
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: 1, email: 'admin@test.com', password_hash: hash, role: 'admin', full_name: 'Admin' }] })
-      .mockResolvedValueOnce({ rows: [] })   // UPDATE last_login
-      .mockResolvedValueOnce({ rows: [] });  // audit log INSERT
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
     const { status, body } = await post('/api/auth/login', { email: 'admin@test.com', password: 'Admin@123' });
     expect(status).toBe(200);
     expect(body.token).toBeDefined();
@@ -166,7 +178,7 @@ describe('POST /api/auth/register', () => {
     expect(body.user.role).toBe('agent');
   });
 
-  test('409 when email already exists (duplicate key)', async () => {
+  test('409 when email already exists', async () => {
     const err = new Error('dup'); err.code = '23505';
     mockQuery.mockRejectedValueOnce(err);
     const { status, body } = await post('/api/auth/register', newUser, makeToken('admin'));
@@ -174,7 +186,7 @@ describe('POST /api/auth/register', () => {
     expect(body.error).toMatch(/already exists/i);
   });
 
-  test('all four valid roles are accepted by admin', async () => {
+  test('all four valid roles accepted by admin', async () => {
     for (const role of ['agent', 'manager', 'customer', 'admin']) {
       mockQuery.mockResolvedValueOnce({
         rows: [{ id: 20, email: `r_${role}@x.com`, full_name: 'X', role, is_active: true, created_at: new Date() }],

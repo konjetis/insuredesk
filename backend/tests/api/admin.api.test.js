@@ -1,7 +1,8 @@
 /**
  * API INTEGRATION TESTS — /api/admin
  *
- * Uses Node's built-in http + fetch (Node 18+) — no supertest required.
+ * Uses Node's built-in http module only — no supertest, no fetch polyfill.
+ * Compatible with Jest 25 + Node 18+.
  * DB is mocked; no real database connection needed.
  *
  * Run: npm run test:api -- --testPathPattern=admin.api
@@ -32,8 +33,7 @@ let server, baseURL;
 
 beforeAll(done => {
   server = http.createServer(app).listen(0, '127.0.0.1', () => {
-    const { port } = server.address();
-    baseURL = `http://127.0.0.1:${port}`;
+    baseURL = `http://127.0.0.1:${server.address().port}`;
     done();
   });
 });
@@ -41,21 +41,37 @@ beforeAll(done => {
 afterAll(done => server.close(done));
 beforeEach(() => mockQuery.mockReset());
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── HTTP helper (http.request, no fetch) ───────────────────────────────────
 
-async function req(method, path, body, token) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const opts = { method, headers };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${baseURL}${path}`, opts);
-  return { status: res.status, body: await res.json() };
+function apiRequest(method, path, body, token) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(baseURL + path);
+    const payload = body ? JSON.stringify(body) : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (payload) headers['Content-Length'] = Buffer.byteLength(payload);
+
+    const req = http.request(
+      { hostname: url.hostname, port: url.port, path: url.pathname, method, headers },
+      res => {
+        let raw = '';
+        res.on('data', c => { raw += c; });
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
+          catch (e) { resolve({ status: res.statusCode, body: raw }); }
+        });
+      }
+    );
+    req.on('error', reject);
+    if (payload) req.write(payload);
+    req.end();
+  });
 }
 
-const get  = (path, token)       => req('GET',    path, null, token);
-const post = (path, body, token) => req('POST',   path, body, token);
-const put  = (path, body, token) => req('PUT',    path, body, token);
-const del  = (path, token)       => req('DELETE', path, null, token);
+const get  = (path, token)       => apiRequest('GET',    path, null, token);
+const post = (path, body, token) => apiRequest('POST',   path, body, token);
+const put  = (path, body, token) => apiRequest('PUT',    path, body, token);
+const del  = (path, token)       => apiRequest('DELETE', path, null, token);
 
 function makeToken(role, userId = 1) {
   return jwt.sign({ userId, email: `${role}@test.com`, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -172,7 +188,7 @@ describe('POST /api/admin/users', () => {
   test('201 creates user successfully', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: 10, email: 'new@test.com', full_name: 'New User', role: 'agent', is_active: true, created_at: new Date() }] })
-      .mockResolvedValueOnce({ rows: [] }); // audit log
+      .mockResolvedValueOnce({ rows: [] });
     const { status, body } = await post('/api/admin/users', newUser, makeToken('admin'));
     expect(status).toBe(201);
     expect(body.user.email).toBe('new@test.com');
@@ -201,23 +217,23 @@ describe('POST /api/admin/users', () => {
 // ── PUT /api/admin/users/:id ───────────────────────────────────────────────
 
 describe('PUT /api/admin/users/:id', () => {
-  const updatePayload = { full_name: 'Updated Name', role: 'manager', is_active: true };
+  const payload = { full_name: 'Updated Name', role: 'manager', is_active: true };
 
   test('401 without token', async () => {
-    const { status } = await put('/api/admin/users/2', updatePayload);
+    const { status } = await put('/api/admin/users/2', payload);
     expect(status).toBe(401);
   });
 
   test('403 for agent role', async () => {
-    const { status } = await put('/api/admin/users/2', updatePayload, makeToken('agent'));
+    const { status } = await put('/api/admin/users/2', payload, makeToken('agent'));
     expect(status).toBe(403);
   });
 
   test('200 updates user successfully', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: 2, email: 'a@b.com', full_name: 'Updated Name', role: 'manager', is_active: true }] })
-      .mockResolvedValueOnce({ rows: [] }); // audit
-    const { status, body } = await put('/api/admin/users/2', updatePayload, makeToken('admin'));
+      .mockResolvedValueOnce({ rows: [] });
+    const { status, body } = await put('/api/admin/users/2', payload, makeToken('admin'));
     expect(status).toBe(200);
     expect(body.user.full_name).toBe('Updated Name');
     expect(body.user.role).toBe('manager');
@@ -225,16 +241,16 @@ describe('PUT /api/admin/users/:id', () => {
 
   test('404 when user does not exist', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] });
-    const { status, body } = await put('/api/admin/users/9999', updatePayload, makeToken('admin'));
+    const { status, body } = await put('/api/admin/users/9999', payload, makeToken('admin'));
     expect(status).toBe(404);
     expect(body.error).toMatch(/not found/i);
   });
 
-  test('200 allows deactivating a user (is_active: false)', async () => {
+  test('200 deactivates a user (is_active: false)', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: 5, email: 'x@y.com', full_name: 'X', role: 'agent', is_active: false }] })
       .mockResolvedValueOnce({ rows: [] });
-    const { status, body } = await put('/api/admin/users/5', { ...updatePayload, is_active: false }, makeToken('admin'));
+    const { status, body } = await put('/api/admin/users/5', { ...payload, is_active: false }, makeToken('admin'));
     expect(status).toBe(200);
     expect(body.user.is_active).toBe(false);
   });
@@ -268,7 +284,7 @@ describe('DELETE /api/admin/users/:id', () => {
   test('200 deactivates a user successfully', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: 3, email: 'bye@test.com' }] })
-      .mockResolvedValueOnce({ rows: [] }); // audit
+      .mockResolvedValueOnce({ rows: [] });
     const { status, body } = await del('/api/admin/users/3', makeToken('admin', 1));
     expect(status).toBe(200);
     expect(body.message).toMatch(/deactivated/i);
