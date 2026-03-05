@@ -173,3 +173,61 @@ describe('generateToken', () => {
     expect(decoded.exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
   });
 });
+
+// ── authenticateSocket ────────────────────────────────────────────────────
+
+const { authenticateSocket } = require('../../src/middleware/auth');
+
+function mockSocket(token) {
+  return { handshake: { auth: { token } } };
+}
+
+describe('authenticateSocket middleware', () => {
+  test('calls next(Error) when no token provided', (done) => {
+    const socket = { handshake: { auth: {} } };
+    authenticateSocket(socket, (err) => {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toMatch(/Authentication required/i);
+      done();
+    });
+  });
+
+  test('calls next(Error) when token is invalid', (done) => {
+    const socket = mockSocket('Bearer invalid.token.here');
+    authenticateSocket(socket, (err) => {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toMatch(/Invalid token/i);
+      done();
+    });
+  });
+
+  test('calls next(Error) when token signed with wrong secret', (done) => {
+    const bad = jwt.sign({ userId: 1 }, 'wrong-secret', { expiresIn: '1h' });
+    const socket = mockSocket(`Bearer ${bad}`);
+    authenticateSocket(socket, (err) => {
+      expect(err).toBeInstanceOf(Error);
+      done();
+    });
+  });
+
+  test('calls next() and attaches user on valid Bearer token', (done) => {
+    const token  = jwt.sign({ userId: 7, role: 'manager', name: 'Mgr' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const socket = mockSocket(`Bearer ${token}`);
+    authenticateSocket(socket, (err) => {
+      expect(err).toBeUndefined();
+      expect(socket.user.userId).toBe(7);
+      expect(socket.user.role).toBe('manager');
+      done();
+    });
+  });
+
+  test('accepts raw token without Bearer prefix', (done) => {
+    const token  = jwt.sign({ userId: 8, role: 'agent' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const socket = mockSocket(token);   // no "Bearer " prefix
+    authenticateSocket(socket, (err) => {
+      expect(err).toBeUndefined();
+      expect(socket.user.userId).toBe(8);
+      done();
+    });
+  });
+});

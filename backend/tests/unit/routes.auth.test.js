@@ -198,3 +198,57 @@ describe('GET /api/auth/me', () => {
     expect(res.body.user.email).toBe('a@b.com');
   });
 });
+
+// ── DB error paths (500 responses) ────────────────────────────────────────
+
+describe('DB error handling — 500 responses', () => {
+  const jwt = require('jsonwebtoken');
+  function adminToken() {
+    return jwt.sign({ userId:1, role:'admin', email:'admin@x.com' }, process.env.JWT_SECRET, { expiresIn:'1h' });
+  }
+
+  async function postWithToken(path, body, tok) {
+    return new Promise((resolve) => {
+      const data = JSON.stringify(body);
+      const r = http.request(`${base}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          ...(tok ? { 'Authorization': `Bearer ${tok}` } : {})
+        }
+      }, (res) => {
+        let raw = '';
+        res.on('data', c => raw += c);
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(raw || '{}') }));
+      });
+      r.write(data);
+      r.end();
+    });
+  }
+
+  test('POST /api/auth/login returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+    const res = await post('/api/auth/login', { email: 'x@x.com', password: 'pass' });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Login failed/i);
+  });
+
+  test('POST /api/auth/register returns 500 on unexpected DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB exploded'));
+    const res = await postWithToken('/api/auth/register',
+      { email:'z@x.com', password:'Test@1234', full_name:'Z', role:'agent' },
+      adminToken()
+    );
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Registration failed/i);
+  });
+
+  test('GET /api/auth/me returns 500 on DB error', async () => {
+    const tok = jwt.sign({ userId:1, role:'agent' }, process.env.JWT_SECRET, { expiresIn:'1h' });
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+    const res = await get('/api/auth/me', tok);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to fetch user/i);
+  });
+});

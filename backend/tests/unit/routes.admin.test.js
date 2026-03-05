@@ -189,3 +189,55 @@ describe('DELETE /api/admin/users/:id', () => {
     expect(res.status).toBe(404);
   });
 });
+
+// ── DB error paths (500 responses) ────────────────────────────────────────
+
+describe('DB error handling — 500 responses', () => {
+  test('GET /api/admin/agents returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB timeout'));
+    const res = await req('GET', '/api/admin/agents', makeToken('admin'));
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to fetch agent performance/i);
+  });
+
+  test('POST /api/admin/users returns 500 on unexpected DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('unexpected'));
+    const res = await req('POST', '/api/admin/users', makeToken('admin'), {
+      email: 'x@x.com', password: 'Test@1234', full_name: 'X', role: 'agent'
+    });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to create user/i);
+  });
+
+  test('PUT /api/admin/users/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('connection lost'));
+    const res = await req('PUT', '/api/admin/users/2', makeToken('admin'), {
+      full_name: 'X', role: 'agent', is_active: true
+    });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to update user/i);
+  });
+
+  test('DELETE /api/admin/users/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('connection lost'));
+    const res = await req('DELETE', '/api/admin/users/5', makeToken('admin', 1));
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to delete user/i);
+  });
+});
+
+// ── PUT with password update ───────────────────────────────────────────────
+
+describe('PUT /api/admin/users/:id — password change', () => {
+  test('200 updates user with new password', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })   // UPDATE password_hash
+      .mockResolvedValueOnce({ rows: [{ id:2, email:'a@b.com', full_name:'User', role:'agent', is_active:true }] })
+      .mockResolvedValueOnce({ rows: [] });   // audit
+    const res = await req('PUT', '/api/admin/users/2', makeToken('admin'), {
+      full_name: 'User', role: 'agent', is_active: true, password: 'NewPass@123'
+    });
+    expect(res.status).toBe(200);
+    expect(mockQuery).toHaveBeenCalledTimes(3);
+  });
+});
