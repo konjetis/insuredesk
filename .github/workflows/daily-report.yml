@@ -1,0 +1,130 @@
+name: Daily Stage Report — 8 AM CST
+
+on:
+  schedule:
+    - cron: '0 14 * * *'   # 8:00 AM CST (UTC-6) | 9:00 AM CDT (UTC-5 during daylight saving)
+  workflow_dispatch:         # Allow manual trigger from GitHub UI → Actions tab → Run workflow
+
+# Allow workflow to commit run-history.json back to the repo
+permissions:
+  contents: write
+
+jobs:
+  daily-report:
+    name: Run Tests → Generate Report → Send Email
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # ── 2. Node.js setup ───────────────────────────────────────────────────
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: Install root dependencies (nodemailer)
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright browsers (Chromium)
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      # ── 4. Unit tests + Coverage ───────────────────────────────────────────
+      - name: Run unit tests with coverage
+        run: |
+          ./node_modules/.bin/jest \
+            --config jest.config.js \
+            --testPathIgnorePatterns="tests/stage" \
+            --coverage \
+            --coverageReporters=json-summary \
+            --forceExit \
+            --silent
+        working-directory: backend
+        env:
+          NODE_ENV: test
+        continue-on-error: true
+
+      # ── 5. Stage API tests (Jest) ──────────────────────────────────────────
+      - name: Run Stage API tests (Jest)
+        run: |
+          mkdir -p ${{ github.workspace }}/reports
+          ./node_modules/.bin/jest \
+            --config jest.config.stage.js \
+            --no-coverage \
+            --json \
+            --outputFile=${{ github.workspace }}/reports/jest-results.json \
+            --forceExit 2>/dev/null || true
+        working-directory: backend
+        env:
+          STAGE_API_URL: ${{ vars.STAGE_API_URL || 'https://insuredesk-production.up.railway.app' }}
+        continue-on-error: true
+
+      # ── 6. Playwright E2E tests ────────────────────────────────────────────
+      - name: Run Playwright E2E tests
+        run: |
+          mkdir -p ${{ github.workspace }}/reports
+          npx playwright test \
+            --config playwright.config.stage.js \
+            --reporter=json \
+            2>/dev/null > ${{ github.workspace }}/reports/pw-results.json || true
+        working-directory: frontend
+        env:
+          STAGE_BASE_URL: ${{ vars.STAGE_BASE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app' }}
+        continue-on-error: true
+
+      # ── 7. Generate HTML report ────────────────────────────────────────────
+      - name: Generate HTML report
+        run: |
+          mkdir -p reports
+          node scripts/generate-html-report.js \
+            --jest     reports/jest-results.json \
+            --playwright reports/pw-results.json \
+            --coverage backend/coverage/coverage-summary.json \
+            --out      reports/daily-report.html
+
+      # ── 8. Send email via Gmail ────────────────────────────────────────────
+      - name: Send daily report email
+        run: |
+          node scripts/send-email-gmail.js \
+            --to      "${{ secrets.RECIPIENT_EMAIL || 'suneethakonjeti@gmail.com' }}" \
+            --subject "InsureDesk Daily Report — $(date '+%A, %B %-d, %Y')" \
+            --html    reports/daily-report.html
+        env:
+          GMAIL_USER:     ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+
+      # ── 9. Persist run history back to repo ───────────────────────────────
+      - name: Commit updated run history
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/run-history.json 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "ci: update run history $(date '+%Y-%m-%d') [skip ci]"
+          git push origin HEAD 2>/dev/null || true
+        continue-on-error: true
+
+      # ── 10. Upload HTML report as artifact ────────────────────────────────
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-report-${{ github.run_number }}
+          path: reports/daily-report.html
+          retention-days: 30
