@@ -28,3 +28,15 @@ build/
 # Temp files
 tmp/
 temp/
+
+# Playwright artifacts
+frontend/playwright-report/
+frontend/test-results/
+frontend/node_modules/
+
+# Jest coverage
+backend/coverage/
+
+# Daily report outputs (generated files, not source)
+reports/
+frontend/playwright-report-stage/

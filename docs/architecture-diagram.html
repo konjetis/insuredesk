@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InsureDesk — Architecture Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f0f4f8; color: #1e293b; padding: 32px 24px; }
+  h1  { font-size: 22px; color: #1E3A5F; font-weight: 800; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+
+  .diagram { display: flex; flex-direction: column; gap: 0; align-items: center; max-width: 900px; margin: 0 auto; }
+
+  /* Rows */
+  .row      { display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; }
+  .row.top  { margin-bottom: 0; }
+
+  /* Boxes */
+  .box {
+    border-radius: 12px; padding: 18px 22px; text-align: center;
+    position: relative; border: 2px solid;
+  }
+  .box .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; opacity: .7; }
+  .box .title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .box .detail { font-size: 12px; opacity: .75; line-height: 1.5; }
+  .box .tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px;
+              border-radius: 99px; margin-top: 6px; }
+
+  /* Colours */
+  .blue  { background: #EFF6FF; border-color: #2563AB; color: #1E3A5F; }
+  .blue .tag  { background: #2563AB; color: #fff; }
+  .green { background: #F0FDF4; border-color: #16a34a; color: #14532d; }
+  .green .tag { background: #16a34a; color: #fff; }
+  .purple{ background: #FAF5FF; border-color: #7c3aed; color: #4c1d95; }
+  .purple .tag{ background: #7c3aed; color: #fff; }
+  .orange{ background: #FFF7ED; border-color: #ea580c; color: #7c2d12; }
+  .orange .tag{ background: #ea580c; color: #fff; }
+  .slate { background: #F8FAFC; border-color: #94a3b8; color: #334155; }
+  .slate .tag { background: #64748b; color: #fff; }
+
+  /* Arrows */
+  .arrow { display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .arrow .line { width: 2px; background: #94a3b8; flex: 1; min-height: 30px; }
+  .arrow .tip  { font-size: 16px; color: #94a3b8; line-height: 1; }
+  .arrow .alabel { font-size: 10px; color: #64748b; background: #f0f4f8; padding: 2px 6px;
+                   border-radius: 4px; border: 1px solid #e2e8f0; margin: 2px 0; white-space: nowrap; }
+
+  .harrow { display: flex; align-items: center; gap: 4px; }
+  .harrow .hline { height: 2px; background: #94a3b8; flex: 1; min-width: 20px; }
+  .harrow .htip  { font-size: 14px; color: #94a3b8; }
+  .harrow .hlabel { font-size: 10px; color: #64748b; white-space: nowrap; }
+
+  /* Full width row */
+  .wide { width: 100%; }
+
+  /* Users row */
+  .users-row { display: flex; gap: 12px; justify-content: center; width: 100%; flex-wrap: wrap; }
+  .user-chip { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 8px;
+               padding: 10px 16px; font-size: 12px; font-weight: 600; color: #475569; text-align: center; min-width: 100px; }
+  .user-chip .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  /* Section label */
+  .zone-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+                color: #94a3b8; text-align: center; padding: 8px 0 4px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 28px;
+            padding: 16px; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; max-width: 900px; margin-left: auto; margin-right: auto; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; }
+  .legend-dot  { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>InsureDesk — Architecture Diagram</h1>
+<p class="sub">Full-stack insurance dashboard · Vercel + Railway + PostgreSQL · JWT Auth · 4 User Roles</p>
+
+<div class="diagram">
+
+  <!-- Users -->
+  <div class="zone-label">👤 Users</div>
+  <div class="users-row">
+    <div class="user-chip"><span class="icon">🔧</span>Admin</div>
+    <div class="user-chip"><span class="icon">📊</span>Manager</div>
+    <div class="user-chip"><span class="icon">📞</span>Agent</div>
+    <div class="user-chip"><span class="icon">🏠</span>Customer</div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="arrow"><div class="line"></div><div class="alabel">HTTPS · Browser</div><div class="tip">▼</div></div>
+
+  <!-- Frontend -->
+  <div class="zone-label">🌐 Frontend Layer — Vercel</div>
+  <div class="row">
+    <div class="box blue" style="width:260px">
+      <div class="label">Static Site</div>
+      <div class="title">login.html</div>
+      <div class="detail">Email + Password form<br>JWT stored in localStorage<br>Role-based redirect on login</div>
+      <span class="tag">HTML5 · CSS3 · Vanilla JS</span>
+    </div>
+    <div class="harrow"><div class="hline" style="min-width:40px"></div><div class="htip">→</div></div>
+    <div class="box blue" style="width:340px">
+      <div class="label">Static Site</div>
+      <div class="title">index.html — Role Dashboard</div>
+      <div class="detail">Tab-based UI: Admin · Manager · Agent · Customer<br>roleTabMap hides tabs per role<br>fetch() API calls with Bearer token</div>
+      <span class="tag">HTML5 · CSS3 · Vanilla JS</span>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="arrow"><div class="line"></div><div class="alabel">REST API · Authorization: Bearer &lt;JWT&gt;</div><div class="tip">▼</div></div>
+
+  <!-- Backend -->
+  <div class="zone-label">⚙️ Backend Layer — Railway</div>
+  <div class="box green" style="width:720px; padding: 22px 28px;">
+    <div class="label">Node.js · Express.js Server</div>
+    <div class="title">insuredesk-production.up.railway.app</div>
+    <div style="display:flex; gap:16px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+      <div style="background:#dcfce7; border-radius:8px; padding:10px 14px; font-size:12px; color:#14532d; text-align:left; min-width:140px;">
+        <strong>Auth Middleware</strong><br>JWT verify<br>requireRole()<br>bcrypt compare
+      </div>
+      <div style="background:#dcfce7; border-radius:8px; padding:10px 14px; font-size:12px; color:#14532d; text-align:left; min-width:140px;">
+        <strong>Admin Routes</strong><br>GET /api/admin/users<br>POST / PUT / DELETE<br>Role filtering
+      </div>
+      <div style="background:#dcfce7; border-radius:8px; padding:10px 14px; font-size:12px; color:#14532d; text-align:left; min-width:140px;">
+        <strong>Role Routes</strong><br>GET /api/agent/*<br>GET /api/manager/*<br>GET /api/customer/*
+      </div>
+      <div style="background:#dcfce7; border-radius:8px; padding:10px 14px; font-size:12px; color:#14532d; text-align:left; min-width:140px;">
+        <strong>Auth Route</strong><br>POST /api/auth/login<br>Returns signed JWT<br>GET /health
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="arrow"><div class="line"></div><div class="alabel">node-postgres (pg) · Internal Railway URL</div><div class="tip">▼</div></div>
+
+  <!-- Database -->
+  <div class="zone-label">🗄️ Database Layer — Railway</div>
+  <div class="box purple" style="width:520px">
+    <div class="label">Managed PostgreSQL 15</div>
+    <div class="title">tramway.proxy.rlwy.net:45849</div>
+    <div style="display:flex; gap:16px; justify-content:center; margin-top:10px;">
+      <div style="background:#f5f3ff; border-radius:8px; padding:10px 14px; font-size:12px; color:#4c1d95; text-align:left;">
+        <strong>users table</strong><br>id · name · email<br>password_hash · role<br>created_at
+      </div>
+      <div style="background:#f5f3ff; border-radius:8px; padding:10px 14px; font-size:12px; color:#4c1d95; text-align:left;">
+        <strong>Seeded via db-setup.js</strong><br>1 admin · 3 agents<br>2 managers · 5 customers<br>ON CONFLICT DO NOTHING
+      </div>
+    </div>
+  </div>
+
+  <!-- Separator -->
+  <div style="width:100%; border-top: 2px dashed #cbd5e1; margin: 36px 0 12px; position:relative;">
+    <span style="position:absolute; left:50%; transform:translateX(-50%); top:-10px; background:#f0f4f8; padding:0 12px; font-size:11px; color:#94a3b8; font-weight:700; letter-spacing:.08em; text-transform:uppercase;">Testing & Reporting Layer</span>
+  </div>
+
+  <!-- Testing row -->
+  <div class="row" style="align-items:stretch; gap:12px;">
+    <div class="box orange" style="flex:1; text-align:left;">
+      <div class="label">API Tests</div>
+      <div class="title">Jest 25.5.4</div>
+      <div class="detail">28 tests · backend/tests/stage/<br>Runs against Railway live API<br>--no-coverage · --json output</div>
+      <span class="tag">28 / 28 ✅</span>
+    </div>
+    <div class="box orange" style="flex:1; text-align:left;">
+      <div class="label">E2E Tests</div>
+      <div class="title">Playwright</div>
+      <div class="detail">83 tests · 5 spec files<br>Runs against Vercel live URL<br>loginViaStorage JWT auth helper</div>
+      <span class="tag">83 / 83 ✅</span>
+    </div>
+    <div class="box orange" style="flex:1; text-align:left;">
+      <div class="label">Daily Report</div>
+      <div class="title">Nodemailer + Gmail</div>
+      <div class="detail">Mac cron @ 8 AM<br>Generates HTML report<br>Emails to suneethakonjeti@gmail.com</div>
+      <span class="tag">Scheduled ✅</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2563AB"></div> Frontend (Vercel)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div> Backend (Railway)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div> Database (Railway PostgreSQL)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ea580c"></div> Testing & Reporting (Local Mac)</div>
+</div>
+
+</body>
+</html>

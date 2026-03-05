@@ -4,18 +4,18 @@ const { defineConfig, devices } = require('@playwright/test');
 /**
  * InsureDesk — Stage Playwright Config
  *
- * Points all E2E tests at the Stage Railway deployment.
+ * Points all E2E tests at the Stage Vercel frontend.
+ * The loginViaStorage helper calls the Railway backend directly.
  * Run AFTER confirming the backend Stage tests pass.
  *
  * Usage:
- *   STAGE_URL=https://insuredesk-stage.up.railway.app \
- *     npx playwright test --config playwright.config.stage.js --project=chromium
+ *   npx playwright test --config playwright.config.stage.js --project=chromium-stage
  *
- * Or use the npm script (set STAGE_URL in your shell first):
- *   npm run test:stage:e2e
+ * Override URL if needed:
+ *   STAGE_URL=https://your-custom.vercel.app npx playwright test --config playwright.config.stage.js
  */
 
-const STAGE_URL = process.env.STAGE_URL || 'https://insuredesk-stage.up.railway.app';
+const STAGE_URL = process.env.STAGE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app';
 
 module.exports = defineConfig({
   testDir: './tests/e2e',

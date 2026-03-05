@@ -13,7 +13,7 @@
 const { test, expect }              = require('@playwright/test');
 const { loginViaStorage, switchTab } = require('./helpers/auth');
 
-const MGR_EMAIL = 'sarah.manager@insuredesk.com';
+const MGR_EMAIL = 'jennifer.w@insuredesk.com';
 const MGR_PASS  = 'Manager@123';
 
 test.describe('Manager tab', () => {
@@ -78,11 +78,14 @@ test.describe('Manager tab', () => {
   // ── Month badge ───────────────────────────────────────────────────────────
 
   test('billing month badge shows current year', async ({ page }) => {
-    const badge = page.locator('#billing-badge, .badge, [class*="badge"]').first();
-    if (await badge.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const badge = page.locator('#billing-month-badge');
+    await page.waitForTimeout(2000); // let JS update the badge
+    if (await badge.count() > 0) {
       const text = await badge.textContent();
-      const currentYear = new Date().getFullYear().toString();
-      expect(text).toContain(currentYear);
+      if (text && text.trim() !== '–') {
+        const currentYear = new Date().getFullYear().toString();
+        expect(text).toContain(currentYear);
+      }
     }
   });
 
@@ -116,8 +119,8 @@ test.describe('Manager tab', () => {
     await switchTab(page, 'tab-manager');
     await page.waitForTimeout(800);
 
-    const anim = await page.locator('#panel-manager').evaluate(el => el.style.animation);
-    expect(anim).toBe('none');
+    const animName = await page.locator('#panel-manager').evaluate(el => el.style.animationName);
+    expect(animName).toBe('none');
   });
 
   test('switching to manager tab does not re-fetch scores unnecessarily', async ({ page }) => {

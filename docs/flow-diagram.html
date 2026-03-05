@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InsureDesk — Flow Diagrams</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f0f4f8; color: #1e293b; padding: 32px 24px; }
+
+  h1  { font-size: 22px; color: #1E3A5F; font-weight: 800; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #64748b; margin-bottom: 36px; }
+  h2  { font-size: 16px; color: #1E3A5F; font-weight: 700; margin-bottom: 20px;
+        padding-bottom: 8px; border-bottom: 3px solid #1E3A5F; }
+
+  .section { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
+             padding: 28px; margin-bottom: 32px; max-width: 960px; }
+
+  /* Flow layout */
+  .flow { display: flex; align-items: flex-start; gap: 0; flex-wrap: nowrap; overflow-x: auto; }
+  .flow.vertical { flex-direction: column; align-items: center; gap: 0; }
+
+  /* Steps */
+  .step {
+    border-radius: 10px; padding: 12px 16px; text-align: center;
+    font-size: 12px; font-weight: 600; min-width: 130px; max-width: 150px;
+    border: 2px solid; position: relative; flex-shrink: 0;
+  }
+  .step .icon { font-size: 18px; display: block; margin-bottom: 4px; }
+  .step .stitle { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .step .sdesc  { font-size: 10px; font-weight: 400; opacity: .75; line-height: 1.4; }
+
+  .step.blue   { background:#EFF6FF; border-color:#2563AB; color:#1E3A5F; }
+  .step.green  { background:#F0FDF4; border-color:#16a34a; color:#14532d; }
+  .step.red    { background:#FEF2F2; border-color:#dc2626; color:#7f1d1d; }
+  .step.orange { background:#FFF7ED; border-color:#ea580c; color:#7c2d12; }
+  .step.purple { background:#FAF5FF; border-color:#7c3aed; color:#4c1d95; }
+  .step.slate  { background:#F8FAFC; border-color:#94a3b8; color:#334155; }
+  .step.teal   { background:#F0FDFA; border-color:#0d9488; color:#134e4a; }
+  .step.diamond { clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                  border-radius: 0; min-width: 120px; min-height: 90px;
+                  display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* Arrows */
+  .arr  { display: flex; align-items: center; color: #94a3b8; font-size: 18px; padding: 0 4px; flex-shrink:0; }
+  .varr { display: flex; flex-direction: column; align-items: center; color: #94a3b8; padding: 4px 0; }
+  .varr .vline { width: 2px; height: 24px; background: #cbd5e1; }
+  .arr-label  { font-size: 10px; color: #64748b; background: #f8fafc; padding: 1px 6px;
+                border: 1px solid #e2e8f0; border-radius: 4px; margin: 0 2px; }
+
+  /* Branch */
+  .branch { display: flex; gap: 16px; align-items: flex-start; }
+  .branch-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  /* Two-col grid for flows */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .flow { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+
+<h1>InsureDesk — Flow Diagrams</h1>
+<p class="sub">User flows · Authentication · Role navigation · Test pipeline · Daily report</p>
+
+<!-- ── 1. LOGIN FLOW ─────────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>1. Login & Authentication Flow</h2>
+  <div class="flow">
+    <div class="step blue"><span class="icon">🌐</span><div class="stitle">User visits</div><div class="sdesc">login.html on Vercel</div></div>
+    <div class="arr">→</div>
+    <div class="step blue"><span class="icon">✍️</span><div class="stitle">Enter credentials</div><div class="sdesc">email + password</div></div>
+    <div class="arr">→</div>
+    <div class="step orange"><span class="icon">📡</span><div class="stitle">POST /api/auth/login</div><div class="sdesc">Railway backend</div></div>
+    <div class="arr">→</div>
+    <div class="step purple"><span class="icon">🗄️</span><div class="stitle">DB lookup</div><div class="sdesc">SELECT user WHERE email matches</div></div>
+    <div class="arr">→</div>
+    <div class="step purple"><span class="icon">🔐</span><div class="stitle">bcrypt compare</div><div class="sdesc">hash vs password</div></div>
+  </div>
+  <div style="display:flex; gap:32px; margin-top:16px; justify-content:center;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+      <div style="font-size:11px; color:#16a34a; font-weight:700;">✅ Match</div>
+      <div class="varr"><div class="vline"></div><div>▼</div></div>
+      <div class="step green"><span class="icon">🎟️</span><div class="stitle">Sign JWT</div><div class="sdesc">{ userId, email, role }</div></div>
+      <div class="varr"><div class="vline"></div><div>▼</div></div>
+      <div class="step green"><span class="icon">💾</span><div class="stitle">Store in localStorage</div><div class="sdesc">token + role</div></div>
+      <div class="varr"><div class="vline"></div><div>▼</div></div>
+      <div class="step teal"><span class="icon">🔀</span><div class="stitle">Redirect by role</div><div class="sdesc">Show correct tab</div></div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+      <div style="font-size:11px; color:#dc2626; font-weight:700;">❌ No match</div>
+      <div class="varr"><div class="vline"></div><div>▼</div></div>
+      <div class="step red"><span class="icon">🚫</span><div class="stitle">401 Unauthorized</div><div class="sdesc">Invalid credentials message</div></div>
+      <div class="varr"><div class="vline"></div><div>▼</div></div>
+      <div class="step red"><span class="icon">↩️</span><div class="stitle">Stay on login</div><div class="sdesc">Error shown to user</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 2. ROLE NAVIGATION FLOW ──────────────────────────────────────────────── -->
+<div class="section">
+  <h2>2. Role-Based Navigation Flow</h2>
+  <div class="flow">
+    <div class="step blue"><span class="icon">🔑</span><div class="stitle">Login success</div><div class="sdesc">JWT in localStorage</div></div>
+    <div class="arr">→</div>
+    <div class="step blue"><span class="icon">📖</span><div class="stitle">Read role</div><div class="sdesc">decode JWT payload</div></div>
+    <div class="arr">→</div>
+    <div class="step orange"><span class="icon">🗺️</span><div class="stitle">roleTabMap lookup</div><div class="sdesc">Defines allowed tabs</div></div>
+  </div>
+  <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; justify-content:center;">
+    <div style="border:2px solid #2563AB; border-radius:10px; padding:14px 18px; background:#EFF6FF; min-width:160px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">🔧</div>
+      <div style="font-size:12px; font-weight:700; color:#1E3A5F; margin-bottom:6px;">Admin</div>
+      <div style="font-size:11px; color:#475569; line-height:1.6;">
+        tab-admin<br>tab-manager<br>tab-agent<br>tab-customer
+      </div>
+    </div>
+    <div style="border:2px solid #7c3aed; border-radius:10px; padding:14px 18px; background:#FAF5FF; min-width:160px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">📊</div>
+      <div style="font-size:12px; font-weight:700; color:#4c1d95; margin-bottom:6px;">Manager</div>
+      <div style="font-size:11px; color:#475569; line-height:1.6;">
+        tab-manager<br>tab-agent<br>tab-customer
+      </div>
+    </div>
+    <div style="border:2px solid #ea580c; border-radius:10px; padding:14px 18px; background:#FFF7ED; min-width:160px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">📞</div>
+      <div style="font-size:12px; font-weight:700; color:#7c2d12; margin-bottom:6px;">Agent</div>
+      <div style="font-size:11px; color:#475569; line-height:1.6;">
+        tab-agent only
+      </div>
+    </div>
+    <div style="border:2px solid #0d9488; border-radius:10px; padding:14px 18px; background:#F0FDFA; min-width:160px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">🏠</div>
+      <div style="font-size:12px; font-weight:700; color:#134e4a; margin-bottom:6px;">Customer</div>
+      <div style="font-size:11px; color:#475569; line-height:1.6;">
+        tab-customer only
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3. API REQUEST FLOW ──────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>3. API Request Flow (Every Dashboard Call)</h2>
+  <div class="flow">
+    <div class="step blue"><span class="icon">🖥️</span><div class="stitle">Dashboard tab loads</div><div class="sdesc">frontend JS</div></div>
+    <div class="arr">→</div>
+    <div class="step blue"><span class="icon">📤</span><div class="stitle">fetch()</div><div class="sdesc">Authorization: Bearer token</div></div>
+    <div class="arr">→</div>
+    <div class="step green"><span class="icon">🔍</span><div class="stitle">authenticateToken</div><div class="sdesc">verify JWT signature</div></div>
+    <div class="arr">→</div>
+    <div class="step green"><span class="icon">👮</span><div class="stitle">requireRole()</div><div class="sdesc">check role permission</div></div>
+    <div class="arr">→</div>
+    <div class="step purple"><span class="icon">🗄️</span><div class="stitle">PostgreSQL query</div><div class="sdesc">return data</div></div>
+    <div class="arr">→</div>
+    <div class="step blue"><span class="icon">📊</span><div class="stitle">Render UI</div><div class="sdesc">update DOM</div></div>
+  </div>
+  <div style="margin-top:12px; padding:10px 16px; background:#FEF2F2; border-radius:8px; border-left:4px solid #dc2626; font-size:12px; color:#7f1d1d;">
+    ❌ If token missing or expired → 401 Unauthorized · Frontend redirects to login.html<br>
+    ❌ If role not permitted → 403 Forbidden · Access denied response
+  </div>
+</div>
+
+<!-- ── 4. TEST PIPELINE FLOW ────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>4. Daily Test Pipeline Flow (8 AM Cron)</h2>
+  <div class="flow vertical">
+    <div class="step slate" style="min-width:320px;"><span class="icon">⏰</span><div class="stitle">Mac cron triggers at 8:00 AM</div><div class="sdesc">send-daily-report.sh executes</div></div>
+    <div class="varr"><div class="vline"></div><div>▼</div></div>
+
+    <div class="step orange" style="min-width:320px;"><span class="icon">🔧</span><div class="stitle">Jest API Tests (28)</div><div class="sdesc">backend/node_modules/.bin/jest --testPathPattern stage --no-coverage --json</div></div>
+    <div class="varr"><div class="vline"></div><div>▼</div></div>
+
+    <div class="step orange" style="min-width:320px;"><span class="icon">🎭</span><div class="stitle">Playwright E2E Tests (83)</div><div class="sdesc">playwright test --config playwright.config.stage.js --reporter=json</div></div>
+    <div class="varr"><div class="vline"></div><div>▼</div></div>
+
+    <div class="step purple" style="min-width:320px;"><span class="icon">📄</span><div class="stitle">Generate HTML Report</div><div class="sdesc">generate-html-report.js parses jest + playwright JSON → styled HTML</div></div>
+    <div class="varr"><div class="vline"></div><div>▼</div></div>
+
+    <div style="display:flex; gap:24px; align-items:flex-start;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="font-size:11px; color:#16a34a; font-weight:700;">✅ All Pass</div>
+        <div class="varr"><div class="vline"></div><div>▼</div></div>
+        <div class="step green" style="min-width:200px;"><span class="icon">📧</span><div class="stitle">Email sent via Gmail</div><div class="sdesc">Subject: ✅ ALL PASSED</div></div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="font-size:11px; color:#dc2626; font-weight:700;">❌ Failures</div>
+        <div class="varr"><div class="vline"></div><div>▼</div></div>
+        <div class="step red" style="min-width:200px;"><span class="icon">🚨</span><div class="stitle">Email sent via Gmail</div><div class="sdesc">Subject: ❌ FAILURES DETECTED</div></div>
+      </div>
+    </div>
+
+    <div class="varr"><div class="vline"></div><div>▼</div></div>
+    <div class="step teal" style="min-width:320px;"><span class="icon">🗑️</span><div class="stitle">Cleanup</div><div class="sdesc">Delete report files older than 30 days</div></div>
+  </div>
+</div>
+
+<!-- ── 5. DEPLOYMENT FLOW ────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>5. Deployment Flow (Code → Production)</h2>
+  <div class="flow">
+    <div class="step blue"><span class="icon">💻</span><div class="stitle">Local dev</div><div class="sdesc">Write code, run tests locally</div></div>
+    <div class="arr">→</div>
+    <div class="step blue"><span class="icon">📦</span><div class="stitle">git push main</div><div class="sdesc">Push to GitHub</div></div>
+    <div class="arr">→</div>
+    <div class="step orange"><span class="icon">🚂</span><div class="stitle">Railway auto-deploy</div><div class="sdesc">Backend + DB updated</div></div>
+    <div class="arr">→</div>
+    <div class="step green"><span class="icon">▲</span><div class="stitle">Vercel auto-deploy</div><div class="sdesc">Frontend updated</div></div>
+    <div class="arr">→</div>
+    <div class="step purple"><span class="icon">🧪</span><div class="stitle">Run Stage tests</div><div class="sdesc">111/111 must pass</div></div>
+    <div class="arr">→</div>
+    <div class="step teal"><span class="icon">🚀</span><div class="stitle">Production certified</div><div class="sdesc">Safe to promote</div></div>
+  </div>
+</div>
+
+</body>
+</html>

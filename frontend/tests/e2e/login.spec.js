@@ -58,7 +58,7 @@ test.describe('Login page — UI rendering', () => {
   });
 
   test('Forgot password link is present', async ({ page }) => {
-    const link = page.locator('a:has-text("Forgot"), button:has-text("Forgot"), text=Forgot').first();
+    const link = page.locator('a:has-text("Forgot"), button:has-text("Forgot"), [href*="reset"], [href*="forgot"]').first();
     await expect(link).toBeVisible();
   });
 

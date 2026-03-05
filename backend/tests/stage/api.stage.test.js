@@ -30,20 +30,13 @@ const https = require('https');
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
-const BASE = (process.env.STAGE_API_URL || '').replace(/\/$/, '');
-
-if (!BASE) {
-  throw new Error(
-    'STAGE_API_URL is not set.\n' +
-    'Example: STAGE_API_URL=https://insuredesk-stage.up.railway.app npm run test:stage'
-  );
-}
+const BASE = (process.env.STAGE_API_URL || 'https://insuredesk-production.up.railway.app').replace(/\/$/, '');
 
 const ADMIN_EMAIL    = process.env.STAGE_ADMIN_EMAIL    || 'admin@insuredesk.com';
 const ADMIN_PASSWORD = process.env.STAGE_ADMIN_PASSWORD || 'Admin@123';
-const AGENT_EMAIL    = process.env.STAGE_AGENT_EMAIL    || 'alex@insuredesk.com';
+const AGENT_EMAIL    = process.env.STAGE_AGENT_EMAIL    || 'alex.johnson@insuredesk.com';
 const AGENT_PASSWORD = process.env.STAGE_AGENT_PASSWORD || 'Agent@123';
-const MGR_EMAIL      = process.env.STAGE_MGR_EMAIL      || 'sarah.manager@insuredesk.com';
+const MGR_EMAIL      = process.env.STAGE_MGR_EMAIL      || 'jennifer.w@insuredesk.com';
 const MGR_PASSWORD   = process.env.STAGE_MGR_PASSWORD   || 'Manager@123';
 
 console.log(`\n🔗 Stage API: ${BASE}\n`);

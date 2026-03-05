@@ -21,13 +21,13 @@
 set -e   # exit on first failure
 
 # ── Defaults ──────────────────────────────────────────────────────
-STAGE_API_URL="${STAGE_API_URL:-https://insuredesk-stage.up.railway.app}"
-STAGE_URL="${STAGE_URL:-$STAGE_API_URL}"
+STAGE_API_URL="${STAGE_API_URL:-https://insuredesk-production.up.railway.app}"
+STAGE_URL="${STAGE_URL:-https://insuredesk-5ssw082eq-konjetis-projects.vercel.app}"
 STAGE_ADMIN_EMAIL="${STAGE_ADMIN_EMAIL:-admin@insuredesk.com}"
 STAGE_ADMIN_PASSWORD="${STAGE_ADMIN_PASSWORD:-Admin@123}"
-STAGE_AGENT_EMAIL="${STAGE_AGENT_EMAIL:-alex@insuredesk.com}"
+STAGE_AGENT_EMAIL="${STAGE_AGENT_EMAIL:-alex.johnson@insuredesk.com}"
 STAGE_AGENT_PASSWORD="${STAGE_AGENT_PASSWORD:-Agent@123}"
-STAGE_MGR_EMAIL="${STAGE_MGR_EMAIL:-sarah.manager@insuredesk.com}"
+STAGE_MGR_EMAIL="${STAGE_MGR_EMAIL:-jennifer.w@insuredesk.com}"
 STAGE_MGR_PASSWORD="${STAGE_MGR_PASSWORD:-Manager@123}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
