@@ -1,146 +1,271 @@
 # InsureDesk — API Reference
 
-## Base URL
+## Base URLs
+
 ```
 Development:  http://localhost:3001
-Production:   https://api.insuredesk.yourcompany.com
+Stage:        https://insuredesk-production.up.railway.app
 ```
 
 ## Authentication
 
-All API endpoints require a JWT Bearer token in the Authorization header:
+All protected endpoints require a JWT Bearer token:
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
-WebSocket connections require the token in the handshake:
+Obtain a token via `POST /api/auth/login`. Tokens expire after 8 hours.
+
+WebSocket connections pass the token in the handshake:
 ```javascript
-const socket = io('wss://api.insuredesk.com', {
+const socket = io('wss://insuredesk-production.up.railway.app', {
   auth: { token: 'Bearer <your_jwt_token>' }
 });
 ```
 
 ---
 
-## REST Endpoints
+## Endpoints
 
 ### GET /health
+
 Health check — no auth required.
 
-**Response:**
+**Response `200`:**
 ```json
-{ "status": "ok", "timestamp": "2026-02-22T10:00:00.000Z", "version": "1.0.0" }
+{ "status": "ok", "timestamp": "2026-03-05T08:00:00.000Z", "version": "1.0.0" }
 ```
 
 ---
 
-### GET /api/customers/:policyNumber
-Returns full 360° customer profile including policy, claims, and billing.
+### POST /api/auth/login
 
-**Roles:** agent, manager
+Authenticate a user and receive a JWT token.
 
-**Response:**
+**No auth required.**
+
+**Body:**
+```json
+{ "email": "admin@insuredesk.com", "password": "Admin@123" }
+```
+
+**Response `200`:**
 ```json
 {
-  "profile": {
-    "id": "003xx0000001234",
-    "name": "Sarah Anderson",
-    "phone": "+1 (555) 204-8821",
-    "email": "s.anderson@email.com",
-    "location": "Austin, TX",
-    "memberSince": 2019,
-    "policyNumber": "INS-2024-8821"
-  },
-  "policy": {
-    "type": "Auto + Home Bundle",
-    "premiumMonthly": 284,
-    "deductible": 1000,
-    "coverageAmount": 500000,
-    "renewalDate": "2026-03-15",
-    "paymentStatus": "Current"
-  },
-  "claims": [
-    {
-      "id": "500xx0000001234",
-      "claimNumber": "CLM-4471",
-      "subject": "Auto Collision - Rear End",
-      "status": "In Review",
-      "filedDate": "2026-01-28",
-      "adjuster": "Mark Davis"
-    }
-  ],
-  "billing": [
-    { "amount": 284, "status": "Paid", "date": "2026-02-01", "method": "Visa ···4892" }
+  "token": "<jwt>",
+  "user": { "id": 1, "email": "admin@insuredesk.com", "name": "Admin User", "role": "admin" }
+}
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 400 | Email or password missing |
+| 401 | Invalid credentials or inactive account |
+| 500 | Server error |
+
+---
+
+### POST /api/auth/register
+
+Create a new user account. Requires admin or manager role.
+
+**Roles:** `admin`, `manager`
+
+**Body:**
+```json
+{ "email": "new@insuredesk.com", "password": "NewUser@123", "full_name": "New User", "role": "agent" }
+```
+
+Valid roles: `admin`, `manager`, `agent`, `customer`. Only `admin` can create other admins.
+Password must be at least 8 characters.
+
+**Response `201`:**
+```json
+{ "user": { "id": 10, "email": "new@insuredesk.com", "full_name": "New User", "role": "agent" } }
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 400 | Missing fields, invalid role, or password too short |
+| 401 | No token provided |
+| 403 | Caller is not admin/manager, or non-admin trying to create admin |
+| 409 | Email already exists |
+| 500 | Server error |
+
+---
+
+### GET /api/auth/me
+
+Returns the currently authenticated user's profile.
+
+**Roles:** Any authenticated user.
+
+**Response `200`:**
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "admin@insuredesk.com",
+    "full_name": "Admin User",
+    "role": "admin",
+    "is_active": true,
+    "last_login": "2026-03-05T07:55:00.000Z"
+  }
+}
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 401 | No token, user not found, or account deactivated |
+| 500 | Server error |
+
+---
+
+### GET /api/admin/users
+
+Returns a list of all users in the system.
+
+**Roles:** `admin`, `manager`
+
+**Response `200`:**
+```json
+{
+  "users": [
+    { "id": 1, "email": "admin@insuredesk.com", "full_name": "Admin User", "role": "admin", "is_active": true, "last_login": "...", "created_at": "..." }
   ]
 }
 ```
 
 ---
 
-### GET /api/calls/queue
-Returns current live call queue stats from Zendesk Talk.
+### POST /api/admin/users
 
-**Roles:** agent, manager
+Create a new user (admin panel version — no password length restriction in route, handled by bcrypt).
 
-**Response:**
+**Roles:** `admin`, `manager`
+
+**Body:**
+```json
+{ "email": "new@insuredesk.com", "password": "Test@1234", "full_name": "New User", "role": "agent" }
+```
+
+**Response `201`:**
+```json
+{ "user": { "id": 11, "email": "new@insuredesk.com", "full_name": "New User", "role": "agent", "is_active": true, "created_at": "..." } }
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 400 | Missing fields or invalid role |
+| 409 | Email already exists |
+| 500 | Server error |
+
+---
+
+### PUT /api/admin/users/:id
+
+Update a user's name, role, active status, or password.
+
+**Roles:** `admin`, `manager`
+
+**Body (all fields optional except required by route):**
+```json
+{ "full_name": "Updated Name", "role": "manager", "is_active": true, "password": "NewPass@123" }
+```
+
+**Response `200`:**
+```json
+{ "user": { "id": 2, "email": "user@insuredesk.com", "full_name": "Updated Name", "role": "manager", "is_active": true } }
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 403 | Insufficient role |
+| 404 | User not found |
+| 500 | Server error |
+
+---
+
+### DELETE /api/admin/users/:id
+
+Deactivates a user (sets `is_active = false`). Does not permanently delete.
+
+**Roles:** `admin`, `manager`
+
+**Response `200`:**
+```json
+{ "message": "User deactivated successfully" }
+```
+
+**Errors:**
+| Code | Reason |
+|------|--------|
+| 400 | Cannot deactivate your own account |
+| 403 | Insufficient role |
+| 404 | User not found |
+| 500 | Server error |
+
+---
+
+### GET /api/admin/agents
+
+Returns agent performance stats for today (joined from `agent_performance` table).
+
+**Roles:** `admin`, `manager`
+
+**Response `200`:**
 ```json
 {
-  "waiting": 5,
-  "avgWait": 222,
-  "activeCalls": 18,
-  "timestamp": "2026-02-22T10:00:00.000Z"
+  "agents": [
+    {
+      "id": 2,
+      "full_name": "Alex Johnson",
+      "email": "alex.johnson@insuredesk.com",
+      "is_active": true,
+      "calls_handled": 24,
+      "avg_handle_time": 272,
+      "first_call_resolution": 87,
+      "csat_score": 4.8,
+      "escalations": 0
+    }
+  ]
 }
 ```
 
 ---
 
-### POST /api/calls/webhook
-Receives Zendesk webhook events. Configure this URL in Zendesk Admin.
+## Role Summary
 
-**No auth required** (secured by Zendesk webhook signing)
-
-**Body:**
-```json
-{ "event": "ticket.created", "payload": { ... } }
-```
-
----
-
-### GET /api/claims/:policyId
-Returns all claims for a given Salesforce Policy ID.
-
-**Roles:** agent, manager, customer
-
----
-
-### GET /api/agents/performance
-Returns agent scorecards and CSAT data.
-
-**Roles:** manager only
-
----
-
-### GET /api/billing/:policyId
-Returns payment history for a policy.
-
-**Roles:** agent, manager, customer
+| Endpoint | admin | manager | agent | customer |
+|----------|-------|---------|-------|----------|
+| `POST /api/auth/login` | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/auth/register` | ✅ | ✅ | ❌ | ❌ |
+| `GET /api/auth/me` | ✅ | ✅ | ✅ | ✅ |
+| `GET /api/admin/users` | ✅ | ✅ | ❌ | ❌ |
+| `POST /api/admin/users` | ✅ | ✅ | ❌ | ❌ |
+| `PUT /api/admin/users/:id` | ✅ | ✅ | ❌ | ❌ |
+| `DELETE /api/admin/users/:id` | ✅ | ✅ | ❌ | ❌ |
+| `GET /api/admin/agents` | ✅ | ✅ | ❌ | ❌ |
 
 ---
 
 ## WebSocket Events
 
-Connect to the WebSocket server:
+Connect to the WebSocket server with your JWT:
 ```javascript
-import { io } from 'socket.io-client';
-
-const socket = io('wss://api.insuredesk.com', {
+const socket = io('wss://insuredesk-production.up.railway.app', {
   auth: { token: localStorage.getItem('jwt') }
 });
 
-// Handle events
-socket.on('queue.updated', (data) => { /* update queue UI */ });
-socket.on('claim.updated', (data) => { /* update claim stepper */ });
-socket.on('call.incoming', (data) => { /* ring notification */ });
+socket.on('queue.updated',  (data) => { /* update call queue UI  */ });
+socket.on('claim.updated',  (data) => { /* update claim stepper  */ });
+socket.on('call.incoming',  (data) => { /* ring notification     */ });
+socket.on('agent.stats',    (data) => { /* update scorecards     */ });
 ```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full event reference table.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full event reference.

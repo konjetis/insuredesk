@@ -21,6 +21,7 @@ function getArg(flag) {
 
 const jestFile       = getArg('--jest');
 const playwrightFile = getArg('--playwright');
+const coverageFile   = getArg('--coverage');
 const outFile        = getArg('--out') || path.join(__dirname, '../reports/stage-report.html');
 
 // ── Environment config (override via env vars) ────────────────────────────────
@@ -167,6 +168,83 @@ for (const [file, data] of Object.entries(pwByFile)) {
       <td colspan="5"><div class="err-title">✗ ${f.title}</div><code>${msg}</code></td>
     </tr>`;
   }
+}
+
+// ── Parse Coverage Summary JSON ───────────────────────────────────────────────
+// Jest writes backend/coverage/coverage-summary.json when run with --coverage
+// Structure: { total: { statements:{pct}, branches:{pct}, functions:{pct}, lines:{pct} } }
+let cov = null;
+if (coverageFile && fs.existsSync(coverageFile)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
+    cov = raw.total || null;
+  } catch(e) {}
+}
+
+function covPct(metric) {
+  return cov && cov[metric] ? Math.round(cov[metric].pct) : null;
+}
+
+function covBar(pct) {
+  if (pct === null) return '';
+  const color = pct >= 90 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626';
+  return `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;">
+        <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:99px;"></div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:${color};min-width:42px;text-align:right;">${pct}%</span>
+    </div>`;
+}
+
+function covSection() {
+  if (!cov) return '';
+  const metrics = [
+    { label: 'Statements', key: 'statements', icon: '📄' },
+    { label: 'Branches',   key: 'branches',   icon: '🔀' },
+    { label: 'Functions',  key: 'functions',   icon: '𝑓' },
+    { label: 'Lines',      key: 'lines',       icon: '📏' },
+  ];
+  const cards = metrics.map(m => {
+    const p = covPct(m.key);
+    const color = p >= 90 ? '#16a34a' : p >= 70 ? '#d97706' : '#dc2626';
+    const bg    = p >= 90 ? '#f0fdf4' : p >= 70 ? '#fffbeb' : '#fef2f2';
+    return `
+      <div style="flex:1;min-width:140px;background:${bg};border-radius:12px;padding:16px 14px;text-align:center;border:1px solid ${color}22;">
+        <div style="font-size:20px;margin-bottom:6px;">${m.icon}</div>
+        <div style="font-size:26px;font-weight:800;color:${color};line-height:1;">${p}%</div>
+        <div style="font-size:11px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;">${m.label}</div>
+        <div style="margin-top:8px;">${covBar(p)}</div>
+      </div>`;
+  }).join('');
+
+  const stmts = covPct('statements');
+  const allGreen = ['statements','branches','functions','lines'].every(k => covPct(k) >= 90);
+
+  return `
+  <!-- ── Unit Test Coverage ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-head-left">
+        <div class="section-head-icon" style="background:#ecfdf5;">📊</div>
+        <div>
+          <h2>Unit Test Coverage</h2>
+          <div class="s-meta">Jest — src/middleware + src/routes &nbsp;·&nbsp; Mocked DB</div>
+        </div>
+      </div>
+      <span class="sbadge ${allGreen ? 'pass' : stmts >= 70 ? 'pass' : 'fail'}">
+        ${allGreen ? '✅ Excellent' : stmts >= 70 ? '✅ Above threshold' : '❌ Below threshold'}
+      </span>
+    </div>
+    <div style="padding:20px 24px;">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        ${cards}
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:#94a3b8;text-align:right;">
+        Thresholds: Statements ≥70% · Branches ≥65% · Functions ≥70% · Lines ≥70%
+      </div>
+    </div>
+  </div>`;
 }
 
 // ── Totals ────────────────────────────────────────────────────────────────────
@@ -698,6 +776,8 @@ const html = `<!DOCTYPE html>
       </tbody>
     </table>
   </div>
+
+  ${covSection()}
 
   ${historyHTML(history)}
 

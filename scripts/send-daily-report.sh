@@ -25,6 +25,7 @@ DATE_LABEL=$(date +"%A, %B %-d, %Y")
 
 JEST_JSON="$REPORT_DIR/jest-results-$TIMESTAMP.json"
 PW_JSON="$REPORT_DIR/pw-results-$TIMESTAMP.json"
+COVERAGE_JSON="$PROJECT_DIR/backend/coverage/coverage-summary.json"
 HTML_REPORT="$REPORT_DIR/stage-report-$TIMESTAMP.html"
 LOG_FILE="$REPORT_DIR/daily-run-$TIMESTAMP.log"
 
@@ -58,6 +59,24 @@ if ! node -e "require('nodemailer')" &>/dev/null; then
   echo "ERROR: nodemailer is not installed." | tee -a "$LOG_FILE"
   echo "  Run: cd $PROJECT_DIR && npm install nodemailer --save-dev" | tee -a "$LOG_FILE"
   exit 1
+fi
+
+# ── Run Unit tests + Coverage ─────────────────────────────────────────────────
+echo "" | tee -a "$LOG_FILE"
+echo "▶ Running Unit tests with coverage (Jest)..." | tee -a "$LOG_FILE"
+UNIT_EXIT=0
+cd "$PROJECT_DIR/backend"
+JWT_SECRET="insuredesk-daily-report-secret" \
+  ./node_modules/.bin/jest --config jest.config.js \
+    --testPathIgnorePatterns="tests/stage" \
+    --coverage --coverageReporters=json-summary \
+    --forceExit --silent 2>>"$LOG_FILE" || UNIT_EXIT=$?
+cd "$PROJECT_DIR"
+
+if [[ $UNIT_EXIT -eq 0 ]]; then
+  echo "  ✅ Unit tests: all passed (coverage written to backend/coverage/)" | tee -a "$LOG_FILE"
+else
+  echo "  ⚠️  Unit tests: some issues (exit $UNIT_EXIT) — coverage may be partial" | tee -a "$LOG_FILE"
 fi
 
 # ── Run Jest API tests ────────────────────────────────────────────────────────
@@ -101,6 +120,7 @@ echo "▶ Generating HTML report..." | tee -a "$LOG_FILE"
 node "$SCRIPT_DIR/generate-html-report.js" \
   --jest "$JEST_JSON" \
   --playwright "$PW_JSON" \
+  --coverage "$COVERAGE_JSON" \
   --out "$HTML_REPORT" 2>>"$LOG_FILE"
 echo "  Report: $HTML_REPORT" | tee -a "$LOG_FILE"
 
