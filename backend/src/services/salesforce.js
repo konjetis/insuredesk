@@ -6,6 +6,13 @@
 const jsforce = require('jsforce');
 const logger = require('../config/logger');
 
+// Sanitize SOQL string values — strips characters used in SOQL injection
+function soqlEscape(value) {
+  if (typeof value !== 'string') throw new Error('Invalid input: expected string');
+  // Remove SOQL-dangerous characters: single quote, backslash, semicolon, null byte
+  return value.replace(/['\\;\0]/g, '');
+}
+
 class SalesforceService {
   constructor(wsService) {
     this.wsService = wsService;
@@ -31,11 +38,12 @@ class SalesforceService {
   // ── Get Customer 360° Profile ───────────────
   async getCustomerProfile(policyNumber) {
     try {
+      const safePolicyNumber = soqlEscape(policyNumber);
       const result = await this.conn.query(`
         SELECT Id, FirstName, LastName, Phone, Email, MailingCity, MailingState,
                CreatedDate, Account.Name, Account.Type
         FROM Contact
-        WHERE Policy_Number__c = '${policyNumber}'
+        WHERE Policy_Number__c = '${safePolicyNumber}'
         LIMIT 1
       `);
       if (!result.records.length) return null;
@@ -59,11 +67,12 @@ class SalesforceService {
   // ── Get Policy Details ──────────────────────
   async getPolicyDetails(policyNumber) {
     try {
+      const safePolicyNumber = soqlEscape(policyNumber);
       const result = await this.conn.query(`
         SELECT Id, Name, Policy_Type__c, Premium_Monthly__c, Deductible__c,
                Coverage_Amount__c, Renewal_Date__c, Payment_Status__c
         FROM Policy__c
-        WHERE Name = '${policyNumber}'
+        WHERE Name = '${safePolicyNumber}'
         LIMIT 1
       `);
       if (!result.records.length) return null;
@@ -88,11 +97,12 @@ class SalesforceService {
   // ── Get Claims for Policy ───────────────────
   async getClaims(policyId) {
     try {
+      const safePolicyId = soqlEscape(policyId);
       const result = await this.conn.query(`
         SELECT Id, CaseNumber, Subject, Status, Description,
                CreatedDate, ClosedDate, OwnerId, Owner.Name
         FROM Case
-        WHERE Policy__c = '${policyId}' AND Type = 'Claim'
+        WHERE Policy__c = '${safePolicyId}' AND Type = 'Claim'
         ORDER BY CreatedDate DESC
       `);
       return result.records.map(c => ({
@@ -114,10 +124,11 @@ class SalesforceService {
   // ── Get Billing History ─────────────────────
   async getBillingHistory(policyId) {
     try {
+      const safePolicyId = soqlEscape(policyId);
       const result = await this.conn.query(`
         SELECT Id, Amount, Status, Payment_Date__c, Payment_Method__c
         FROM Payment__c
-        WHERE Policy__c = '${policyId}'
+        WHERE Policy__c = '${safePolicyId}'
         ORDER BY Payment_Date__c DESC
         LIMIT 12
       `);
