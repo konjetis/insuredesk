@@ -75,13 +75,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- LOGIN VIEW -->
   <div class="view active" id="loginView">
-    <div class="role-label">Sign in as</div>
-    <div class="role-tabs">
-      <button class="role-btn active" onclick="setRole('manager',this)">📊 Mgr</button>
-      <button class="role-btn" onclick="setRole('agent',this)">🎧 Agent</button>
-      <button class="role-btn" onclick="setRole('customer',this)">👤 Client</button>
-      <button class="role-btn" onclick="setRole('admin',this)">⚙️ Admin</button>
-    </div>
     <div id="loginError" class="msg error" style="display:none">⚠️ <span id="loginErrorText"></span></div>
     <div id="loginSuccess" class="msg success" style="display:none">✅ <span id="loginSuccessText"></span></div>
     <div class="field">
