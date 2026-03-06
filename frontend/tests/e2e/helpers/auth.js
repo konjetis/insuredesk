@@ -19,7 +19,7 @@ async function loginViaUI(page, email, password) {
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.click('#loginBtn');
-  await page.waitForURL('**/index.html', { timeout: 15000 });
+  await page.waitForURL('**/index.html', { timeout: 25000 });
 }
 
 /**

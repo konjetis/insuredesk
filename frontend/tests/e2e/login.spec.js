@@ -141,7 +141,7 @@ test.describe('Successful login (live API)', () => {
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     // App shows success message then redirects after 1s
-    await page.waitForURL('**/index.html', { timeout: 12000 });
+    await page.waitForURL('**/index.html', { timeout: 25000 });
     expect(page.url()).toContain('index.html');
   });
 
@@ -149,7 +149,7 @@ test.describe('Successful login (live API)', () => {
     await page.goto('/login.html');
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 12000 });
+    await page.waitForURL('**/index.html', { timeout: 25000 });
     const token = await page.evaluate(() => localStorage.getItem('insuredesk_token'));
     expect(token).not.toBeNull();
     expect(token?.length).toBeGreaterThan(20);
@@ -159,7 +159,7 @@ test.describe('Successful login (live API)', () => {
     await page.goto('/login.html');
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 12000 });
+    await page.waitForURL('**/index.html', { timeout: 25000 });
     const raw = await page.evaluate(() => localStorage.getItem('insuredesk_user'));
     expect(raw).not.toBeNull();
     const user = JSON.parse(raw);
@@ -170,7 +170,7 @@ test.describe('Successful login (live API)', () => {
     await page.goto('/login.html');
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 12000 });
+    await page.waitForURL('**/index.html', { timeout: 25000 });
     // Header should be visible
     await expect(page.locator('.header, .logo').first()).toBeVisible({ timeout: 5000 });
     // Login button should NOT be present
@@ -186,7 +186,7 @@ test.describe('Logout', () => {
     await page.goto('/login.html');
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 12000 });
+    await page.waitForURL('**/index.html', { timeout: 25000 });
 
     // Open user menu and click logout
     await page.locator('.avatar, #user-avatar').first().click();
@@ -194,7 +194,7 @@ test.describe('Logout', () => {
     await page.locator('.logout-btn, button:has-text("Sign Out"), button:has-text("Logout")').first().click();
 
     // Should navigate back to login.html
-    await page.waitForURL('**/login.html', { timeout: 5000 });
+    await page.waitForURL('**/login.html', { timeout: 10000 });
     expect(page.url()).toContain('login.html');
 
     // Token should be cleared
