@@ -97,6 +97,19 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
+      - name: Warm up Railway backend (avoid cold start)
+        run: |
+          echo "Pinging Railway health endpoint to wake up the server..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://insuredesk-production.up.railway.app/health)
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Railway is awake!"
+              break
+            fi
+            sleep 10
+          done
+
       - name: Run Stage Jest API tests
         run: npm run test:stage
         working-directory: backend

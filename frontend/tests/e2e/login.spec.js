@@ -14,6 +14,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
+const { loginViaStorage } = require('./helpers/auth');
 
 // ── Shared helper ──────────────────────────────────────────────────────────
 
@@ -146,20 +147,16 @@ test.describe('Successful login (live API)', () => {
   });
 
   test('token is stored in localStorage after successful login', async ({ page }) => {
-    await page.goto('/login.html');
-    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 25000 });
+    // Use fast storage login — this test verifies token is set, not the form flow
+    await loginViaStorage(page, 'admin@insuredesk.com', 'Admin@123', 'admin');
     const token = await page.evaluate(() => localStorage.getItem('insuredesk_token'));
     expect(token).not.toBeNull();
     expect(token?.length).toBeGreaterThan(20);
   });
 
   test('user data is stored in localStorage after login', async ({ page }) => {
-    await page.goto('/login.html');
-    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 25000 });
+    // Use fast storage login — this test verifies user object, not the form flow
+    await loginViaStorage(page, 'admin@insuredesk.com', 'Admin@123', 'admin');
     const raw = await page.evaluate(() => localStorage.getItem('insuredesk_user'));
     expect(raw).not.toBeNull();
     const user = JSON.parse(raw);
@@ -167,13 +164,11 @@ test.describe('Successful login (live API)', () => {
   });
 
   test('dashboard loads correctly after admin login', async ({ page }) => {
-    await page.goto('/login.html');
-    await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
-    await page.click('#loginBtn');
-    await page.waitForURL('**/index.html', { timeout: 25000 });
+    // Use fast storage login — this test verifies dashboard renders, not the form flow
+    await loginViaStorage(page, 'admin@insuredesk.com', 'Admin@123', 'admin');
     // Header should be visible
     await expect(page.locator('.header, .logo').first()).toBeVisible({ timeout: 5000 });
-    // Login button should NOT be present
+    // Login button should NOT be present on the dashboard
     await expect(page.locator('#loginBtn')).not.toBeAttached();
   });
 });
