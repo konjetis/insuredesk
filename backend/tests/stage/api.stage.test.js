@@ -282,12 +282,12 @@ describe('POST /api/admin/users — create & cleanup', () => {
     expect(body.error).toMatch(/already exists/i);
   });
 
-  // Cleanup — deactivate the test user
+  // Cleanup — permanently delete the test user so it doesn't accumulate in the DB
   afterAll(async () => {
     if (!createdId) return;
     try {
       const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
-      await del(`/api/admin/users/${createdId}`, token);
+      await del(`/api/admin/users/${createdId}?permanent=true`, token);
     } catch (e) { /* ignore cleanup errors */ }
   });
 });

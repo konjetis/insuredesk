@@ -82,12 +82,20 @@ router.put('/users/:id', async (req, res) => {
 });
 router.delete('/users/:id', async (req, res) => {
   const { id } = req.params;
+  const permanent = req.query.permanent === 'true';
   if (parseInt(id) === req.user.userId) return res.status(400).json({ error: 'Cannot delete your own account' });
   try {
-    const result = await pool.query('UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id, email', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
-    audit(req.user.userId, 'DEACTIVATE_USER', 'user', id, { email: result.rows[0].email }, req);
-    res.json({ message: 'User deactivated successfully' });
+    if (permanent) {
+      const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id, email', [id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      audit(req.user.userId, 'DELETE_USER', 'user', id, { email: result.rows[0].email }, req);
+      res.json({ message: 'User permanently deleted' });
+    } else {
+      const result = await pool.query('UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id, email', [id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      audit(req.user.userId, 'DEACTIVATE_USER', 'user', id, { email: result.rows[0].email }, req);
+      res.json({ message: 'User deactivated successfully' });
+    }
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete user' });
   }
