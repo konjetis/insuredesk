@@ -13,13 +13,9 @@ const { expect } = require('@playwright/test');
  * Real UI login through login.html.
  * Use for tests that specifically test the auth flow.
  */
-async function loginViaUI(page, email, password, roleLabel = 'Admin') {
+async function loginViaUI(page, email, password) {
   await page.goto('/login.html');
-  // Click the correct role tab
-  const roleBtn = page.locator(`.role-btn:has-text("${roleLabel}")`).first();
-  if (await roleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await roleBtn.click();
-  }
+  // Role is determined server-side from credentials — no role tab selection needed
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.click('#loginBtn');

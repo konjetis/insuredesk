@@ -121,7 +121,7 @@ test.describe('Agent tab', () => {
   // ── Animation stability ───────────────────────────────────────────────────
 
   test('numbers are stable after returning to agent tab', async ({ page }) => {
-    // Agents only have tab-agent — test queue stability in place
+    // Agents land on tab-agent by default — test queue stability in place
     const qNum = page.locator('#q-num');
     await expect(qNum).toBeVisible({ timeout: 5000 });
     const before = await qNum.textContent();

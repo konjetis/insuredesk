@@ -52,11 +52,6 @@ test.describe('Login page — UI rendering', () => {
     await expect(page.locator('body')).toContainText('InsureDesk');
   });
 
-  test('role selector buttons are visible (Manager/Agent/Client/Admin)', async ({ page }) => {
-    const roles = page.locator('.role-btn');
-    expect(await roles.count()).toBeGreaterThanOrEqual(3);
-  });
-
   test('Forgot password link is present', async ({ page }) => {
     const link = page.locator('a:has-text("Forgot"), button:has-text("Forgot"), [href*="reset"], [href*="forgot"]').first();
     await expect(link).toBeVisible();
@@ -143,8 +138,6 @@ test.describe('Failed login (live API)', () => {
 test.describe('Successful login (live API)', () => {
   test('admin login redirects to index.html', async ({ page }) => {
     await page.goto('/login.html');
-    // Select Admin role tab first
-    await page.locator('.role-btn:has-text("Admin")').click();
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     // App shows success message then redirects after 1s
@@ -154,7 +147,6 @@ test.describe('Successful login (live API)', () => {
 
   test('token is stored in localStorage after successful login', async ({ page }) => {
     await page.goto('/login.html');
-    await page.locator('.role-btn:has-text("Admin")').click();
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     await page.waitForURL('**/index.html', { timeout: 12000 });
@@ -165,7 +157,6 @@ test.describe('Successful login (live API)', () => {
 
   test('user data is stored in localStorage after login', async ({ page }) => {
     await page.goto('/login.html');
-    await page.locator('.role-btn:has-text("Admin")').click();
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     await page.waitForURL('**/index.html', { timeout: 12000 });
@@ -177,7 +168,6 @@ test.describe('Successful login (live API)', () => {
 
   test('dashboard loads correctly after admin login', async ({ page }) => {
     await page.goto('/login.html');
-    await page.locator('.role-btn:has-text("Admin")').click();
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     await page.waitForURL('**/index.html', { timeout: 12000 });
@@ -194,7 +184,6 @@ test.describe('Logout', () => {
   test('logout clears localStorage and redirects to login.html', async ({ page }) => {
     // Set up session via login
     await page.goto('/login.html');
-    await page.locator('.role-btn:has-text("Admin")').click();
     await fillLogin(page, 'admin@insuredesk.com', 'Admin@123');
     await page.click('#loginBtn');
     await page.waitForURL('**/index.html', { timeout: 12000 });
