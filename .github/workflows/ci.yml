@@ -69,3 +69,62 @@ jobs:
         env:
           JWT_SECRET: test-secret-key-insuredesk-ci
           NODE_ENV: test
+
+  # ── Full suite: Stage Jest + Playwright — runs only on PRs to main ──────────
+  full-suite:
+    name: Full Suite — Stage + E2E (PR gate)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright + Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Warm up Railway backend (avoid cold start)
+        run: |
+          echo "Pinging Railway health endpoint to wake up the server..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://insuredesk-production.up.railway.app/health)
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Railway is awake!"
+              break
+            fi
+            sleep 10
+          done
+
+      - name: Run Stage Jest API tests
+        run: npm run test:stage
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          NODE_ENV: test
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test --config playwright.config.stage.js --reporter=list
+        working-directory: frontend
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 14
