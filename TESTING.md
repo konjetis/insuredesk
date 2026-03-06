@@ -192,8 +192,50 @@ insuredesk/
 
 ## CI/CD Integration
 
-A GitHub Actions workflow runs automatically on every push and pull request.
-See `.github/workflows/ci.yml`.
+### Branch Strategy
+
+The project uses a **2-branch workflow** to keep `main` stable at all times:
+
+| Branch | Purpose | CI Jobs |
+|--------|---------|---------|
+| `develop` | Daily work, feature changes | Backend unit tests + coverage summary (fast, ~1 min) |
+| `main` | Production-ready code only | Protected — merges via PR only |
+
+### GitHub Branch Protection (main)
+
+`main` is protected by a GitHub Ruleset with the following rules enforced:
+- **Require a pull request before merging** — direct pushes to `main` are blocked
+- **Require status checks to pass** — the `Full Suite — Stage + E2E (PR gate)` job must be green before the merge button becomes active
+- **Restrict deletions** — branch cannot be accidentally deleted
+- **Block force pushes** — no history rewrites on `main`
+
+### CI Jobs (`.github/workflows/ci.yml`)
+
+**On every push to `develop` or `main`:**
+- `backend-tests` — runs Jest unit + API tests with coverage
+- `coverage-summary` — prints a coverage table to the Actions log
+
+**On every PR targeting `main` (full gate):**
+- `full-suite` — runs Stage Jest API tests + all Playwright E2E tests against the Railway stage environment. Includes a Railway warmup step (up to 5 health-check pings) before tests begin.
+
+### Release Workflow
+
+```
+develop  →  push  →  fast CI (unit tests only)
+                          ↓
+                   open PR: develop → main
+                          ↓
+              full-suite CI runs automatically
+              (Stage Jest + Playwright E2E)
+                          ↓
+                   all checks green?
+                          ↓
+                    merge → main
+                          ↓
+               Vercel + Railway auto-deploy
+```
+
+### Run Tests Locally
 
 ```bash
 # Locally replicate what CI runs:

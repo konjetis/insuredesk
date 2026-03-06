@@ -1,4 +1,11 @@
-name: CI — Unit & API Tests
+name: CI — InsureDesk
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Branch strategy:
+#   develop  →  daily work  →  push triggers unit + API tests only (~1 min)
+#   main     →  stage env   →  PR from develop triggers full suite (~5 min)
+#                              merge auto-deploys to Vercel + Railway
+# ──────────────────────────────────────────────────────────────────────────────
 
 on:
   push:
@@ -6,9 +13,10 @@ on:
   pull_request:
     branches: [main]
 
+# ── Job 1: Unit + API Tests — runs on every push to main or develop ───────────
 jobs:
   backend-tests:
-    name: Backend — Unit + API Tests (Jest)
+    name: Unit + API Tests (Jest)
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +70,7 @@ jobs:
         run: npm ci
         working-directory: backend
 
-      - name: Run tests and print coverage table
+      - name: Print coverage table
         run: |
           npm run test:ci -- --coverageReporters=text-summary 2>&1 | tail -20
         working-directory: backend
@@ -70,9 +78,9 @@ jobs:
           JWT_SECRET: test-secret-key-insuredesk-ci
           NODE_ENV: test
 
-  # ── Full suite: Stage Jest + Playwright — runs only on PRs to main ──────────
+  # ── Job 2: Full Suite — runs only on PRs to main (develop → main gate) ───────
   full-suite:
-    name: Full Suite — Stage + E2E (PR gate)
+    name: Full Suite — Stage Jest + Playwright (PR gate)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
 
