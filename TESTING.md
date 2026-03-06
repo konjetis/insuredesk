@@ -3,7 +3,7 @@
 Complete testing strategy covering unit tests (Jest), API integration tests,
 backend DB integration tests, and frontend E2E automation (Playwright).
 
-**Total: 234 tests — all passing**
+**Total: 233 tests — all passing**
 
 | Suite | Tests | Requires |
 |-------|-------|---------|
@@ -11,7 +11,7 @@ backend DB integration tests, and frontend E2E automation (Playwright).
 | API integration | 49 | Nothing (all mocked) |
 | DB integration | 13 | Live `DATABASE_URL` |
 | Stage E2E — Jest API | 28 | Live Stage environment |
-| Stage E2E — Playwright | 83 | Live Stage environment |
+| Stage E2E — Playwright | 82 | Live Stage environment |
 
 ---
 
@@ -124,7 +124,7 @@ Playwright controls a real Chromium browser against the live Stage frontend on V
 ```bash
 cd ~/Downloads/insuredesk/frontend
 
-# Run all Stage E2E tests (83 tests)
+# Run all Stage E2E tests (82 tests)
 npx playwright test --config playwright.config.stage.js
 
 # Run a specific spec

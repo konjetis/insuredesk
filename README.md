@@ -1,6 +1,6 @@
 # InsureDesk 360° — Insurance Customer Service Platform
 
-![Tests](https://img.shields.io/badge/tests-234%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-233%20passing-brightgreen?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/coverage-100%25%20statements-brightgreen?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
 
@@ -36,7 +36,7 @@ insuredesk/
 │   ├── login.html                   # Login page
 │   ├── index.html                   # Main 360° dashboard (all 4 portals)
 │   ├── playwright.config.stage.js   # Playwright E2E config (Stage)
-│   └── tests/e2e/                   # 83 Playwright E2E tests
+│   └── tests/e2e/                   # 82 Playwright E2E tests
 ├── backend/                         # Node.js + Express API server
 │   ├── server.js                    # Entry point
 │   ├── src/
@@ -141,7 +141,7 @@ cd frontend && npx playwright test --config playwright.config.stage.js
 
 See [TESTING.md](TESTING.md) for the full guide.
 
-**Current test results: 234 / 234 passing**
+**Current test results: 233 / 233 passing**
 
 | Suite | Tests | Status |
 |-------|-------|--------|
@@ -149,7 +149,7 @@ See [TESTING.md](TESTING.md) for the full guide.
 | API integration | 49 | ✅ |
 | DB integration (live Railway) | 13 | ✅ |
 | Stage API (Jest) | 28 | ✅ |
-| Stage E2E (Playwright) | 83 | ✅ |
+| Stage E2E (Playwright) | 82 | ✅ |
 
 ---
 
