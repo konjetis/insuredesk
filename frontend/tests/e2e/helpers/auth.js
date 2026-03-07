@@ -48,6 +48,15 @@ async function loginViaStorage(page, email, password, role) {
     localStorage.setItem('insuredesk_user', JSON.stringify(user));
   }, { token: body.token, user: body.user });
 
+  // Proxy all in-page Railway API requests through Playwright's Node.js layer.
+  // This bypasses browser CORS restrictions when the frontend is served from
+  // localhost (e.g. in CI via python3 http.server). The token is already valid —
+  // only the browser's same-origin policy blocks the request, not the server.
+  await page.route(`${apiBase}/**`, async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+
   // Navigate directly to dashboard
   await page.goto('/index.html');
   // Confirm the header loaded (the portal content)
