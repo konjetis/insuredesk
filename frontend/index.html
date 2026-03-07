@@ -1185,7 +1185,7 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
             <button onclick="filterUsers('customer',this)" class="filter-btn">Customers</button>
             <button onclick="filterUsers('admin',this)" class="filter-btn">Admins</button>
           </div>
-          <button onclick="loadUsers()" style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit">🔄</button>
+          <button onclick="loadUsers()" title="Refresh team list" style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit">🔄</button>
         </div>
       </div>
 
@@ -1263,7 +1263,7 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
     </div>
     <div id="editUserMsg" style="margin-top:10px;font-size:0.82rem;display:none;padding:9px 12px;border-radius:9px"></div>
     <div class="modal-foot" style="justify-content:space-between">
-      <button id="deleteUserBtn" onclick="deleteUserPermanently()" style="padding:8px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;cursor:pointer;font-size:0.83rem;font-family:inherit;display:none">🗑️ Delete</button>
+      <button id="deleteUserBtn" onclick="deleteUserPermanently()" title="Permanently delete this user — cannot be undone" style="padding:8px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;cursor:pointer;font-size:0.83rem;font-family:inherit;display:none">🗑️ Delete</button>
       <div style="display:flex;gap:8px">
         <button class="btn btn-g" onclick="closeM('m-edituser')">Cancel</button>
         <button class="btn btn-p" onclick="saveUser()">💾 Save Changes</button>
@@ -1470,8 +1470,8 @@ function renderUsers(){
         <div style="font-size:0.78rem;color:var(--muted);margin-top:3px">${u.email} · Last login: ${lastLogin}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button onclick="openEditUser(${u.id},'${u.full_name.replace(/'/g,"\'")}','${u.email}','${u.role}',${u.is_active})" style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">✏️ Edit</button>
-        <button onclick="deleteUser(${u.id},'${u.full_name.replace(/'/g,"\'")}',${u.is_active})" style="padding:6px 12px;background:${u.is_active?'rgba(239,68,68,0.1)':'rgba(16,185,129,0.1)'};border:1px solid ${u.is_active?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)'};border-radius:8px;color:${u.is_active?'#fca5a5':'var(--accent3)'};cursor:pointer;font-size:0.75rem;font-family:inherit">${u.is_active?'🚫 Deactivate':'✅ Activate'}</button>
+        <button onclick="openEditUser(${u.id},'${u.full_name.replace(/'/g,"\'")}','${u.email}','${u.role}',${u.is_active})" title="Edit user details, role, or password" style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.75rem;font-family:inherit;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">✏️ Edit</button>
+        <button onclick="deleteUser(${u.id},'${u.full_name.replace(/'/g,"\'")}',${u.is_active})" title="${u.is_active?'Deactivate user — they will no longer be able to log in':'Re-activate user — restore their access'}" style="padding:6px 12px;background:${u.is_active?'rgba(239,68,68,0.1)':'rgba(16,185,129,0.1)'};border:1px solid ${u.is_active?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)'};border-radius:8px;color:${u.is_active?'#fca5a5':'var(--accent3)'};cursor:pointer;font-size:0.75rem;font-family:inherit">${u.is_active?'🚫 Deactivate':'✅ Activate'}</button>
       </div>
     </div>`;
   }).join('');
