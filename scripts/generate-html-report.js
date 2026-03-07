@@ -393,7 +393,7 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InsureDesk Stage Report — ${dateStr}</title>
+<title>InsureDesk Report — ${dateStr}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -413,382 +413,396 @@ const html = `<!DOCTYPE html>
     --muted:    #64748b;
     --purple:   #7c3aed;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+    background: var(--bg); color: var(--text); font-size: 13px;
+    line-height: 1.4; -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Page shell ── */
-  .page-header {
+  /* ── Sticky header bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 100;
     background: linear-gradient(135deg, #1E3A5F 0%, #2563AB 100%);
-    padding: 36px 40px 32px;
-    color: #fff;
+    padding: 10px 20px; color: #fff;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
   }
-  .page-header-inner {
-    max-width: 860px;
-    margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-  }
-  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .brand-icon {
-    width: 42px; height: 42px; border-radius: 10px;
-    background: rgba(255,255,255,.18);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-  }
-  .brand-name { font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
-  .brand-sub  { font-size: 13px; opacity: .75; margin-top: 1px; }
-  .header-date { font-size: 13px; opacity: .7; margin-top: 6px; }
-
-  .status-pill {
+  .top-bar-left  { display: flex; align-items: center; gap: 10px; }
+  .brand-icon    { font-size: 18px; }
+  .brand-name    { font-size: 15px; font-weight: 800; letter-spacing: -.2px; }
+  .brand-sub     { font-size: 11px; opacity: .65; }
+  .top-bar-right { display: flex; align-items: center; gap: 12px; }
+  .top-stat {
     display: flex; flex-direction: column; align-items: center;
-    padding: 14px 24px; border-radius: 14px;
-    font-weight: 700; text-align: center; min-width: 160px;
-    backdrop-filter: blur(8px);
-    flex-shrink: 0;
+    padding: 4px 12px; border-radius: 8px;
+    background: rgba(255,255,255,.1); min-width: 56px;
   }
-  .status-pill.pass { background: rgba(134,239,172,.22); border: 1.5px solid rgba(134,239,172,.5); }
-  .status-pill.fail { background: rgba(252,165,165,.22); border: 1.5px solid rgba(252,165,165,.5); }
-  .status-pill .pill-icon { font-size: 28px; line-height: 1; margin-bottom: 4px; }
-  .status-pill .pill-label { font-size: 14px; letter-spacing: .02em; }
-  .status-pill .pill-count { font-size: 12px; opacity: .8; margin-top: 2px; font-weight: 500; }
+  .top-stat .ts-num { font-size: 16px; font-weight: 800; line-height: 1; }
+  .top-stat .ts-lbl { font-size: 9px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
+  .top-stat.pass .ts-num { color: #4ade80; }
+  .top-stat.fail .ts-num { color: ${totalFailed > 0 ? '#f87171' : '#94a3b8'}; }
+  .top-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .top-pill.pass { background: rgba(74,222,128,.2); border: 1px solid rgba(74,222,128,.4); color: #4ade80; }
+  .top-pill.fail { background: rgba(248,113,113,.2); border: 1px solid rgba(248,113,113,.4); color: #f87171; }
 
-  /* ── Body wrapper ── */
-  .wrapper { max-width: 860px; margin: 0 auto; padding: 28px 20px 48px; }
+  /* ── Wrapper ── */
+  .wrapper { max-width: 980px; margin: 0 auto; padding: 16px 16px 32px; }
 
-  /* ── Stat cards ── */
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 24px;
+  /* ── Summary strip ── */
+  .summary-strip {
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px; margin-bottom: 14px;
   }
-  .card {
-    background: var(--card);
-    border-radius: 14px;
-    padding: 20px 16px;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    border: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
+  .s-card {
+    background: var(--card); border-radius: 10px; padding: 12px 14px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
   }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: 14px 14px 0 0;
-  }
-  .card.c-total::before { background: linear-gradient(90deg, #1E3A5F, #2563AB); }
-  .card.c-pass::before  { background: linear-gradient(90deg, #16a34a, #4ade80); }
-  .card.c-fail::before  { background: ${totalFailed > 0 ? 'linear-gradient(90deg,#dc2626,#f87171)' : 'linear-gradient(90deg,#94a3b8,#cbd5e1)'}; }
-  .card.c-time::before  { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+  .s-card-icon { font-size: 18px; flex-shrink: 0; }
+  .s-card-num  { font-size: 22px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
+  .s-card-lbl  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 1px; }
+  .s-card.c-total .s-card-num { color: var(--primary); }
+  .s-card.c-pass  .s-card-num { color: var(--pass); }
+  .s-card.c-fail  .s-card-num { color: ${totalFailed > 0 ? 'var(--fail)' : 'var(--muted)'}; }
+  .s-card.c-time  .s-card-num { color: var(--purple); font-size: 16px; }
 
-  .card .c-icon { font-size: 22px; margin-bottom: 8px; display: block; }
-  .card .c-num  { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
-  .card .c-lbl  { font-size: 11px; color: var(--muted); margin-top: 5px;
-                  letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
-  .card.c-total .c-num { color: var(--primary); }
-  .card.c-pass  .c-num { color: var(--pass); }
-  .card.c-fail  .c-num { color: ${totalFailed > 0 ? 'var(--fail)' : 'var(--muted)'}; }
-  .card.c-time  .c-num { color: var(--purple); font-size: 22px; }
-
-  /* ── Progress bar ── */
-  .progress-card {
-    background: var(--card);
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06);
-    border: 1px solid var(--border);
+  /* ── Pass rate bar ── */
+  .rate-strip {
+    background: var(--card); border-radius: 10px; padding: 10px 14px;
+    border: 1px solid var(--border); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
   }
-  .progress-top {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
-  }
-  .progress-top h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .progress-top .pct-badge {
-    font-size: 13px; font-weight: 700;
-    background: ${allPass ? 'var(--pass-bg)' : 'var(--fail-bg)'};
-    color: ${allPass ? 'var(--pass)' : 'var(--fail)'};
-    padding: 2px 10px; border-radius: 99px;
-  }
-  .bar-track { background: #e2e8f0; border-radius: 99px; height: 10px; overflow: hidden; }
-  .bar-fill  {
-    height: 100%; border-radius: 99px;
+  .rate-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
+  .rate-fill  {
+    height: 100%; border-radius: 99px; width: ${passRate}%;
     background: ${allPass ? 'linear-gradient(90deg,#16a34a,#4ade80)' : 'linear-gradient(90deg,#dc2626,#f87171)'};
-    width: ${passRate}%;
-    transition: width .6s ease;
   }
-  .bar-meta {
-    display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--muted);
+  .rate-pct   {
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    background: ${allPass ? 'var(--pass-bg)' : 'var(--fail-bg)'};
+    color: ${allPass ? 'var(--pass)' : 'var(--fail)'}; white-space: nowrap;
   }
-  .bar-meta span { display: flex; align-items: center; gap: 4px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .dot.pass { background: var(--pass); }
-  .dot.fail { background: var(--fail); }
-  .dot.time { background: var(--purple); }
+  .rate-meta  { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
-  /* ── Section cards ── */
+  /* ── Two-column grid for Jest + PW ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  /* ── Section card ── */
   .section {
-    background: var(--card);
-    border-radius: 14px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    border: 1px solid var(--border);
+    background: var(--card); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,.04);
   }
   .section-head {
-    padding: 16px 22px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    background: #f8fafc;
+    padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); background: #f8fafc;
   }
-  .section-head-left { display: flex; align-items: center; gap: 12px; }
-  .section-head-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
+  .section-head-left { display: flex; align-items: center; gap: 8px; }
+  .sh-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
   }
-  .section-head-icon.jest { background: #fef3c7; }
-  .section-head-icon.pw   { background: #ede9fe; }
-  .section-head h2 { font-size: 15px; font-weight: 700; color: var(--primary); }
-  .section-head .s-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-  /* ── Status badge ── */
-  .sbadge { font-size: 12px; font-weight: 700; padding: 5px 12px;
-            border-radius: 99px; white-space: nowrap; }
+  .sh-icon.jest { background: #fef3c7; }
+  .sh-icon.pw   { background: #ede9fe; }
+  .sh-icon.cov  { background: #ecfdf5; }
+  .sh-icon.hist { background: #f0f4ff; }
+  .section-head h2  { font-size: 12px; font-weight: 700; color: var(--primary); }
+  .section-head .s-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .sbadge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
   .sbadge.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-mid); }
   .sbadge.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid #fca5a5; }
-  .sbadge.none { background: #fef3c7;         color: #92400e;    border: 1px solid #fcd34d; }
+  .sbadge.none { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 
   /* ── Table ── */
   table { width: 100%; border-collapse: collapse; }
   thead tr { background: #f8fafc; }
   th {
-    padding: 10px 18px; text-align: left;
-    font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    padding: 7px 12px; text-align: left;
+    font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
     color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border);
   }
-  td { padding: 11px 18px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  td { padding: 7px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 12px; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafbfc; }
-
-  td.tc  { text-align: center; }
-  td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
-            text-align: center; color: var(--muted); }
-  td.suite-name { font-weight: 500; }
-
+  td.tc   { text-align: center; }
+  td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; text-align: center; color: var(--muted); }
+  td.suite-name { font-weight: 500; font-size: 11px; }
   .pass-num { color: var(--pass); font-weight: 700; }
   .fail-num { color: var(--fail); font-weight: 700; }
   .zero-num { color: #94a3b8; }
-
-  /* Status dot in table */
-  .row-status { display: inline-flex; align-items: center; gap: 8px; }
-  .row-status .sdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .row-status { display: inline-flex; align-items: center; gap: 6px; }
+  .row-status .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .row-status .sdot.p { background: var(--pass); }
   .row-status .sdot.f { background: var(--fail); }
-
-  /* Totals row */
-  tr.totals {
-    background: linear-gradient(90deg, #f0f4f8, #f8fafc);
-    border-top: 2px solid var(--border);
-  }
-  tr.totals td { font-weight: 700; border-bottom: none; color: var(--primary); }
-
-  /* Error rows */
+  tr.totals { background: #f0f4f8; border-top: 1.5px solid var(--border); }
+  tr.totals td { font-weight: 700; border-bottom: none; color: var(--primary); font-size: 11px; }
   tr.err-row td {
-    background: #fff5f5; padding: 10px 18px 10px 42px;
-    border-bottom: 1px solid #fee2e2;
+    background: #fff5f5; padding: 6px 12px 6px 32px; border-bottom: 1px solid #fee2e2;
   }
-  tr.err-row .err-title { font-weight: 600; color: var(--fail); font-size: 12px; }
+  tr.err-row .err-title { font-weight: 600; color: var(--fail); font-size: 11px; }
   tr.err-row code {
-    display: block; margin-top: 4px; font-size: 11px; color: #7f1d1d;
+    display: block; margin-top: 3px; font-size: 10px; color: #7f1d1d;
     white-space: pre-wrap; word-break: break-all; opacity: .85;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: 'SF Mono','Fira Code',monospace;
   }
+  .no-data { text-align: center; color: var(--muted); padding: 20px 12px; font-size: 12px; }
 
-  .no-data { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 13px; }
+  /* ── Bottom row: coverage + history side by side ── */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  /* ── Coverage inline metrics ── */
+  .cov-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 12px; }
+  .cov-cell { text-align: center; }
+  .cov-pct  { font-size: 20px; font-weight: 800; line-height: 1; }
+  .cov-lbl  { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 3px 0; }
+  .cov-bar  { height: 4px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+  .cov-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* ── History chart only ── */
+  .hist-chart {
+    display: flex; gap: 6px; align-items: flex-end;
+    padding: 12px 14px; border-bottom: 1.5px solid var(--border);
+  }
+  .hist-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+  .hist-bars { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 64px; gap: 1px; width: 100%; }
+  .hist-count { font-size: 9px; font-weight: 700; }
+  .hist-lbl { font-size: 9px; color: #94a3b8; text-align: center; max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-dur { font-size: 8px; color: #cbd5e1; font-family: monospace; }
+  .hist-latest { font-size: 8px; font-weight: 700; color: #2563AB; text-transform: uppercase; }
 
   /* ── Footer ── */
   .footer {
-    text-align: center; font-size: 12px; color: var(--muted);
-    margin-top: 32px; padding-top: 20px;
-    border-top: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 6px; align-items: center;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    padding: 10px 14px; background: var(--card); border-radius: 10px;
+    border: 1px solid var(--border); font-size: 11px; color: var(--muted);
   }
-  .footer-links { display: flex; gap: 16px; }
-  .footer-links a { color: var(--accent); text-decoration: none; }
-  .footer-links a:hover { text-decoration: underline; }
   .footer-badge {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
     background: ${allPass ? 'var(--pass-bg)' : 'var(--fail-bg)'};
     color: ${allPass ? 'var(--pass)' : 'var(--fail)'};
-    padding: 4px 12px; border-radius: 99px; font-weight: 600; font-size: 12px;
+    padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 11px;
   }
+  .footer-links { display: flex; gap: 12px; }
+  .footer-links a { color: var(--accent); text-decoration: none; }
+  .footer-links a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
-<!-- ── Page header ───────────────────────────────────────────────────────── -->
-<div class="page-header">
-  <div class="page-header-inner">
+<!-- ── Sticky top bar ── -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <span class="brand-icon">🛡️</span>
     <div>
-      <div class="brand">
-        <div class="brand-icon">🛡️</div>
-        <div>
-          <div class="brand-name">InsureDesk</div>
-          <div class="brand-sub">Stage Test Report</div>
-        </div>
-      </div>
-      <div class="header-date">📅 ${dateStr} &nbsp;·&nbsp; ⏰ ${timeStr}</div>
+      <div class="brand-name">InsureDesk</div>
+      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${timeStr}</div>
     </div>
-    <div class="status-pill ${allPass ? 'pass' : 'fail'}">
-      <div class="pill-icon">${allPass ? '✅' : '❌'}</div>
-      <div class="pill-label">${allPass ? 'ALL PASSED' : 'FAILURES DETECTED'}</div>
-      <div class="pill-count">${totalPassed} / ${totalTests} tests</div>
-    </div>
+  </div>
+  <div class="top-bar-right">
+    <div class="top-stat"><span class="ts-num">${totalTests}</span><span class="ts-lbl">Total</span></div>
+    <div class="top-stat pass"><span class="ts-num">${totalPassed}</span><span class="ts-lbl">Passed</span></div>
+    <div class="top-stat fail"><span class="ts-num">${totalFailed}</span><span class="ts-lbl">Failed</span></div>
+    <div class="top-stat"><span class="ts-num" style="font-size:13px">${fmtMs(totalDuration)}</span><span class="ts-lbl">Duration</span></div>
+    <span class="top-pill ${allPass ? 'pass' : 'fail'}">${allPass ? '✅ ALL PASSED' : '❌ FAILURES'}</span>
   </div>
 </div>
 
 <div class="wrapper">
 
-  <!-- ── Stat cards ── -->
-  <div class="cards">
-    <div class="card c-total">
-      <span class="c-icon">🧪</span>
-      <div class="c-num">${totalTests}</div>
-      <div class="c-lbl">Total Tests</div>
+  <!-- ── Summary strip ── -->
+  <div class="summary-strip">
+    <div class="s-card c-total">
+      <span class="s-card-icon">🧪</span>
+      <div><div class="s-card-num">${totalTests}</div><div class="s-card-lbl">Total Tests</div></div>
     </div>
-    <div class="card c-pass">
-      <span class="c-icon">✅</span>
-      <div class="c-num">${totalPassed}</div>
-      <div class="c-lbl">Passed</div>
+    <div class="s-card c-pass">
+      <span class="s-card-icon">✅</span>
+      <div><div class="s-card-num">${totalPassed}</div><div class="s-card-lbl">Passed</div></div>
     </div>
-    <div class="card c-fail">
-      <span class="c-icon">${totalFailed > 0 ? '❌' : '🎯'}</span>
-      <div class="c-num">${totalFailed}</div>
-      <div class="c-lbl">Failed</div>
+    <div class="s-card c-fail">
+      <span class="s-card-icon">${totalFailed > 0 ? '❌' : '🎯'}</span>
+      <div><div class="s-card-num">${totalFailed}</div><div class="s-card-lbl">Failed</div></div>
     </div>
-    <div class="card c-time">
-      <span class="c-icon">⏱️</span>
-      <div class="c-num">${fmtMs(totalDuration)}</div>
-      <div class="c-lbl">Total Duration</div>
+    <div class="s-card c-time">
+      <span class="s-card-icon">⏱️</span>
+      <div><div class="s-card-num">${fmtMs(totalDuration)}</div><div class="s-card-lbl">Duration</div></div>
     </div>
   </div>
 
-  <!-- ── Pass rate ── -->
-  <div class="progress-card">
-    <div class="progress-top">
-      <h3>Pass Rate</h3>
-      <span class="pct-badge">${passRate}%</span>
-    </div>
-    <div class="bar-track"><div class="bar-fill"></div></div>
-    <div class="bar-meta">
-      <span><span class="dot pass"></span>${totalPassed} passed</span>
-      <span><span class="dot fail"></span>${totalFailed} failed</span>
-      <span><span class="dot time"></span>${fmtMs(totalDuration)} total run time</span>
-    </div>
+  <!-- ── Pass rate bar ── -->
+  <div class="rate-strip">
+    <span class="rate-label">Pass Rate</span>
+    <div class="rate-bar"><div class="rate-fill"></div></div>
+    <span class="rate-pct">${passRate}%</span>
+    <span class="rate-meta">${totalPassed} passed &nbsp;·&nbsp; ${totalFailed} failed &nbsp;·&nbsp; ${fmtMs(totalDuration)}</span>
   </div>
 
-  <!-- ── Backend API (Jest) ── -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-head-left">
-        <div class="section-head-icon jest">⚡</div>
-        <div>
-          <h2>Backend API Tests</h2>
-          <div class="s-meta">${JEST_VERSION} &nbsp;·&nbsp; ${jestData.numTotalTests || 0} tests &nbsp;·&nbsp; ${fmtMs(jestTotalDurationMs)}</div>
+  <!-- ── Jest + Playwright side by side ── -->
+  <div class="two-col">
+
+    <!-- Backend API (Jest) -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon jest">⚡</div>
+          <div>
+            <h2>Backend API Tests</h2>
+            <div class="s-meta">${JEST_VERSION} &nbsp;·&nbsp; ${jestData.numTotalTests || 0} tests &nbsp;·&nbsp; ${fmtMs(jestTotalDurationMs)}</div>
+          </div>
         </div>
+        <span class="sbadge ${jestData.numTotalTests === 0 ? 'none' : jestData.numFailedTests > 0 ? 'fail' : 'pass'}">
+          ${jestData.numTotalTests === 0 ? 'NO DATA' : jestData.numFailedTests > 0 ? '❌ ' + jestData.numFailedTests + ' failed' : '✅ ' + jestData.numPassedTests + '/' + jestData.numTotalTests}
+        </span>
       </div>
-      <span class="sbadge ${jestData.numTotalTests === 0 ? 'none' : jestData.numFailedTests > 0 ? 'fail' : 'pass'}">
-        ${jestData.numTotalTests === 0 ? 'NO DATA' : jestData.numFailedTests > 0 ? '❌ ' + jestData.numFailedTests + ' failed' : '✅ ' + jestData.numPassedTests + ' / ' + jestData.numTotalTests + ' passed'}
-      </span>
+      <table>
+        <thead>
+          <tr>
+            <th>Suite</th><th class="tc">✓</th><th class="tc">✗</th><th class="tc">ms</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${jestRows.replace(/<td class="tc">\d+<\/td>\s*<td class="tc pass-num">/g, '<td class="tc pass-num">').replace(/<td class="tc">\d+<\/td>/g,'') || `<tr><td colspan="4" class="no-data">⚠️ No Jest data</td></tr>`}
+          ${jestData.numTotalTests > 0 ? `
+          <tr class="totals">
+            <td>All Suites</td>
+            <td class="tc pass-num">${jestData.numPassedTests}</td>
+            <td class="tc ${jestData.numFailedTests > 0 ? 'fail-num' : 'zero-num'}">${jestData.numFailedTests || 0}</td>
+            <td class="mono">${fmtMs(jestTotalDurationMs)}</td>
+          </tr>` : ''}
+        </tbody>
+      </table>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:44%">Suite</th>
-          <th class="tc">Tests</th>
-          <th class="tc">Passed</th>
-          <th class="tc">Failed</th>
-          <th class="tc">Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${jestRows || `<tr><td colspan="5" class="no-data">⚠️ No Jest data found — ensure <code>--json</code> and <code>--outputFile</code> flags are used</td></tr>`}
-        ${jestData.numTotalTests > 0 ? `
-        <tr class="totals">
-          <td>All Suites</td>
-          <td class="tc">${jestData.numTotalTests}</td>
-          <td class="tc pass-num">${jestData.numPassedTests}</td>
-          <td class="tc ${jestData.numFailedTests > 0 ? 'fail-num' : 'zero-num'}">${jestData.numFailedTests || 0}</td>
-          <td class="mono">${fmtMs(jestTotalDurationMs)}</td>
-        </tr>` : ''}
-      </tbody>
-    </table>
-  </div>
 
-  <!-- ── E2E (Playwright) ── -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-head-left">
-        <div class="section-head-icon pw">🎭</div>
-        <div>
-          <h2>End-to-End Tests</h2>
-          <div class="s-meta">Playwright &nbsp;·&nbsp; ${pwTotal} tests &nbsp;·&nbsp; ${fmtMs(pwTotalDurationMs)}</div>
+    <!-- E2E (Playwright) -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon pw">🎭</div>
+          <div>
+            <h2>End-to-End Tests</h2>
+            <div class="s-meta">Playwright &nbsp;·&nbsp; ${pwTotal} tests &nbsp;·&nbsp; ${fmtMs(pwTotalDurationMs)}</div>
+          </div>
         </div>
+        <span class="sbadge ${pwTotal === 0 ? 'none' : pwFailed > 0 ? 'fail' : 'pass'}">
+          ${pwTotal === 0 ? 'NO DATA' : pwFailed > 0 ? '❌ ' + pwFailed + ' failed' : '✅ ' + pwPassed + '/' + pwTotal}
+        </span>
       </div>
-      <span class="sbadge ${pwTotal === 0 ? 'none' : pwFailed > 0 ? 'fail' : 'pass'}">
-        ${pwTotal === 0 ? 'NO DATA' : pwFailed > 0 ? '❌ ' + pwFailed + ' failed' : '✅ ' + pwPassed + ' / ' + pwTotal + ' passed'}
-      </span>
+      <table>
+        <thead>
+          <tr>
+            <th>Spec File</th><th class="tc">✓</th><th class="tc">✗</th><th class="tc">ms</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pwRows.replace(/<td class="tc">\d+<\/td>\s*<td class="tc pass-num">/g, '<td class="tc pass-num">').replace(/<td class="tc">\d+<\/td>/g,'') || `<tr><td colspan="4" class="no-data">⚠️ No Playwright data</td></tr>`}
+          ${pwTotal > 0 ? `
+          <tr class="totals">
+            <td>All Specs</td>
+            <td class="tc pass-num">${pwPassed}</td>
+            <td class="tc ${pwFailed > 0 ? 'fail-num' : 'zero-num'}">${pwFailed || 0}</td>
+            <td class="mono">${fmtMs(pwTotalDurationMs)}</td>
+          </tr>` : ''}
+        </tbody>
+      </table>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:44%">Spec File</th>
-          <th class="tc">Tests</th>
-          <th class="tc">Passed</th>
-          <th class="tc">Failed</th>
-          <th class="tc">Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${pwRows || `<tr><td colspan="5" class="no-data">⚠️ No Playwright data found — ensure <code>--reporter=json</code> is used</td></tr>`}
-        ${pwTotal > 0 ? `
-        <tr class="totals">
-          <td>All Specs</td>
-          <td class="tc">${pwTotal}</td>
-          <td class="tc pass-num">${pwPassed}</td>
-          <td class="tc ${pwFailed > 0 ? 'fail-num' : 'zero-num'}">${pwFailed || 0}</td>
-          <td class="mono">${fmtMs(pwTotalDurationMs)}</td>
-        </tr>` : ''}
-      </tbody>
-    </table>
-  </div>
 
-  ${covSection()}
+  </div><!-- /two-col -->
 
-  ${historyHTML(history)}
+  <!-- ── Coverage + History side by side ── -->
+  <div class="bottom-row">
+
+    ${cov ? `
+    <!-- Coverage -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon cov">📊</div>
+          <div>
+            <h2>Unit Test Coverage</h2>
+            <div class="s-meta">Jest — middleware + routes &nbsp;·&nbsp; Mocked DB</div>
+          </div>
+        </div>
+        <span class="sbadge ${['statements','branches','functions','lines'].every(k=>covPct(k)>=90) ? 'pass' : covPct('statements')>=70 ? 'pass' : 'fail'}">
+          ${['statements','branches','functions','lines'].every(k=>covPct(k)>=90) ? '✅ Excellent' : covPct('statements')>=70 ? '✅ Above threshold' : '❌ Below threshold'}
+        </span>
+      </div>
+      <div class="cov-row">
+        ${[{label:'Stmts',key:'statements'},{label:'Branch',key:'branches'},{label:'Funcs',key:'functions'},{label:'Lines',key:'lines'}].map(m => {
+          const p = covPct(m.key);
+          const color = p >= 90 ? '#16a34a' : p >= 70 ? '#d97706' : '#dc2626';
+          return `<div class="cov-cell">
+            <div class="cov-pct" style="color:${color}">${p}%</div>
+            <div class="cov-lbl">${m.label}</div>
+            <div class="cov-bar"><div class="cov-bar-fill" style="width:${Math.min(p,100)}%;background:${color}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="padding:0 12px 8px;font-size:9px;color:#94a3b8;text-align:right;">
+        Thresholds: Stmts ≥70% · Branches ≥65% · Functions ≥70% · Lines ≥70%
+      </div>
+    </div>` : ''}
+
+    ${history.length > 0 ? (() => {
+      const runs = history;
+      const maxTests = Math.max(...runs.map(r => r.total), 1);
+      let trendHTML = '';
+      if (runs.length >= 2) {
+        const diff = runs[runs.length-1].passed - runs[runs.length-2].passed;
+        if (diff > 0)      trendHTML = `<span style="color:#4ade80;font-weight:700;">↑ +${diff}</span>`;
+        else if (diff < 0) trendHTML = `<span style="color:#f87171;font-weight:700;">↓ ${diff}</span>`;
+        else               trendHTML = `<span style="color:#94a3b8;">→ No change</span>`;
+      }
+      const bars = runs.map((r, i) => {
+        const isLatest = i === runs.length - 1;
+        const passH = Math.round((r.passed / maxTests) * 60);
+        const failH = Math.round((r.failed / maxTests) * 60);
+        const barColor = r.pass ? '#16a34a' : '#dc2626';
+        return `<div class="hist-bar-wrap">
+          <div class="hist-bars">
+            ${r.failed > 0 ? `<div style="width:20px;background:#f87171;border-radius:3px 3px 0 0;height:${failH}px;" title="${r.failed} failed"></div>` : ''}
+            <div style="width:20px;background:${barColor};border-radius:${r.failed>0?'0':'3px 3px 0 0'};height:${passH}px;" title="${r.passed} passed"></div>
+          </div>
+          <div class="hist-count" style="color:${r.pass?'#16a34a':'#dc2626'}">${r.passed}/${r.total}</div>
+          <div class="hist-lbl">${r.label}</div>
+          <div class="hist-dur">${fmtMs(r.duration)}</div>
+          ${isLatest ? `<div class="hist-latest">Latest</div>` : ''}
+        </div>`;
+      }).join('');
+      return `
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon hist">📈</div>
+          <div>
+            <h2>Run History</h2>
+            <div class="s-meta">Last ${runs.length} run${runs.length>1?'s':''} &nbsp;·&nbsp; ${trendHTML}</div>
+          </div>
+        </div>
+        <span style="font-size:10px;color:#94a3b8;">Oldest → Latest</span>
+      </div>
+      <div class="hist-chart">${bars}</div>
+      <div style="padding:8px 14px;display:flex;gap:14px;font-size:10px;color:#64748b;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#16a34a;display:inline-block;"></span>Passed</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#f87171;display:inline-block;"></span>Failed</span>
+      </div>
+    </div>`;
+    })() : ''}
+
+  </div><!-- /bottom-row -->
 
   <!-- ── Footer ── -->
-  <div class="footer" style="margin-top:28px;">
-    <span class="footer-badge">${allPass ? '✅ Stage Certified — Safe to Promote' : '❌ Stage Failed — Do Not Promote'}</span>
+  <div class="footer">
+    <span class="footer-badge">${allPass ? '✅ Safe to Promote' : '❌ Do Not Promote'}</span>
     <div class="footer-links">
-      <a href="${STAGE_API_URL}">🚂 Railway Backend</a>
-      <a href="${STAGE_BASE_URL}">▲ Vercel Frontend</a>
+      <a href="${STAGE_API_URL}">🚂 Railway</a>
+      <a href="${STAGE_BASE_URL}">▲ Vercel</a>
     </div>
-    <span>Generated ${dateStr} &nbsp;·&nbsp; ${timeStr}</span>
+    <span>Generated ${dateStr} · ${timeStr}</span>
   </div>
 
 </div>
