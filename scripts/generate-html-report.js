@@ -75,7 +75,6 @@ for (const suite of jestData.testResults || []) {
           ${suiteName}
         </span>
       </td>
-      <td class="tc">${total}</td>
       <td class="tc pass-num">${passed}</td>
       <td class="tc ${failed > 0 ? 'fail-num' : 'zero-num'}">${failed > 0 ? failed : '0'}</td>
       <td class="mono">${fmtMs(durationMs)}</td>
@@ -87,7 +86,7 @@ for (const suite of jestData.testResults || []) {
         .replace(/</g,'&lt;').replace(/>/g,'&gt;').substring(0, 400);
       jestRows += `
     <tr class="err-row">
-      <td colspan="5"><div class="err-title">✗ ${t.fullName}</div><code>${msg}</code></td>
+      <td colspan="4"><div class="err-title">✗ ${t.fullName}</div><code>${msg}</code></td>
     </tr>`;
     }
   }
@@ -156,7 +155,6 @@ for (const [file, data] of Object.entries(pwByFile)) {
           ${file}
         </span>
       </td>
-      <td class="tc">${data.total}</td>
       <td class="tc pass-num">${data.passed}</td>
       <td class="tc ${data.failed > 0 ? 'fail-num' : 'zero-num'}">${data.failed > 0 ? data.failed : '0'}</td>
       <td class="mono">${fmtMs(data.durationMs)}</td>
@@ -165,7 +163,7 @@ for (const [file, data] of Object.entries(pwByFile)) {
     const msg = (f.error || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').substring(0, 400);
     pwRows += `
     <tr class="err-row">
-      <td colspan="5"><div class="err-title">✗ ${f.title}</div><code>${msg}</code></td>
+      <td colspan="4"><div class="err-title">✗ ${f.title}</div><code>${msg}</code></td>
     </tr>`;
   }
 }
@@ -666,7 +664,7 @@ const html = `<!DOCTYPE html>
           </tr>
         </thead>
         <tbody>
-          ${jestRows.replace(/<td class="tc">\d+<\/td>\s*<td class="tc pass-num">/g, '<td class="tc pass-num">').replace(/<td class="tc">\d+<\/td>/g,'') || `<tr><td colspan="4" class="no-data">⚠️ No Jest data</td></tr>`}
+          ${jestRows || `<tr><td colspan="4" class="no-data">⚠️ No Jest data</td></tr>`}
           ${jestData.numTotalTests > 0 ? `
           <tr class="totals">
             <td>All Suites</td>
@@ -699,7 +697,7 @@ const html = `<!DOCTYPE html>
           </tr>
         </thead>
         <tbody>
-          ${pwRows.replace(/<td class="tc">\d+<\/td>\s*<td class="tc pass-num">/g, '<td class="tc pass-num">').replace(/<td class="tc">\d+<\/td>/g,'') || `<tr><td colspan="4" class="no-data">⚠️ No Playwright data</td></tr>`}
+          ${pwRows || `<tr><td colspan="4" class="no-data">⚠️ No Playwright data</td></tr>`}
           ${pwTotal > 0 ? `
           <tr class="totals">
             <td>All Specs</td>
