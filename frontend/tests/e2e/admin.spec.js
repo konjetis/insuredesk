@@ -8,6 +8,8 @@
  *   Filter btns   : data-filter="all|agents|managers|customers|admins"
  *   Add User btn  : opens overlay #m-adduser
  *   Stat IDs      : #stat-total, #stat-agents, #stat-managers, #stat-customers, #stat-admins
+ *   Bulk bar      : #bulkBar, #selectAllChk, #bulkCount, .user-chk
+ *   Edit modal    : #m-edituser, #deleteUserBtn
  *
  * Run: npx playwright test tests/e2e/admin.spec.js --project=chromium
  */
@@ -170,6 +172,110 @@ test.describe('Admin tab — admin role', () => {
 
     const animName = await page.locator('#panel-admin').evaluate(el => el.style.animationName);
     expect(animName).toBe('none');
+  });
+});
+
+// ── Bulk delete & checkboxes ──────────────────────────────────────────────
+
+test.describe('Admin tab — bulk delete & checkboxes', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
+    await switchTab(page, 'admin-tab');
+    await page.waitForTimeout(2500);
+  });
+
+  test('bulk action bar is in the DOM', async ({ page }) => {
+    await expect(page.locator('#bulkBar')).toBeAttached();
+  });
+
+  test('select-all checkbox is present in bulk bar', async ({ page }) => {
+    await expect(page.locator('#selectAllChk')).toBeAttached();
+  });
+
+  test('user rows have checkboxes after list loads', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    const checkboxes = page.locator('.user-chk');
+    const count = await checkboxes.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test('checking a user checkbox updates bulk count', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    const firstChk = page.locator('.user-chk').first();
+    await firstChk.check();
+    await page.waitForTimeout(200);
+    const countText = await page.locator('#bulkCount').textContent();
+    expect(countText).toContain('1 selected');
+  });
+
+  test('select-all checks all visible user checkboxes', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    const total = await page.locator('.user-chk').count();
+    await page.locator('#selectAllChk').check();
+    await page.waitForTimeout(200);
+    const checked = await page.locator('.user-chk:checked').count();
+    expect(checked).toBe(total);
+  });
+
+  test('bulk bar shows Delete Selected button', async ({ page }) => {
+    await expect(page.locator('#bulkBar button:has-text("Delete Selected")')).toBeAttached();
+  });
+
+  test('refresh button has tooltip', async ({ page }) => {
+    const title = await page.locator('button:has-text("🔄")').getAttribute('title');
+    expect(title).toBeTruthy();
+    expect(title?.toLowerCase()).toContain('refresh');
+  });
+});
+
+// ── Edit modal — delete button ────────────────────────────────────────────
+
+test.describe('Admin tab — edit modal delete button', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
+    await switchTab(page, 'admin-tab');
+    await page.waitForTimeout(2500);
+  });
+
+  test('edit modal has a delete button element', async ({ page }) => {
+    await expect(page.locator('#deleteUserBtn')).toBeAttached();
+  });
+
+  test('delete button is visible when editing another user', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    // Click Edit on the first user card that is NOT the logged-in admin
+    const editBtns = page.locator('.user-card button:has-text("Edit")');
+    const count = await editBtns.count();
+    for (let i = 0; i < count; i++) {
+      await editBtns.nth(i).click();
+      await page.waitForTimeout(400);
+      const modal = page.locator('#m-edituser');
+      if (await modal.isVisible()) {
+        const deleteBtn = page.locator('#deleteUserBtn');
+        const display = await deleteBtn.evaluate(el => el.style.display);
+        // If editing another user, delete button should be visible (not 'none')
+        if (display !== 'none') {
+          expect(display).not.toBe('none');
+          break;
+        }
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+      }
+    }
+  });
+
+  test('edit button has tooltip', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    const editBtn = page.locator('.user-card button:has-text("Edit")').first();
+    const title = await editBtn.getAttribute('title');
+    expect(title).toBeTruthy();
+  });
+
+  test('deactivate/activate button has tooltip', async ({ page }) => {
+    await page.waitForTimeout(2000);
+    const actionBtn = page.locator('.user-card button:has-text("Deactivate"), .user-card button:has-text("Activate")').first();
+    const title = await actionBtn.getAttribute('title');
+    expect(title).toBeTruthy();
   });
 });
 

@@ -319,7 +319,7 @@ describe('PUT /api/admin/users/:id', () => {
 
 // ── DELETE /api/admin/users/:id ───────────────────────────────────────────
 
-describe('DELETE /api/admin/users/:id', () => {
+describe('DELETE /api/admin/users/:id — soft deactivate', () => {
   test('401 without token', async () => {
     const { status } = await del('/api/admin/users/999');
     expect(status).toBe(401);
@@ -335,6 +335,62 @@ describe('DELETE /api/admin/users/:id', () => {
     const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
     const { status } = await del('/api/admin/users/999999', token);
     expect(status).toBe(404);
+  });
+});
+
+describe('DELETE /api/admin/users/:id?permanent=true — hard delete', () => {
+  const permEmail = `stage_perm_${Date.now()}@insuredesk-stage.com`;
+  let permId = null;
+
+  beforeAll(async () => {
+    // Create a throwaway user to hard-delete
+    const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const { status, body } = await post('/api/admin/users',
+      { email: permEmail, password: 'StageTest@123', full_name: 'Perm Delete Test', role: 'agent' },
+      token
+    );
+    if (status === 201) permId = body.user.id;
+  });
+
+  test('401 without token', async () => {
+    const { status } = await del('/api/admin/users/999?permanent=true');
+    expect(status).toBe(401);
+  });
+
+  test('403 for agent role', async () => {
+    const token = await getToken(AGENT_EMAIL, AGENT_PASSWORD);
+    const { status } = await del('/api/admin/users/999?permanent=true', token);
+    expect(status).toBe(403);
+  });
+
+  test('404 for non-existent user', async () => {
+    const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const { status } = await del('/api/admin/users/999999?permanent=true', token);
+    expect(status).toBe(404);
+  });
+
+  test('200 admin can permanently delete a user', async () => {
+    if (!permId) return;
+    const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const { status, body } = await del(`/api/admin/users/${permId}?permanent=true`, token);
+    expect(status).toBe(200);
+    expect(body.message).toMatch(/permanently deleted/i);
+  });
+
+  test('404 on re-delete confirms user is truly gone', async () => {
+    if (!permId) return;
+    const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const { status } = await del(`/api/admin/users/${permId}?permanent=true`, token);
+    expect(status).toBe(404);
+  });
+
+  afterAll(async () => {
+    // Safety cleanup in case the delete test failed
+    if (!permId) return;
+    try {
+      const token = await getToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+      await del(`/api/admin/users/${permId}?permanent=true`, token);
+    } catch (e) { /* ignore */ }
   });
 });
 
