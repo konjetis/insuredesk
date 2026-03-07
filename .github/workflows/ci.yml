@@ -119,6 +119,18 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
+      - name: Serve frontend locally on port 3000
+        run: |
+          python3 -m http.server 3000 --directory frontend &
+          # Wait until the server responds before proceeding
+          for i in $(seq 1 10); do
+            if curl -s http://localhost:3000/index.html > /dev/null; then
+              echo "Frontend server ready on port 3000"
+              break
+            fi
+            sleep 1
+          done
+
       - name: Warm up Railway backend (avoid cold start)
         run: |
           echo "Pinging Railway health endpoint to wake up the server..."
@@ -142,6 +154,11 @@ jobs:
       - name: Run Playwright E2E tests
         run: npx playwright test --config playwright.config.stage.js --reporter=list
         working-directory: frontend
+        env:
+          # Point Playwright at the locally-served frontend so tests always
+          # run against the exact source code in this commit — no Vercel deploy needed.
+          # API calls inside index.html still go to Railway (hardcoded there).
+          STAGE_URL: http://localhost:3000
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
