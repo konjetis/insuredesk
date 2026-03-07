@@ -190,6 +190,31 @@ describe('DELETE /api/admin/users/:id', () => {
   });
 });
 
+// ── DELETE /api/admin/users/:id?permanent=true ────────────────────────────
+
+describe('DELETE /api/admin/users/:id?permanent=true', () => {
+  test('200 permanently deletes user', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: 3, email: 'gone@x.com' }] }) // DELETE query
+      .mockResolvedValueOnce({ rows: [] }); // audit
+    const res = await req('DELETE', '/api/admin/users/3?permanent=true', makeToken('admin', 1));
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/permanently deleted/i);
+  });
+
+  test('404 when user not found with permanent=true', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const res = await req('DELETE', '/api/admin/users/999?permanent=true', makeToken('admin', 1));
+    expect(res.status).toBe(404);
+  });
+
+  test('400 when admin tries to permanently delete themselves', async () => {
+    const res = await req('DELETE', '/api/admin/users/1?permanent=true', makeToken('admin', 1));
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/own account/i);
+  });
+});
+
 // ── DB error paths (500 responses) ────────────────────────────────────────
 
 describe('DB error handling — 500 responses', () => {
