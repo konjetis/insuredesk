@@ -1189,6 +1189,15 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
         </div>
       </div>
 
+      <!-- Bulk action bar — shown when 1+ users selected -->
+      <div id="bulkBar" style="display:none;align-items:center;justify-content:space-between;background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this.checked)" title="Select / deselect all visible users" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)"/>
+          <span id="bulkCount" style="font-size:0.83rem;color:var(--accent);font-weight:600">0 selected</span>
+        </div>
+        <button onclick="bulkDelete()" title="Permanently delete all selected users" style="padding:6px 14px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:8px;color:#fca5a5;cursor:pointer;font-size:0.8rem;font-family:inherit">🗑️ Delete Selected</button>
+      </div>
+
       <div id="usersGrid" style="display:grid;gap:10px">
         <div style="padding:32px;text-align:center;color:var(--muted)">Loading team members...</div>
       </div>
@@ -1459,7 +1468,8 @@ function renderUsers(){
     const initials = u.full_name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
     const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Never';
     return `
-    <div class="user-card">
+    <div class="user-card" id="ucard-${u.id}">
+      <input type="checkbox" class="user-chk" data-id="${u.id}" onchange="updateBulkBar()" title="Select this user for bulk action" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent);flex-shrink:0"/>
       <div class="user-avatar" style="background:${avatarColors[u.role]||'rgba(0,212,255,0.2)'};color:${roleColors[u.role]||'var(--accent)'}">${initials}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1475,6 +1485,7 @@ function renderUsers(){
       </div>
     </div>`;
   }).join('');
+  updateBulkBar();
 }
 
 // ── ADD USER ──
@@ -1578,6 +1589,44 @@ async function deleteUser(id, name, isActive){
     }
     loadUsers();
   } catch(e){ showToast('❌','Error','Connection error'); }
+}
+
+// ── BULK SELECTION ──
+function updateBulkBar(){
+  const checked = document.querySelectorAll('.user-chk:checked');
+  const total   = document.querySelectorAll('.user-chk');
+  const bar     = document.getElementById('bulkBar');
+  const countEl = document.getElementById('bulkCount');
+  const selectAllChk = document.getElementById('selectAllChk');
+  bar.style.display = total.length ? 'flex' : 'none';
+  countEl.textContent = checked.length + ' selected';
+  selectAllChk.checked = total.length > 0 && checked.length === total.length;
+  selectAllChk.indeterminate = checked.length > 0 && checked.length < total.length;
+}
+
+function toggleSelectAll(checked){
+  document.querySelectorAll('.user-chk').forEach(chk => chk.checked = checked);
+  updateBulkBar();
+}
+
+async function bulkDelete(){
+  const checked = [...document.querySelectorAll('.user-chk:checked')];
+  if(!checked.length) return;
+  const currentUser = JSON.parse(localStorage.getItem('insuredesk_user') || '{}');
+  const ids = checked.map(c => parseInt(c.dataset.id)).filter(id => id !== currentUser.id);
+  if(!ids.length){ showToast('⚠️','Notice','You cannot delete your own account'); return; }
+  if(!confirm(`Permanently delete ${ids.length} user${ids.length>1?'s':''}? This cannot be undone.`)) return;
+  const token = getToken();
+  let deleted = 0, failed = 0;
+  await Promise.all(ids.map(async id => {
+    try {
+      const res = await fetch(API+'/api/admin/users/'+id+'?permanent=true', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+      if(res.ok) deleted++; else failed++;
+    } catch { failed++; }
+  }));
+  if(deleted) showToast('🗑️','Bulk delete', `${deleted} user${deleted>1?'s':''} permanently deleted${failed?' ('+failed+' failed)':''}`);
+  else showToast('❌','Error','Failed to delete selected users');
+  loadUsers();
 }
 
 // ── PERMANENT DELETE USER (admin only) ──
