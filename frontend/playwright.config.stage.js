@@ -15,7 +15,10 @@ const { defineConfig, devices } = require('@playwright/test');
  *   STAGE_URL=https://your-custom.vercel.app npx playwright test --config playwright.config.stage.js
  */
 
-const STAGE_URL = process.env.STAGE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app';
+// Branch alias URL — always resolves to the latest deploy of the 'develop' branch on Vercel.
+// Do NOT use a hash-based deployment URL here (e.g. insuredesk-abc123-...) because those
+// point to a fixed snapshot and won't reflect new commits pushed to develop.
+const STAGE_URL = process.env.STAGE_URL || 'https://insuredesk-git-develop-konjetis-projects.vercel.app';
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
