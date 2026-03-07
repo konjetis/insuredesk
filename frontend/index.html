@@ -1262,9 +1262,12 @@ setTimeout(()=>{showToast('📞','Incoming call','John Webb · Policy Renewal qu
       </button>
     </div>
     <div id="editUserMsg" style="margin-top:10px;font-size:0.82rem;display:none;padding:9px 12px;border-radius:9px"></div>
-    <div class="modal-foot">
-      <button class="btn btn-g" onclick="closeM('m-edituser')">Cancel</button>
-      <button class="btn btn-p" onclick="saveUser()">💾 Save Changes</button>
+    <div class="modal-foot" style="justify-content:space-between">
+      <button id="deleteUserBtn" onclick="deleteUserPermanently()" style="padding:8px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#fca5a5;cursor:pointer;font-size:0.83rem;font-family:inherit;display:none">🗑️ Delete</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="closeM('m-edituser')">Cancel</button>
+        <button class="btn btn-p" onclick="saveUser()">💾 Save Changes</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1525,6 +1528,10 @@ function openEditUser(id, name, email, role, isActive){
   label.style.color = isActive ? 'var(--accent3)' : '#fca5a5';
   // Store email for reset
   document.getElementById('resetEmailBtn').dataset.email = email;
+  // Show delete button only for admins, and never for own account
+  const currentUser = JSON.parse(localStorage.getItem('insuredesk_user') || '{}');
+  const deleteBtn = document.getElementById('deleteUserBtn');
+  deleteBtn.style.display = (currentUser.role === 'admin' && currentUser.id !== id) ? 'block' : 'none';
   document.getElementById('m-edituser').classList.add('open');
 }
 
@@ -1569,6 +1576,21 @@ async function deleteUser(id, name, isActive){
       if(!res.ok){ showToast('❌','Error', data.error||'Failed'); return; }
       showToast('✅','User activated', name+' can now log in');
     }
+    loadUsers();
+  } catch(e){ showToast('❌','Error','Connection error'); }
+}
+
+// ── PERMANENT DELETE USER (admin only) ──
+async function deleteUserPermanently(){
+  const id = parseInt(document.getElementById('edit-id').value);
+  const name = document.getElementById('edit-name').value;
+  if(!confirm(`Permanently delete "${name}"? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(API+'/api/admin/users/'+id+'?permanent=true', { method:'DELETE', headers:{'Authorization':'Bearer '+getToken()} });
+    const data = await res.json();
+    if(!res.ok){ showToast('❌','Error', data.error||'Failed to delete'); return; }
+    showToast('🗑️','User deleted', name+' has been permanently removed');
+    closeM('m-edituser');
     loadUsers();
   } catch(e){ showToast('❌','Error','Connection error'); }
 }
