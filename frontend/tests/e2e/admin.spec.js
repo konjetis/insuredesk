@@ -200,19 +200,30 @@ test.describe('Admin tab — bulk delete & checkboxes', () => {
   });
 
   test('checking a user checkbox updates bulk count', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Wait for user cards to actually render (CI can be slow)
+    await page.waitForSelector('.user-chk', { timeout: 10000 });
     const firstChk = page.locator('.user-chk').first();
     await firstChk.check();
-    await page.waitForTimeout(200);
+    // Poll until #bulkCount reflects the change instead of relying on a fixed sleep
+    await page.waitForFunction(
+      () => (document.getElementById('bulkCount')?.textContent || '') !== '0 selected',
+      { timeout: 4000 }
+    );
     const countText = await page.locator('#bulkCount').textContent();
     expect(countText).toContain('1 selected');
   });
 
   test('select-all checks all visible user checkboxes', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Wait for user cards to actually render (CI can be slow)
+    await page.waitForSelector('.user-chk', { timeout: 10000 });
     const total = await page.locator('.user-chk').count();
     await page.locator('#selectAllChk').check();
-    await page.waitForTimeout(200);
+    // Poll until every .user-chk reflects checked state instead of relying on a fixed sleep
+    await page.waitForFunction(
+      (expectedCount) => document.querySelectorAll('.user-chk:checked').length === expectedCount,
+      total,
+      { timeout: 4000 }
+    );
     const checked = await page.locator('.user-chk:checked').count();
     expect(checked).toBe(total);
   });
@@ -265,14 +276,16 @@ test.describe('Admin tab — edit modal delete button', () => {
   });
 
   test('edit button has tooltip', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Wait for at least one user card button to appear before reading attributes
+    await page.waitForSelector('.user-card button', { timeout: 10000 });
     const editBtn = page.locator('.user-card button:has-text("Edit")').first();
     const title = await editBtn.getAttribute('title');
     expect(title).toBeTruthy();
   });
 
   test('deactivate/activate button has tooltip', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Wait for at least one user card button to appear before reading attributes
+    await page.waitForSelector('.user-card button', { timeout: 10000 });
     const actionBtn = page.locator('.user-card button:has-text("Deactivate"), .user-card button:has-text("Activate")').first();
     const title = await actionBtn.getAttribute('title');
     expect(title).toBeTruthy();
