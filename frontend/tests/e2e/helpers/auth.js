@@ -52,9 +52,18 @@ async function loginViaStorage(page, email, password, role) {
   // This bypasses browser CORS restrictions when the frontend is served from
   // localhost (e.g. in CI via python3 http.server). The token is already valid —
   // only the browser's same-origin policy blocks the request, not the server.
+  //
+  // The try-catch guards against "Target page, context or browser has been closed"
+  // which fires when a test ends and the page is torn down while a routed request
+  // is still in-flight. Those stragglers are safe to silently drop.
   await page.route(`${apiBase}/**`, async route => {
-    const response = await route.fetch();
-    await route.fulfill({ response });
+    try {
+      const response = await route.fetch();
+      await route.fulfill({ response });
+    } catch (err) {
+      if (!`${err}`.includes('closed') && !`${err}`.includes('destroyed')) throw err;
+      // page/context closed before the request completed — nothing to do
+    }
   });
 
   // Navigate directly to dashboard

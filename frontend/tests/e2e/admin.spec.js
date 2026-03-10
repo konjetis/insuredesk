@@ -204,13 +204,8 @@ test.describe('Admin tab — bulk delete & checkboxes', () => {
     await page.waitForSelector('.user-chk', { timeout: 10000 });
     const firstChk = page.locator('.user-chk').first();
     await firstChk.check();
-    // Poll until #bulkCount reflects the change instead of relying on a fixed sleep
-    await page.waitForFunction(
-      () => (document.getElementById('bulkCount')?.textContent || '') !== '0 selected',
-      { timeout: 4000 }
-    );
-    const countText = await page.locator('#bulkCount').textContent();
-    expect(countText).toContain('1 selected');
+    // Use Playwright's built-in retry assertion — cleaner than waitForFunction
+    await expect(page.locator('#bulkCount')).toHaveText('1 selected', { timeout: 4000 });
   });
 
   test('select-all checks all visible user checkboxes', async ({ page }) => {
@@ -218,14 +213,11 @@ test.describe('Admin tab — bulk delete & checkboxes', () => {
     await page.waitForSelector('.user-chk', { timeout: 10000 });
     const total = await page.locator('.user-chk').count();
     await page.locator('#selectAllChk').check();
-    // Poll until every .user-chk reflects checked state instead of relying on a fixed sleep
-    await page.waitForFunction(
-      (expectedCount) => document.querySelectorAll('.user-chk:checked').length === expectedCount,
-      total,
+    // Use expect.poll — retries the async count query until it matches
+    await expect.poll(
+      () => page.locator('.user-chk:checked').count(),
       { timeout: 4000 }
-    );
-    const checked = await page.locator('.user-chk:checked').count();
-    expect(checked).toBe(total);
+    ).toBe(total);
   });
 
   test('bulk bar shows Delete Selected button', async ({ page }) => {
