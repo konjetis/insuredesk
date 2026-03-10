@@ -85,40 +85,48 @@ jobs:
             2>/dev/null > ${{ github.workspace }}/reports/pw-results.json || true
         working-directory: frontend
         env:
-          STAGE_BASE_URL: ${{ vars.STAGE_BASE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app' }}
+          STAGE_BASE_URL: ${{ vars.STAGE_BASE_URL || 'https://insuredesk-git-develop-konjetis-projects.vercel.app' }}
         continue-on-error: true
 
-      # ── 7. Generate HTML report ────────────────────────────────────────────
+      # ── 7. Generate full HTML report + compact email ──────────────────────
       - name: Generate HTML report
         run: |
-          mkdir -p reports
+          mkdir -p reports frontend/reports
+          REPORT_URL="${{ vars.STAGE_BASE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app' }}/reports/daily-report.html"
           node scripts/generate-html-report.js \
-            --jest     reports/jest-results.json \
-            --playwright reports/pw-results.json \
-            --coverage backend/coverage/coverage-summary.json \
-            --out      reports/daily-report.html
+            --jest        reports/jest-results.json \
+            --playwright  reports/pw-results.json \
+            --coverage    backend/coverage/coverage-summary.json \
+            --out         reports/daily-report.html \
+            --out-email   reports/daily-report-email.html \
+            --report-url  "$REPORT_URL"
+          # Copy full report to frontend so Vercel serves it publicly
+          cp reports/daily-report.html frontend/reports/daily-report.html
+        env:
+          STAGE_API_URL:  ${{ vars.STAGE_API_URL  || 'https://insuredesk-production.up.railway.app' }}
+          STAGE_BASE_URL: ${{ vars.STAGE_BASE_URL || 'https://insuredesk-git-develop-konjetis-projects.vercel.app' }}
 
-      # ── 8. Send email via Gmail ────────────────────────────────────────────
+      # ── 8. Commit run history + web report back to repo (triggers Vercel) ─
+      - name: Commit run history and web report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/run-history.json frontend/reports/daily-report.html 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "ci: daily report $(date '+%Y-%m-%d') [skip ci]"
+          git push origin HEAD 2>/dev/null || true
+        continue-on-error: true
+
+      # ── 9. Send compact summary email with link to web report ─────────────
       - name: Send daily report email
         run: |
           node scripts/send-email-gmail.js \
             --to      "${{ secrets.RECIPIENT_EMAIL || 'suneethakonjeti@gmail.com' }}" \
             --subject "InsureDesk Daily Report — $(date '+%A, %B %-d, %Y')" \
-            --html    reports/daily-report.html
+            --html    reports/daily-report-email.html
         env:
           GMAIL_USER:     ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
-
-      # ── 9. Persist run history back to repo ───────────────────────────────
-      - name: Commit updated run history
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add reports/run-history.json 2>/dev/null || true
-          git diff --staged --quiet || \
-            git commit -m "ci: update run history $(date '+%Y-%m-%d') [skip ci]"
-          git push origin HEAD 2>/dev/null || true
-        continue-on-error: true
 
       # ── 10. Upload HTML report as artifact ────────────────────────────────
       - name: Upload report artifact

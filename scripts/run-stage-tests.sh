@@ -8,8 +8,8 @@
 #   ./scripts/run-stage-tests.sh
 #
 # Required env vars (set before running, or export in your shell):
-#   STAGE_API_URL        — https://insuredesk-stage.up.railway.app
-#   STAGE_URL            — same value, used by Playwright
+#   STAGE_API_URL        — Railway backend URL
+#   STAGE_BASE_URL       — Vercel frontend URL (Playwright reads this)
 #   STAGE_ADMIN_EMAIL    — admin@insuredesk.com
 #   STAGE_ADMIN_PASSWORD — Admin@123
 #
@@ -22,7 +22,8 @@ set -e   # exit on first failure
 
 # ── Defaults ──────────────────────────────────────────────────────
 STAGE_API_URL="${STAGE_API_URL:-https://insuredesk-production.up.railway.app}"
-STAGE_URL="${STAGE_URL:-https://insuredesk-5ssw082eq-konjetis-projects.vercel.app}"
+# Use branch alias URL — always points to latest develop deploy, never a stale hash-based snapshot
+STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk-git-develop-konjetis-projects.vercel.app}"
 STAGE_ADMIN_EMAIL="${STAGE_ADMIN_EMAIL:-admin@insuredesk.com}"
 STAGE_ADMIN_PASSWORD="${STAGE_ADMIN_PASSWORD:-Admin@123}"
 STAGE_AGENT_EMAIL="${STAGE_AGENT_EMAIL:-alex.johnson@insuredesk.com}"
@@ -36,7 +37,8 @@ ROOT="$SCRIPT_DIR/.."
 echo ""
 echo "═══════════════════════════════════════════════════════════"
 echo "  InsureDesk Stage Test Suite"
-echo "  API URL : $STAGE_API_URL"
+echo "  API URL  : $STAGE_API_URL"
+echo "  Front URL: $STAGE_BASE_URL"
 echo "  Admin   : $STAGE_ADMIN_EMAIL"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
@@ -76,7 +78,7 @@ cd "$ROOT/frontend"
 if ! command -v npx &>/dev/null; then
   echo "   ⚠️  npx not found — skipping E2E tests"
 else
-  STAGE_URL="$STAGE_URL" \
+  STAGE_BASE_URL="$STAGE_BASE_URL" \
     npx playwright test \
       --config playwright.config.stage.js \
       --project=chromium-stage

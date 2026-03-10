@@ -1,0 +1,81 @@
+name: Release — Tag & Publish
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Creates a GitHub Release whenever a version tag (v*.*.*) is pushed to main.
+#
+# How to cut a release:
+#   1. Bump the version in backend/package.json
+#   2. Update CHANGELOG.md with the release notes
+#   3. Commit: git commit -am "chore: release v1.2.0"
+#   4. Tag:    git tag v1.2.0
+#   5. Push:   git push origin main --tags
+#
+# The workflow will:
+#   • Run the full backend test suite
+#   • Create a GitHub Release with the CHANGELOG entry as release notes
+#   • Attach the backend package.json version as the release label
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write   # required to create GitHub releases
+
+jobs:
+  release:
+    name: Run tests → Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Node.js setup ─────────────────────────────────────────────────────
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      # ── 3. Install + test backend ────────────────────────────────────────────
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run unit + API tests
+        run: npm run test:ci
+        working-directory: backend
+        env:
+          JWT_SECRET: test-secret-key-insuredesk-ci
+          NODE_ENV: test
+
+      # ── 4. Extract CHANGELOG entry for this tag ──────────────────────────────
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # Extract the block between this version header and the next
+          NOTES=$(awk "/^## \[${TAG}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See CHANGELOG.md for details."
+          fi
+          # Write to a temp file to avoid quoting issues
+          echo "$NOTES" > /tmp/release-notes.md
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      # ── 5. Create GitHub Release ─────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: InsureDesk ${{ steps.changelog.outputs.tag }}
+          body_path: /tmp/release-notes.md
+          draft: false
+          prerelease: false

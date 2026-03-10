@@ -1,6 +1,6 @@
 {
   "name": "insuredesk-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "InsureDesk 360° — Backend API & WebSocket Server",
   "main": "server.js",
   "scripts": {

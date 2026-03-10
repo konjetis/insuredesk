@@ -23,6 +23,8 @@ const jestFile       = getArg('--jest');
 const playwrightFile = getArg('--playwright');
 const coverageFile   = getArg('--coverage');
 const outFile        = getArg('--out') || path.join(__dirname, '../reports/stage-report.html');
+const outEmailFile   = getArg('--out-email');   // optional compact summary email
+const reportUrl      = getArg('--report-url');  // public URL of the full web report
 
 // ── Environment config (override via env vars) ────────────────────────────────
 const STAGE_API_URL  = process.env.STAGE_API_URL  || 'https://insuredesk-production.up.railway.app';
@@ -422,96 +424,87 @@ const html = `<!DOCTYPE html>
   .top-bar {
     position: sticky; top: 0; z-index: 100;
     background: linear-gradient(135deg, #1E3A5F 0%, #2563AB 100%);
-    padding: 10px 20px; color: #fff;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 7px 16px; color: #fff;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,.2);
   }
-  .top-bar-left  { display: flex; align-items: center; gap: 10px; }
-  .brand-icon    { font-size: 18px; }
-  .brand-name    { font-size: 15px; font-weight: 800; letter-spacing: -.2px; }
-  .brand-sub     { font-size: 11px; opacity: .65; }
-  .top-bar-right { display: flex; align-items: center; gap: 12px; }
+  .top-bar-left  { display: flex; align-items: center; gap: 8px; }
+  .brand-icon    { font-size: 16px; }
+  .brand-name    { font-size: 13px; font-weight: 800; letter-spacing: -.2px; }
+  .brand-sub     { font-size: 10px; opacity: .65; }
+  .top-bar-right { display: flex; align-items: center; gap: 8px; }
   .top-stat {
     display: flex; flex-direction: column; align-items: center;
-    padding: 4px 12px; border-radius: 8px;
-    background: rgba(255,255,255,.1); min-width: 56px;
+    padding: 3px 9px; border-radius: 7px;
+    background: rgba(255,255,255,.1); min-width: 46px;
   }
-  .top-stat .ts-num { font-size: 16px; font-weight: 800; line-height: 1; }
-  .top-stat .ts-lbl { font-size: 9px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
+  .top-stat .ts-num { font-size: 14px; font-weight: 800; line-height: 1; }
+  .top-stat .ts-lbl { font-size: 8px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
   .top-stat.pass .ts-num { color: #4ade80; }
   .top-stat.fail .ts-num { color: ${totalFailed > 0 ? '#f87171' : '#94a3b8'}; }
   .top-pill {
-    padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    padding: 4px 11px; border-radius: 20px; font-size: 10px; font-weight: 700;
     letter-spacing: .04em;
   }
   .top-pill.pass { background: rgba(74,222,128,.2); border: 1px solid rgba(74,222,128,.4); color: #4ade80; }
   .top-pill.fail { background: rgba(248,113,113,.2); border: 1px solid rgba(248,113,113,.4); color: #f87171; }
 
   /* ── Wrapper ── */
-  .wrapper { max-width: 980px; margin: 0 auto; padding: 16px 16px 32px; }
+  .wrapper { max-width: 980px; margin: 0 auto; padding: 10px 12px 18px; }
 
-  /* ── Summary strip ── */
+  /* ── Summary strip (with pass rate embedded) ── */
   .summary-strip {
-    display: grid; grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 10px; margin-bottom: 14px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto auto;
+    gap: 7px; margin-bottom: 8px; align-items: center;
   }
   .s-card {
-    background: var(--card); border-radius: 10px; padding: 12px 14px;
-    border: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+    background: var(--card); border-radius: 8px; padding: 8px 10px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
     box-shadow: 0 1px 2px rgba(0,0,0,.04);
   }
-  .s-card-icon { font-size: 18px; flex-shrink: 0; }
-  .s-card-num  { font-size: 22px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
-  .s-card-lbl  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 1px; }
+  .s-card-icon { font-size: 15px; flex-shrink: 0; }
+  .s-card-num  { font-size: 18px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
+  .s-card-lbl  { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 1px; }
   .s-card.c-total .s-card-num { color: var(--primary); }
   .s-card.c-pass  .s-card-num { color: var(--pass); }
   .s-card.c-fail  .s-card-num { color: ${totalFailed > 0 ? 'var(--fail)' : 'var(--muted)'}; }
-  .s-card.c-time  .s-card-num { color: var(--purple); font-size: 16px; }
-
-  /* ── Pass rate bar ── */
-  .rate-strip {
-    background: var(--card); border-radius: 10px; padding: 10px 14px;
-    border: 1px solid var(--border); margin-bottom: 14px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.04);
-  }
-  .rate-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
-  .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
+  .s-card.c-time  .s-card-num { color: var(--purple); font-size: 14px; }
+  .s-card.c-rate  { flex-direction: column; align-items: stretch; gap: 4px; min-width: 120px; }
+  .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 6px; overflow: hidden; }
   .rate-fill  {
     height: 100%; border-radius: 99px; width: ${passRate}%;
     background: ${allPass ? 'linear-gradient(90deg,#16a34a,#4ade80)' : 'linear-gradient(90deg,#dc2626,#f87171)'};
   }
   .rate-pct   {
-    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 99px;
     background: ${allPass ? 'var(--pass-bg)' : 'var(--fail-bg)'};
     color: ${allPass ? 'var(--pass)' : 'var(--fail)'}; white-space: nowrap;
   }
-  .rate-meta  { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
   /* ── Two-column grid for Jest + PW ── */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 
   /* ── Section card ── */
   .section {
-    background: var(--card); border-radius: 10px; overflow: hidden;
+    background: var(--card); border-radius: 8px; overflow: hidden;
     border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,.04);
   }
   .section-head {
-    padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 11px; display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid var(--border); background: #f8fafc;
   }
-  .section-head-left { display: flex; align-items: center; gap: 8px; }
+  .section-head-left { display: flex; align-items: center; gap: 7px; }
   .sh-icon {
-    width: 28px; height: 28px; border-radius: 7px;
-    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
   }
   .sh-icon.jest { background: #fef3c7; }
   .sh-icon.pw   { background: #ede9fe; }
   .sh-icon.cov  { background: #ecfdf5; }
   .sh-icon.hist { background: #f0f4ff; }
-  .section-head h2  { font-size: 12px; font-weight: 700; color: var(--primary); }
-  .section-head .s-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
-  .sbadge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+  .section-head h2  { font-size: 11px; font-weight: 700; color: var(--primary); }
+  .section-head .s-meta { font-size: 9px; color: var(--muted); margin-top: 1px; }
+  .sbadge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
   .sbadge.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-mid); }
   .sbadge.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid #fca5a5; }
   .sbadge.none { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
@@ -520,16 +513,16 @@ const html = `<!DOCTYPE html>
   table { width: 100%; border-collapse: collapse; }
   thead tr { background: #f8fafc; }
   th {
-    padding: 7px 12px; text-align: left;
-    font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+    padding: 5px 10px; text-align: left;
+    font-size: 9px; text-transform: uppercase; letter-spacing: .06em;
     color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border);
   }
-  td { padding: 7px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 12px; }
+  td { padding: 5px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 11px; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafbfc; }
   td.tc   { text-align: center; }
-  td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; text-align: center; color: var(--muted); }
-  td.suite-name { font-weight: 500; font-size: 11px; }
+  td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; text-align: center; color: var(--muted); }
+  td.suite-name { font-weight: 500; font-size: 10px; }
   .pass-num { color: var(--pass); font-weight: 700; }
   .fail-num { color: var(--fail); font-weight: 700; }
   .zero-num { color: #94a3b8; }
@@ -540,44 +533,44 @@ const html = `<!DOCTYPE html>
   tr.totals { background: #f0f4f8; border-top: 1.5px solid var(--border); }
   tr.totals td { font-weight: 700; border-bottom: none; color: var(--primary); font-size: 11px; }
   tr.err-row td {
-    background: #fff5f5; padding: 6px 12px 6px 32px; border-bottom: 1px solid #fee2e2;
+    background: #fff5f5; padding: 4px 10px 4px 24px; border-bottom: 1px solid #fee2e2;
   }
-  tr.err-row .err-title { font-weight: 600; color: var(--fail); font-size: 11px; }
+  tr.err-row .err-title { font-weight: 600; color: var(--fail); font-size: 10px; }
   tr.err-row code {
-    display: block; margin-top: 3px; font-size: 10px; color: #7f1d1d;
+    display: block; margin-top: 2px; font-size: 9px; color: #7f1d1d;
     white-space: pre-wrap; word-break: break-all; opacity: .85;
     font-family: 'SF Mono','Fira Code',monospace;
   }
-  .no-data { text-align: center; color: var(--muted); padding: 20px 12px; font-size: 12px; }
+  .no-data { text-align: center; color: var(--muted); padding: 12px 10px; font-size: 11px; }
 
   /* ── Bottom row: coverage + history side by side ── */
-  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 
   /* ── Coverage inline metrics ── */
-  .cov-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 12px; }
+  .cov-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 8px 10px; }
   .cov-cell { text-align: center; }
-  .cov-pct  { font-size: 20px; font-weight: 800; line-height: 1; }
-  .cov-lbl  { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 3px 0; }
-  .cov-bar  { height: 4px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+  .cov-pct  { font-size: 16px; font-weight: 800; line-height: 1; }
+  .cov-lbl  { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 2px 0; }
+  .cov-bar  { height: 3px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
   .cov-bar-fill { height: 100%; border-radius: 99px; }
 
   /* ── History chart only ── */
   .hist-chart {
-    display: flex; gap: 6px; align-items: flex-end;
-    padding: 12px 14px; border-bottom: 1.5px solid var(--border);
+    display: flex; gap: 5px; align-items: flex-end;
+    padding: 8px 10px; border-bottom: 1.5px solid var(--border);
   }
-  .hist-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
-  .hist-bars { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 64px; gap: 1px; width: 100%; }
-  .hist-count { font-size: 9px; font-weight: 700; }
-  .hist-lbl { font-size: 9px; color: #94a3b8; text-align: center; max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hist-dur { font-size: 8px; color: #cbd5e1; font-family: monospace; }
-  .hist-latest { font-size: 8px; font-weight: 700; color: #2563AB; text-transform: uppercase; }
+  .hist-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 0; }
+  .hist-bars { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 50px; gap: 1px; width: 100%; }
+  .hist-count { font-size: 8px; font-weight: 700; }
+  .hist-lbl { font-size: 8px; color: #94a3b8; text-align: center; max-width: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-dur { font-size: 7px; color: #cbd5e1; font-family: monospace; }
+  .hist-latest { font-size: 7px; font-weight: 700; color: #2563AB; text-transform: uppercase; }
 
   /* ── Footer ── */
   .footer {
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-    padding: 10px 14px; background: var(--card); border-radius: 10px;
-    border: 1px solid var(--border); font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+    padding: 7px 11px; background: var(--card); border-radius: 8px;
+    border: 1px solid var(--border); font-size: 10px; color: var(--muted);
   }
   .footer-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -612,11 +605,11 @@ const html = `<!DOCTYPE html>
 
 <div class="wrapper">
 
-  <!-- ── Summary strip ── -->
+  <!-- ── Summary strip (with inline pass rate) ── -->
   <div class="summary-strip">
     <div class="s-card c-total">
       <span class="s-card-icon">🧪</span>
-      <div><div class="s-card-num">${totalTests}</div><div class="s-card-lbl">Total Tests</div></div>
+      <div><div class="s-card-num">${totalTests}</div><div class="s-card-lbl">Total</div></div>
     </div>
     <div class="s-card c-pass">
       <span class="s-card-icon">✅</span>
@@ -630,14 +623,13 @@ const html = `<!DOCTYPE html>
       <span class="s-card-icon">⏱️</span>
       <div><div class="s-card-num">${fmtMs(totalDuration)}</div><div class="s-card-lbl">Duration</div></div>
     </div>
-  </div>
-
-  <!-- ── Pass rate bar ── -->
-  <div class="rate-strip">
-    <span class="rate-label">Pass Rate</span>
-    <div class="rate-bar"><div class="rate-fill"></div></div>
-    <span class="rate-pct">${passRate}%</span>
-    <span class="rate-meta">${totalPassed} passed &nbsp;·&nbsp; ${totalFailed} failed &nbsp;·&nbsp; ${fmtMs(totalDuration)}</span>
+    <div class="s-card c-rate">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Pass Rate</span>
+        <span class="rate-pct">${passRate}%</span>
+      </div>
+      <div class="rate-bar"><div class="rate-fill"></div></div>
+    </div>
   </div>
 
   <!-- ── Jest + Playwright side by side ── -->
@@ -740,7 +732,7 @@ const html = `<!DOCTYPE html>
           </div>`;
         }).join('')}
       </div>
-      <div style="padding:0 12px 8px;font-size:9px;color:#94a3b8;text-align:right;">
+      <div style="padding:0 10px 6px;font-size:8px;color:#94a3b8;text-align:right;">
         Thresholds: Stmts ≥70% · Branches ≥65% · Functions ≥70% · Lines ≥70%
       </div>
     </div>` : ''}
@@ -757,8 +749,8 @@ const html = `<!DOCTYPE html>
       }
       const bars = runs.map((r, i) => {
         const isLatest = i === runs.length - 1;
-        const passH = Math.round((r.passed / maxTests) * 60);
-        const failH = Math.round((r.failed / maxTests) * 60);
+        const passH = Math.round((r.passed / maxTests) * 46);
+        const failH = Math.round((r.failed / maxTests) * 46);
         const barColor = r.pass ? '#16a34a' : '#dc2626';
         return `<div class="hist-bar-wrap">
           <div class="hist-bars">
@@ -784,9 +776,9 @@ const html = `<!DOCTYPE html>
         <span style="font-size:10px;color:#94a3b8;">Oldest → Latest</span>
       </div>
       <div class="hist-chart">${bars}</div>
-      <div style="padding:8px 14px;display:flex;gap:14px;font-size:10px;color:#64748b;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#16a34a;display:inline-block;"></span>Passed</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#f87171;display:inline-block;"></span>Failed</span>
+      <div style="padding:5px 10px;display:flex;gap:12px;font-size:9px;color:#64748b;">
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:2px;background:#16a34a;display:inline-block;"></span>Passed</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:2px;background:#f87171;display:inline-block;"></span>Failed</span>
       </div>
     </div>`;
     })() : ''}
@@ -807,9 +799,115 @@ const html = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// ── Write output ──────────────────────────────────────────────────────────────
+// ── Write full report ─────────────────────────────────────────────────────────
 const outDir = path.dirname(outFile);
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(outFile, html, 'utf8');
 console.log(`HTML report written to: ${outFile}`);
 console.log(`  Total: ${totalTests}  Passed: ${totalPassed}  Failed: ${totalFailed}  Duration: ${fmtMs(totalDuration)}`);
+
+// ── Compact summary email (only when --out-email is provided) ─────────────────
+if (outEmailFile) {
+  const statusColor  = allPass ? '#16a34a' : '#dc2626';
+  const statusBg     = allPass ? '#f0fdf4' : '#fef2f2';
+  const statusLabel  = allPass ? 'ALL TESTS PASSED' : 'FAILURES DETECTED';
+  const statusEmoji  = allPass ? '✅' : '❌';
+  const btnLabel     = reportUrl ? '📊 View Full Report' : '📊 Report Attached';
+  const failedColor  = totalFailed > 0 ? '#dc2626' : '#94a3b8';
+
+  // Per-suite failure list (shown only when there are failures)
+  const failLines = [];
+  for (const suite of jestData.testResults || []) {
+    const tests = suite.assertionResults || suite.testResults || [];
+    for (const t of tests) {
+      if (t.status === 'failed') {
+        failLines.push(`<li style="margin:3px 0;font-size:11px;color:#7f1d1d;">⚡ ${t.fullName}</li>`);
+      }
+    }
+  }
+  for (const t of pwTests.filter(t => t.failed)) {
+    failLines.push(`<li style="margin:3px 0;font-size:11px;color:#7f1d1d;">🎭 ${t.title}</li>`);
+  }
+  const failSection = failLines.length ? `
+    <div style="padding:10px 20px 14px;">
+      <div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Failed Tests</div>
+      <ul style="margin:0;padding-left:16px;">${failLines.join('')}</ul>
+    </div>` : '';
+
+  const emailHtml = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InsureDesk Report — ${dateStr}</title>
+</head>
+<body style="margin:0;padding:16px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1E3A5F 0%,#2563AB 100%);padding:14px 20px;color:#fff;">
+    <div style="font-size:15px;font-weight:800;letter-spacing:-.2px;">🛡️ InsureDesk</div>
+    <div style="font-size:10px;opacity:.65;margin-top:2px;">Stage Test Report &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${timeStr}</div>
+  </div>
+
+  <!-- Status banner -->
+  <div style="padding:18px 20px 14px;text-align:center;background:${statusBg};border-bottom:1px solid ${statusColor}22;">
+    <div style="font-size:32px;line-height:1;">${statusEmoji}</div>
+    <div style="font-size:18px;font-weight:800;color:${statusColor};margin-top:6px;letter-spacing:-.3px;">${statusLabel}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:4px;">${passRate}% pass rate &nbsp;·&nbsp; ${fmtMs(totalDuration)}</div>
+  </div>
+
+  <!-- Stats row -->
+  <div style="display:flex;border-bottom:1px solid #e2e8f0;">
+    <div style="flex:1;padding:12px 6px;text-align:center;border-right:1px solid #e2e8f0;">
+      <div style="font-size:22px;font-weight:800;color:#1E3A5F;line-height:1;">${totalTests}</div>
+      <div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600;margin-top:3px;letter-spacing:.05em;">Total</div>
+    </div>
+    <div style="flex:1;padding:12px 6px;text-align:center;border-right:1px solid #e2e8f0;">
+      <div style="font-size:22px;font-weight:800;color:#16a34a;line-height:1;">${totalPassed}</div>
+      <div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600;margin-top:3px;letter-spacing:.05em;">Passed</div>
+    </div>
+    <div style="flex:1;padding:12px 6px;text-align:center;border-right:1px solid #e2e8f0;">
+      <div style="font-size:22px;font-weight:800;color:${failedColor};line-height:1;">${totalFailed}</div>
+      <div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600;margin-top:3px;letter-spacing:.05em;">Failed</div>
+    </div>
+    <div style="flex:1;padding:12px 6px;text-align:center;">
+      <div style="font-size:16px;font-weight:800;color:#7c3aed;line-height:1;">${fmtMs(totalDuration)}</div>
+      <div style="font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600;margin-top:3px;letter-spacing:.05em;">Duration</div>
+    </div>
+  </div>
+
+  <!-- Pass rate bar -->
+  <div style="padding:10px 20px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;">
+        <div style="width:${passRate}%;height:100%;background:${allPass ? '#16a34a' : '#dc2626'};border-radius:99px;"></div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:${statusColor};min-width:32px;text-align:right;">${passRate}%</span>
+    </div>
+  </div>
+
+  ${failSection}
+
+  <!-- CTA button -->
+  <div style="padding:${failLines.length ? '6px' : '4px'} 20px 20px;text-align:center;">
+    ${reportUrl
+      ? `<a href="${reportUrl}" style="display:inline-block;background:#2563AB;color:#ffffff;text-decoration:none;padding:11px 28px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:-.1px;">${btnLabel}</a>`
+      : `<span style="font-size:11px;color:#94a3b8;">Full report attached to this email.</span>`
+    }
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:8px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;font-size:9px;color:#94a3b8;">
+    InsureDesk CI &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${timeStr}
+    ${reportUrl ? `&nbsp;·&nbsp; <a href="${STAGE_API_URL}" style="color:#94a3b8;text-decoration:none;">Railway</a> &nbsp;·&nbsp; <a href="${STAGE_BASE_URL}" style="color:#94a3b8;text-decoration:none;">Vercel</a>` : ''}
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const emailDir = path.dirname(outEmailFile);
+  if (!fs.existsSync(emailDir)) fs.mkdirSync(emailDir, { recursive: true });
+  fs.writeFileSync(outEmailFile, emailHtml, 'utf8');
+  console.log(`Compact email written to: ${outEmailFile}`);
+  if (reportUrl) console.log(`  Report URL: ${reportUrl}`);
+}

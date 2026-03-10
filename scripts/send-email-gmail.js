@@ -24,9 +24,14 @@ function getArg(flag) {
   return i !== -1 ? args[i + 1] : null;
 }
 
-const to      = getArg('--to')      || process.env.RECIPIENT_EMAIL || 'suneethakonjeti@gmail.com';
+const to      = getArg('--to')      || process.env.RECIPIENT_EMAIL;
 const subject = getArg('--subject') || 'InsureDesk Stage Report';
 const htmlFile = getArg('--html');
+
+if (!to) {
+  console.error('ERROR: Recipient email not set. Pass --to <email> or set RECIPIENT_EMAIL env var.');
+  process.exit(1);
+}
 
 if (!htmlFile || !fs.existsSync(htmlFile)) {
   console.error(`ERROR: HTML report file not found: ${htmlFile}`);

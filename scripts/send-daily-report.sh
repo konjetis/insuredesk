@@ -27,9 +27,14 @@ JEST_JSON="$REPORT_DIR/jest-results-$TIMESTAMP.json"
 PW_JSON="$REPORT_DIR/pw-results-$TIMESTAMP.json"
 COVERAGE_JSON="$PROJECT_DIR/backend/coverage/coverage-summary.json"
 HTML_REPORT="$REPORT_DIR/stage-report-$TIMESTAMP.html"
+EMAIL_REPORT="$REPORT_DIR/stage-report-email-$TIMESTAMP.html"
+WEB_REPORT="$PROJECT_DIR/frontend/reports/daily-report.html"
 LOG_FILE="$REPORT_DIR/daily-run-$TIMESTAMP.log"
 
-RECIPIENT_EMAIL="${RECIPIENT_EMAIL:-suneethakonjeti@gmail.com}"
+STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk-5ssw082eq-konjetis-projects.vercel.app}"
+REPORT_URL="${REPORT_URL:-$STAGE_BASE_URL/reports/daily-report.html}"
+
+RECIPIENT_EMAIL="${RECIPIENT_EMAIL:?ERROR: RECIPIENT_EMAIL env var must be set (e.g. export RECIPIENT_EMAIL=you@example.com)}"
 GMAIL_USER="${GMAIL_USER:-}"
 GMAIL_APP_PASS="${GMAIL_APP_PASS:-}"
 
@@ -116,13 +121,22 @@ fi
 
 # ── Generate HTML report ──────────────────────────────────────────────────────
 echo "" | tee -a "$LOG_FILE"
-echo "▶ Generating HTML report..." | tee -a "$LOG_FILE"
-node "$SCRIPT_DIR/generate-html-report.js" \
-  --jest "$JEST_JSON" \
-  --playwright "$PW_JSON" \
-  --coverage "$COVERAGE_JSON" \
-  --out "$HTML_REPORT" 2>>"$LOG_FILE"
-echo "  Report: $HTML_REPORT" | tee -a "$LOG_FILE"
+echo "▶ Generating HTML report + compact email..." | tee -a "$LOG_FILE"
+mkdir -p "$PROJECT_DIR/frontend/reports"
+STAGE_API_URL="$STAGE_API_URL" \
+STAGE_BASE_URL="$STAGE_BASE_URL" \
+  node "$SCRIPT_DIR/generate-html-report.js" \
+    --jest        "$JEST_JSON" \
+    --playwright  "$PW_JSON" \
+    --coverage    "$COVERAGE_JSON" \
+    --out         "$HTML_REPORT" \
+    --out-email   "$EMAIL_REPORT" \
+    --report-url  "$REPORT_URL" 2>>"$LOG_FILE"
+# Copy full report to frontend so next Vercel deploy serves it
+cp "$HTML_REPORT" "$WEB_REPORT"
+echo "  Full report:    $HTML_REPORT" | tee -a "$LOG_FILE"
+echo "  Compact email:  $EMAIL_REPORT" | tee -a "$LOG_FILE"
+echo "  Web report:     $WEB_REPORT  →  $REPORT_URL" | tee -a "$LOG_FILE"
 
 # ── Determine subject line ────────────────────────────────────────────────────
 OVERALL_STATUS="✅ ALL PASSED"
@@ -141,7 +155,7 @@ RECIPIENT_EMAIL="$RECIPIENT_EMAIL" \
   node "$SCRIPT_DIR/send-email-gmail.js" \
     --to "$RECIPIENT_EMAIL" \
     --subject "$SUBJECT" \
-    --html "$HTML_REPORT" 2>>"$LOG_FILE" | tee -a "$LOG_FILE" || {
+    --html "$EMAIL_REPORT" 2>>"$LOG_FILE" | tee -a "$LOG_FILE" || {
   echo "  ❌ Email failed — check $LOG_FILE for details" | tee -a "$LOG_FILE"
 }
 

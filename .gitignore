@@ -39,4 +39,10 @@ backend/coverage/
 
 # Daily report outputs (generated files, not source)
 reports/
+# Keep run history so the trend chart persists across CI runs
+!reports/run-history.json
+# Keep the web report directory so Vercel serves the daily report
+!frontend/reports/
+!frontend/reports/.gitkeep
+!frontend/reports/daily-report.html
 frontend/playwright-report-stage/
