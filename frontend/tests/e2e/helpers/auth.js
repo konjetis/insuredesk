@@ -61,8 +61,12 @@ async function loginViaStorage(page, email, password, role) {
       const response = await route.fetch();
       await route.fulfill({ response });
     } catch (err) {
-      if (!`${err}`.includes('closed') && !`${err}`.includes('destroyed')) throw err;
-      // page/context closed before the request completed — nothing to do
+      const msg = `${err}`;
+      // Page/context was torn down while the request was in-flight — safe to drop.
+      if (msg.includes('closed') || msg.includes('destroyed')) return;
+      // For any other error (e.g. Railway unreachable) abort the browser request
+      // cleanly so the in-page fetch() rejects immediately rather than hanging.
+      await route.abort('failed').catch(() => {});
     }
   });
 

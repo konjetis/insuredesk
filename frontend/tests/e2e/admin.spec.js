@@ -193,9 +193,9 @@ test.describe('Admin tab — bulk delete & checkboxes', () => {
   });
 
   test('user rows have checkboxes after list loads', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const checkboxes = page.locator('.user-chk');
-    const count = await checkboxes.count();
+    // waitForSelector retries until the element appears (Railway can be slow in CI)
+    await page.waitForSelector('.user-chk', { timeout: 10000 });
+    const count = await page.locator('.user-chk').count();
     expect(count).toBeGreaterThan(0);
   });
 
