@@ -20,18 +20,44 @@ const { loginViaStorage, switchTab } = require('./helpers/auth');
 const ADMIN_EMAIL = 'admin@insuredesk.com';
 const ADMIN_PASS  = 'Admin@123';
 
-// Shared beforeEach helper — waits for the real loadUsers() API response
-// instead of a fixed sleep, so tests never start before the grid has data.
+// Deterministic mock users served to every admin test.
+// One of each role so filter tests work; sam-admin has a different id
+// from the logged-in admin so the "delete" button visibility test works.
+const MOCK_USERS = [
+  { id: 2, full_name: 'Alice Agent',    email: 'alice@insuredesk.com',  role: 'agent',    is_active: true,  last_login: null },
+  { id: 3, full_name: 'Bob Manager',    email: 'bob@insuredesk.com',    role: 'manager',  is_active: true,  last_login: null },
+  { id: 4, full_name: 'Carol Customer', email: 'carol@insuredesk.com',  role: 'customer', is_active: false, last_login: null },
+  { id: 5, full_name: 'Sam Admin',      email: 'sam@insuredesk.com',    role: 'admin',    is_active: true,  last_login: null },
+];
+
+// Shared beforeEach for all admin describe blocks.
+//
+// WHY we stub the API here
+// ─────────────────────────
+// The tests in this file check *frontend* behaviour: checkboxes render,
+// select-all works, buttons have tooltips, filter buttons show the right
+// rows, etc.  None of them test the backend.  After multiple CI failures
+// caused by Railway latency / cold-start / empty DB we switched to a
+// stub so the grid always has deterministic data, instantly.
+//
+// Playwright evaluates routes in LIFO order, so this specific route
+// takes precedence over the general `apiBase/**` proxy registered by
+// loginViaStorage for every other API call.
 async function adminBeforeEach(page) {
   await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
-  // Register the response listener BEFORE clicking the tab so we don't miss it.
-  const usersLoaded = page.waitForResponse(
-    resp => resp.url().includes('/api/admin/users') && resp.status() === 200,
-    { timeout: 15000 }
-  ).catch(() => null); // if API is down the test will fail at its own assertion
+
+  // Stub /api/admin/users — returns instantly, never flakes.
+  await page.route('**/api/admin/users', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_USERS),
+    })
+  );
+
   await switchTab(page, 'admin-tab');
-  await usersLoaded;            // resolves when loadUsers() response arrives
-  await page.waitForTimeout(300); // brief settle for renderUsers() to paint DOM
+  // Mock responds synchronously — just wait for renderUsers() to paint.
+  await page.waitForSelector('.user-chk', { timeout: 5000 });
 }
 
 test.describe('Admin tab — admin role', () => {
