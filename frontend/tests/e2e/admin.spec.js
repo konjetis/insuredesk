@@ -20,12 +20,23 @@ const { loginViaStorage, switchTab } = require('./helpers/auth');
 const ADMIN_EMAIL = 'admin@insuredesk.com';
 const ADMIN_PASS  = 'Admin@123';
 
+// Shared beforeEach helper — waits for the real loadUsers() API response
+// instead of a fixed sleep, so tests never start before the grid has data.
+async function adminBeforeEach(page) {
+  await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
+  // Register the response listener BEFORE clicking the tab so we don't miss it.
+  const usersLoaded = page.waitForResponse(
+    resp => resp.url().includes('/api/admin/users') && resp.status() === 200,
+    { timeout: 15000 }
+  ).catch(() => null); // if API is down the test will fail at its own assertion
+  await switchTab(page, 'admin-tab');
+  await usersLoaded;            // resolves when loadUsers() response arrives
+  await page.waitForTimeout(300); // brief settle for renderUsers() to paint DOM
+}
+
 test.describe('Admin tab — admin role', () => {
   test.beforeEach(async ({ page }) => {
-    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
-    await switchTab(page, 'admin-tab'); // real ID from HTML
-    // loadUsers() fires on tab switch — wait for API
-    await page.waitForTimeout(2500);
+    await adminBeforeEach(page);
   });
 
   // ── Panel ─────────────────────────────────────────────────────────────────
@@ -179,9 +190,7 @@ test.describe('Admin tab — admin role', () => {
 
 test.describe('Admin tab — bulk delete & checkboxes', () => {
   test.beforeEach(async ({ page }) => {
-    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
-    await switchTab(page, 'admin-tab');
-    await page.waitForTimeout(2500);
+    await adminBeforeEach(page);
   });
 
   test('bulk action bar is in the DOM', async ({ page }) => {
@@ -235,9 +244,7 @@ test.describe('Admin tab — bulk delete & checkboxes', () => {
 
 test.describe('Admin tab — edit modal delete button', () => {
   test.beforeEach(async ({ page }) => {
-    await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
-    await switchTab(page, 'admin-tab');
-    await page.waitForTimeout(2500);
+    await adminBeforeEach(page);
   });
 
   test('edit modal has a delete button element', async ({ page }) => {
@@ -245,7 +252,8 @@ test.describe('Admin tab — edit modal delete button', () => {
   });
 
   test('delete button is visible when editing another user', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // beforeEach already confirmed the user list loaded — just ensure cards are visible
+    await page.waitForSelector('.user-card button', { timeout: 5000 });
     // Click Edit on the first user card that is NOT the logged-in admin
     const editBtns = page.locator('.user-card button:has-text("Edit")');
     const count = await editBtns.count();
