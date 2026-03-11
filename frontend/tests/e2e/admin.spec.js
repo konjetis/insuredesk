@@ -46,8 +46,10 @@ const MOCK_USERS = [
 async function adminBeforeEach(page) {
   await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
 
-  // Stub /api/admin/users — returns instantly, never flakes.
-  await page.route('**/api/admin/users', route =>
+  // Stub /api/admin/users — regex matches with or without query strings.
+  // LIFO ordering: registered after the proxy in loginViaStorage, so this
+  // intercept takes precedence and returns instantly without hitting Railway.
+  await page.route(/\/api\/admin\/users/, route =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -55,9 +57,11 @@ async function adminBeforeEach(page) {
     })
   );
 
+  // Switch away from admin tab first, then back — guarantees loadUsers() fires
+  // even if the admin tab was already active when index.html loaded.
+  await switchTab(page, 'tab-agent');
   await switchTab(page, 'admin-tab');
-  // Mock responds synchronously — just wait for renderUsers() to paint.
-  await page.waitForSelector('.user-chk', { timeout: 5000 });
+  // No blocking waitForSelector here — individual tests wait for what they need.
 }
 
 test.describe('Admin tab — admin role', () => {
