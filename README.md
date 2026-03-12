@@ -1,8 +1,8 @@
 # InsureDesk 360° — Insurance Customer Service Platform
 
-![Tests](https://img.shields.io/badge/tests-233%20passing-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-188%20CI%20passing-brightgreen?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/coverage-100%25%20statements-brightgreen?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge)
 
 > A full-stack insurance customer service dashboard with role-based portals for Agents, Customers, Managers, and Admins — deployed on Vercel (frontend) and Railway (backend + PostgreSQL).
 
@@ -35,8 +35,8 @@ insuredesk/
 ├── frontend/                        # Static HTML/CSS/JS dashboard
 │   ├── login.html                   # Login page
 │   ├── index.html                   # Main 360° dashboard (all 4 portals)
-│   ├── playwright.config.stage.js   # Playwright E2E config (Stage)
-│   └── tests/e2e/                   # 82 Playwright E2E tests
+│   ├── playwright.config.stage.js   # Playwright E2E config (ui-stage + integration-stage)
+│   └── tests/e2e/                   # 92 Playwright E2E tests (72 UI + 20 integration)
 ├── backend/                         # Node.js + Express API server
 │   ├── server.js                    # Entry point
 │   ├── src/
@@ -44,7 +44,7 @@ insuredesk/
 │   │   ├── middleware/              # JWT auth, role-based access, audit
 │   │   ├── routes/                  # Express route handlers
 │   │   └── services/                # Salesforce + Zendesk integrations
-│   ├── tests/                       # 151 Jest tests (unit + API + DB + Stage)
+│   ├── tests/                       # 158 Jest tests (unit + API + DB + Stage)
 │   ├── jest.config.js               # Unit + API test config (with coverage)
 │   └── jest.config.stage.js         # Stage API test config
 ├── docs/                            # Project documentation
@@ -126,30 +126,31 @@ npx serve frontend -l 3000
 ## Running Tests
 
 ```bash
-# Unit + API tests with full coverage report (no DB needed)
+# Suite 1 — Backend unit tests with coverage (no DB, no network)
 cd backend && npm run test:ci
 
-# DB integration tests (needs live DATABASE_URL)
-DATABASE_URL="postgresql://..." npm run test:integration
-
-# Stage E2E — Jest API tests (needs live Railway)
+# Suite 2 — Backend API tests (needs live Railway)
 npm run test:stage
 
-# Stage E2E — Playwright browser tests (needs live Vercel)
-cd frontend && npx playwright test --config playwright.config.stage.js
+# Suite 3 — Frontend UI tests (mocked backend, serves frontend locally)
+cd frontend
+python3 -m http.server 3000 --directory . &
+STAGE_URL=http://localhost:3000 npx playwright test --config playwright.config.stage.js --project=ui-stage
+
+# Suite 4 — E2E Integration tests (needs live Railway)
+npx playwright test --config playwright.config.stage.js --project=integration-stage
 ```
 
 See [TESTING.md](TESTING.md) for the full guide.
 
-**Current test results: 233 / 233 passing**
+**CI pipeline: 4 suites, 188 tests total**
 
-| Suite | Tests | Status |
-|-------|-------|--------|
-| Unit (middleware + routes) | 68 | ✅ |
-| API integration | 49 | ✅ |
-| DB integration (live Railway) | 13 | ✅ |
-| Stage API (Jest) | 28 | ✅ |
-| Stage E2E (Playwright) | 82 | ✅ |
+| Suite | Tool | Tests | Backend | Status |
+|-------|------|-------|---------|--------|
+| Suite 1 — Backend Unit Tests | Jest | 68 | None (mocked) | ✅ |
+| Suite 2 — Backend API Tests | Jest | 28 | Live Railway | ✅ |
+| Suite 3 — Frontend UI Tests | Playwright | 72 | Mocked | ✅ |
+| Suite 4 — E2E Integration Tests | Playwright | 20 | Live Railway | ✅ |
 
 ---
 

@@ -1,17 +1,16 @@
 # InsureDesk — Test Suite Guide
 
-Complete testing strategy covering unit tests (Jest), API integration tests,
-backend DB integration tests, and frontend E2E automation (Playwright).
+Complete testing strategy covering backend unit tests (Jest), backend API tests (live Railway),
+frontend UI tests (Playwright, mocked backend), and E2E integration tests (Playwright, live Railway).
 
-**Total: 233 tests — all passing**
+**CI Pipeline: 4 suites — all must pass before develop is promoted to main**
 
-| Suite | Tests | Requires |
-|-------|-------|---------|
-| Unit — middleware & routes | 68 | Nothing (all mocked) |
-| API integration | 49 | Nothing (all mocked) |
-| DB integration | 13 | Live `DATABASE_URL` |
-| Stage E2E — Jest API | 28 | Live Stage environment |
-| Stage E2E — Playwright | 82 | Live Stage environment |
+| Suite | Tool | Tests | Backend | CI trigger |
+|-------|------|-------|---------|------------|
+| Suite 1 — Backend Unit Tests | Jest | 68 | None (all mocked) | Every push |
+| Suite 2 — Backend API Tests | Jest | 28 | Live Railway | `develop` push |
+| Suite 3 — Frontend UI Tests | Playwright | 72 | Mocked (no Railway) | `develop` push |
+| Suite 4 — E2E Integration Tests | Playwright | 20 | Live Railway | `develop` push |
 
 ---
 
@@ -24,30 +23,24 @@ npm install
 
 # 2. Install frontend test dependencies
 cd ~/Downloads/insuredesk/frontend
-npm install --save-dev @playwright/test
-npx playwright install          # downloads Chromium, Firefox, WebKit
+npm install
+npx playwright install --with-deps chromium
 ```
 
 ---
 
-## Backend — Unit Tests (Jest)
+## Suite 1 — Backend Unit Tests (Jest)
 
-All DB calls are mocked — no database connection required.
+All DB calls are mocked — no database connection required. Runs on every push to `develop` and `main`.
 
 ```bash
 cd ~/Downloads/insuredesk/backend
 
-# Run ALL unit tests + coverage report
-npm run test:unit
-
-# Run ALL tests (unit + API mocked + coverage)
-npm run test:all
+# Run unit tests with coverage report
+npm run test:ci
 
 # Watch mode (re-runs on file save)
 npm run test:watch
-
-# CI mode (exits cleanly after run)
-npm run test:ci
 ```
 
 ### Files
@@ -67,22 +60,121 @@ npm run test:ci
 | Branches | **98.61%** ✅ | 65% |
 | Functions | **94.11%** ✅ | 70% |
 
-Coverage HTML report is generated at `backend/coverage/index.html`.
+Coverage HTML report: `backend/coverage/index.html`
 
 ---
 
-## Backend — API Integration Tests
+## Suite 2 — Backend API Tests (Jest, live Railway)
 
-These spin up a real Express app with a mocked DB — no real database needed.
+Jest stage tests that call the live Railway API. Verifies API contracts, authentication, DB
+queries, and error responses. Runs only on `develop` pushes after Suite 1 passes.
 
 ```bash
 cd ~/Downloads/insuredesk/backend
 
-# Run only API tests
-npm run test:api
+# Run Stage API tests (requires live Railway)
+npm run test:stage
 ```
 
 ### Files
+
+| File | Endpoints covered | Tests |
+|------|------------------|-------|
+| `tests/stage/api.stage.test.js` | Auth, admin CRUD, health — all against live Railway | 28 |
+
+---
+
+## Suite 3 — Frontend UI Tests (Playwright, mocked backend)
+
+Playwright browser tests against a locally-served frontend. All Railway data API calls
+(`/api/admin/users`, `/api/admin/agents`, etc.) are intercepted by deterministic mocks
+before page navigation. Only the login token POST hits Railway — one fast call per test.
+
+This architecture eliminates Railway cold-start flakiness and makes tests deterministic.
+
+```bash
+cd ~/Downloads/insuredesk/frontend
+
+# Run UI tests only (no Railway warm-up required beyond login)
+npx playwright test --config playwright.config.stage.js --project=ui-stage
+
+# Run with visible browser
+npx playwright test --config playwright.config.stage.js --project=ui-stage --headed
+
+# View HTML report after run
+npx playwright show-report playwright-report-stage
+```
+
+### How mocking works
+
+The `loginViaStorage` helper in `tests/e2e/helpers/auth.js` accepts an optional
+`beforeNavigate` callback. Mock route handlers are registered in this callback — after
+the CORS proxy is set up (LIFO precedence) but before `page.goto('/index.html')`.
+
+The page-init IIFE in `index.html` auto-clicks the role tab on load, which fires the
+first data API call. Because the mock is registered before navigation, it intercepts
+that very first call — no race condition, no inflight Railway response overwriting data.
+
+Centralised mock data and route helpers live in `tests/e2e/helpers/mocks.js`.
+The mock body is correctly wrapped as `{ users: [...] }` matching what `loadUsers()` expects.
+
+### Test Files
+
+| File | Tab / Feature | Tests | Key scenarios |
+|------|--------------|-------|---------------|
+| `tests/e2e/ui/admin.spec.js` | Admin tab | 33 | Users grid with mock data, filter buttons, stat cards, bulk checkboxes, Add User form, access control by role, animation stability |
+| `tests/e2e/ui/agent.spec.js` | Agent tab | 14 | Call queue visibility, queue count stability, customer profile panel, call controls, history dates, animation stability |
+| `tests/e2e/ui/customer.spec.js` | Customer tab | 12 | Panel visibility, personalised greeting, policy section, dynamic payment dates, call history dates, animation stability |
+| `tests/e2e/ui/manager.spec.js` | Manager tab | 13 | Agent scorecard rows (mock data), metric stat cards, billing month badge, volume chart canvas, tab revisit stability |
+
+### Stage Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@insuredesk.com | Admin@123 |
+| Manager | jennifer.w@insuredesk.com | Manager@123 |
+| Agent | alex.johnson@insuredesk.com | Agent@123 |
+| Customer | marcus.roberts@customer.com | Customer@123 |
+
+---
+
+## Suite 4 — E2E Integration Tests (Playwright, live Railway)
+
+Full auth flow tests against the live Railway backend. No mocking — every call hits Railway
+to verify end-to-end behaviour. Tests the real login form, token storage, error handling,
+and logout. Runs serially on `develop` after Suite 3 (Railway is already warm).
+
+```bash
+cd ~/Downloads/insuredesk/frontend
+
+# Run E2E integration tests only (requires live Railway)
+npx playwright test --config playwright.config.stage.js --project=integration-stage
+
+# Run with visible browser
+npx playwright test --config playwright.config.stage.js --project=integration-stage --headed
+```
+
+### Test Files
+
+| File | Feature | Tests | Key scenarios |
+|------|---------|-------|---------------|
+| `tests/e2e/integration/login.spec.js` | Login + auth flow | 20 | Form rendering, validation, wrong credentials, successful token storage, dashboard redirect, logout, password visibility toggle |
+
+---
+
+## Additional Backend Tests (run locally, not in CI)
+
+These tests exist for local development verification but are not part of the automated
+CI pipeline.
+
+### Backend API Integration Tests
+
+Spins up a real Express app with a mocked DB — no real database needed.
+
+```bash
+cd ~/Downloads/insuredesk/backend
+npm run test:api
+```
 
 | File | Endpoints covered | Tests |
 |------|------------------|-------|
@@ -90,71 +182,21 @@ npm run test:api
 | `tests/api/admin.api.test.js` | `GET /users`, `GET /agents`, `POST /users`, `PUT /users/:id`, `DELETE /users/:id` | 29 |
 | `tests/api/health.api.test.js` | `GET /health` | 4 |
 
----
+### Backend Database Integration Tests
 
-## Backend — Database Integration Tests
-
-These run against the **real** Railway PostgreSQL database.
-They are skipped automatically if `DATABASE_URL` is not set.
+Runs against the **real** Railway PostgreSQL database.
+Skipped automatically if `DATABASE_URL` is not set.
 
 ```bash
 cd ~/Downloads/insuredesk/backend
 
-# Get your public DATABASE_URL from Railway dashboard → PostgreSQL → Connect tab, then:
 DATABASE_URL="postgresql://postgres:PASSWORD@tramway.proxy.rlwy.net:45849/railway" \
   npm run test:integration
 ```
 
-### What it tests (13 tests)
-
-- Live DB connection (`SELECT 1`)
-- Schema: all required tables exist (`users`, `audit_logs`, `agent_performance`)
-- Data integrity: at least one admin, valid role values, no null passwords
-- Audit log: insert + retrieve + cleanup cycle
-- Query performance: both main queries complete in < 500 ms
-
----
-
-## Frontend — E2E Tests (Playwright)
-
-Playwright controls a real Chromium browser against the live Stage frontend on Vercel.
-
-### Running Stage E2E Tests
-
-```bash
-cd ~/Downloads/insuredesk/frontend
-
-# Run all Stage E2E tests (82 tests)
-npx playwright test --config playwright.config.stage.js
-
-# Run a specific spec
-npx playwright test --config playwright.config.stage.js tests/e2e/admin.spec.js
-
-# Headed mode (watch the browser)
-npx playwright test --config playwright.config.stage.js --headed
-
-# View HTML report after run
-npx playwright show-report
-```
-
-### Test Files
-
-| File | Tab / Feature | Tests | Key scenarios |
-|------|--------------|-------|---------------|
-| `tests/e2e/login.spec.js` | Login page | ~10 | Form validation, wrong credentials, successful login, JWT storage, logout |
-| `tests/e2e/agent.spec.js` | Agent tab | ~18 | Call queue, customer profile panel, call controls, history dates, animation stability |
-| `tests/e2e/customer.spec.js` | Customer tab | ~18 | Policy card, claims tracker, billing dates, animation stability |
-| `tests/e2e/manager.spec.js` | Manager tab | ~18 | Agent scorecards, metric cards, month badge, chart rendering |
-| `tests/e2e/admin.spec.js` | Admin tab | ~19 | Users table, filter buttons, stat cards, Add User modal, access control |
-
-### Stage Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@insuredesk.com | Admin@123 |
-| Manager | sarah.manager@insuredesk.com | Manager@123 |
-| Agent | alex.johnson@insuredesk.com | Agent@123 |
-| Customer | marcus.roberts@customer.com | Customer@123 |
+What it tests (13 tests): live DB connection, schema validation (all required tables), data
+integrity (at least one admin, valid role values, no null passwords), audit log cycle, and
+query performance (both main queries < 500 ms).
 
 ---
 
@@ -163,29 +205,34 @@ npx playwright show-report
 ```
 insuredesk/
 ├── backend/
-│   ├── jest.config.js                          ← Jest + coverage config (unit + API)
+│   ├── jest.config.js                          ← Jest config (unit + API tests with coverage)
 │   ├── jest.config.stage.js                    ← Jest config for Stage API tests
-│   ├── tests/
-│   │   ├── unit/
-│   │   │   ├── middleware.auth.test.js          ← 21 unit tests (JWT middleware + socket)
-│   │   │   ├── routes.auth.test.js             ← 21 unit tests (auth routes + 500 paths)
-│   │   │   └── routes.admin.test.js            ← 26 unit tests (admin CRUD + 500 paths)
-│   │   ├── api/
-│   │   │   ├── auth.api.test.js                ← 16 API integration tests
-│   │   │   ├── admin.api.test.js               ← 29 API integration tests
-│   │   │   └── health.api.test.js              ← 4 health endpoint tests
-│   │   ├── integration/
-│   │   │   └── database.test.js                ← 13 live DB integration tests
-│   │   └── stage/
-│   │       └── api.stage.test.js               ← 28 Stage API tests (live Railway)
+│   └── tests/
+│       ├── unit/
+│       │   ├── middleware.auth.test.js          ← 21 unit tests (JWT middleware + socket)
+│       │   ├── routes.auth.test.js             ← 21 unit tests (auth routes + 500 paths)
+│       │   └── routes.admin.test.js            ← 26 unit tests (admin CRUD + 500 paths)
+│       ├── api/
+│       │   ├── auth.api.test.js                ← 16 API integration tests
+│       │   ├── admin.api.test.js               ← 29 API integration tests
+│       │   └── health.api.test.js              ← 4 health endpoint tests
+│       ├── integration/
+│       │   └── database.test.js                ← 13 live DB integration tests
+│       └── stage/
+│           └── api.stage.test.js               ← 28 Stage API tests (Suite 2 — live Railway)
 └── frontend/
-    ├── playwright.config.stage.js              ← Playwright Stage config (Vercel URL)
+    ├── playwright.config.stage.js              ← Playwright config: ui-stage + integration-stage
     └── tests/e2e/
-        ├── login.spec.js                       ← Login + auth flow
-        ├── agent.spec.js                       ← Agent tab E2E
-        ├── customer.spec.js                    ← Customer tab E2E
-        ├── manager.spec.js                     ← Manager tab E2E
-        └── admin.spec.js                       ← Admin tab E2E
+        ├── helpers/
+        │   ├── auth.js                         ← loginViaStorage + beforeNavigate callback
+        │   └── mocks.js                        ← MOCK_USERS, MOCK_AGENT_SCORES, setupAdminMocks, setupManagerMocks
+        ├── ui/                                 ← Suite 3: mocked backend, fast & deterministic
+        │   ├── admin.spec.js                   ← 33 UI tests (Admin tab)
+        │   ├── agent.spec.js                   ← 14 UI tests (Agent tab)
+        │   ├── customer.spec.js                ← 12 UI tests (Customer tab)
+        │   └── manager.spec.js                 ← 13 UI tests (Manager tab)
+        └── integration/                        ← Suite 4: live Railway, verify API contracts
+            └── login.spec.js                   ← 20 E2E integration tests (login + auth flow)
 ```
 
 ---
@@ -196,49 +243,81 @@ insuredesk/
 
 The project uses a **2-branch workflow** to keep `main` stable at all times:
 
-| Branch | Purpose | CI Jobs |
-|--------|---------|---------|
-| `develop` | Daily work, feature changes | Backend unit tests + coverage summary (fast, ~1 min) |
-| `main` | Production-ready code only | Protected — merges via PR only |
+| Branch | Purpose | CI Suites run |
+|--------|---------|---------------|
+| `develop` | Daily work, feature changes | All 4 suites — must all pass for auto-promote |
+| `main` | Production-ready code only | Suite 1 only (sanity check) |
 
-### GitHub Branch Protection (main)
-
-`main` is protected by a GitHub Ruleset with the following rules enforced:
-- **Require a pull request before merging** — direct pushes to `main` are blocked
-- **Require status checks to pass** — the `Full Suite — Stage + E2E (PR gate)` job must be green before the merge button becomes active
-- **Restrict deletions** — branch cannot be accidentally deleted
-- **Block force pushes** — no history rewrites on `main`
-
-### CI Jobs (`.github/workflows/ci.yml`)
-
-**On every push to `develop` or `main`:**
-- `backend-tests` — runs Jest unit + API tests with coverage
-- `coverage-summary` — prints a coverage table to the Actions log
-
-**On every PR targeting `main` (full gate):**
-- `full-suite` — runs Stage Jest API tests + all Playwright E2E tests against the Railway stage environment. Includes a Railway warmup step (up to 5 health-check pings) before tests begin.
-
-### Release Workflow
+### 4-Suite Pipeline (`.github/workflows/ci.yml`)
 
 ```
-develop  →  push  →  fast CI (unit tests only)
-                          ↓
-                   open PR: develop → main
-                          ↓
-              full-suite CI runs automatically
-              (Stage Jest + Playwright E2E)
-                          ↓
-                   all checks green?
-                          ↓
-                    merge → main
-                          ↓
-               Vercel + Railway auto-deploy
+Push to develop
+      │
+      ▼
+Suite 1 — Backend Unit Tests       (backend-unit-tests)
+  Jest unit tests, no network        Runs on every push to develop + main
+  68 tests, ~1 min                   ↓ must pass
+      │
+      ▼
+Suite 2 — Backend API Tests        (backend-api-tests)
+  Jest stage tests, live Railway     develop only
+  28 tests, ~2 min                   ↓ must pass
+      │
+      ▼
+Suite 3 — Frontend UI Tests        (frontend-ui-tests)
+  Playwright ui-stage, mocked        develop only
+  72 tests, ~3 min                   ↓ must pass
+      │
+      ▼
+Suite 4 — E2E Integration Tests    (e2e-integration-tests)
+  Playwright integration-stage       develop only
+  20 tests, ~2 min                   ↓ must pass
+      │
+      ▼
+Auto-promote develop → main
+      │
+      ▼
+Vercel + Railway auto-deploy to production
 ```
 
-### Run Tests Locally
+Suites 2–4 are sequential on `develop` pushes to avoid Railway rate-limiting.
+Suite 1 also runs on `main` as a sanity check.
+
+### Playwright Config — Two Projects
+
+`frontend/playwright.config.stage.js` defines two projects using per-project `testDir`:
+
+```js
+projects: [
+  // Suite 3: all data calls mocked, login token hits Railway
+  { name: 'ui-stage',          testDir: './tests/e2e/ui' },
+  // Suite 4: real Railway calls, verify end-to-end behaviour
+  { name: 'integration-stage', testDir: './tests/e2e/integration' },
+]
+```
+
+Override the frontend URL:
+```bash
+STAGE_BASE_URL=https://your-deploy.vercel.app \
+  npx playwright test --config playwright.config.stage.js
+```
+
+### Run Tests Locally (replicate CI)
 
 ```bash
-# Locally replicate what CI runs:
+# Suite 1 — Backend unit tests
 cd ~/Downloads/insuredesk/backend
-npm run test:ci          # unit + API tests with coverage (no DB, no Stage)
+npm run test:ci
+
+# Suite 2 — Backend API tests (live Railway)
+npm run test:stage
+
+# Suite 3 — Frontend UI tests (serve frontend first)
+cd ~/Downloads/insuredesk/frontend
+python3 -m http.server 3000 --directory . &
+STAGE_URL=http://localhost:3000 \
+  npx playwright test --config playwright.config.stage.js --project=ui-stage
+
+# Suite 4 — E2E Integration tests (live Railway)
+npx playwright test --config playwright.config.stage.js --project=integration-stage
 ```
