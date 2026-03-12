@@ -1,21 +1,28 @@
 name: CI — InsureDesk
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Automated CD pipeline (no PRs required):
+# Four test suites, one pipeline:
 #
-#   push to develop
-#       │
-#       ├─► Unit + API Tests (Jest)    always runs, ~1 min
-#       │       └─► Coverage Summary
-#       │
-#       └─► Full Suite — Stage Jest + Playwright    ~10 min
-#               └─► if ALL green → auto-promote develop → main
-#                                       │
-#                                       ▼
-#                           Vercel + Railway auto-deploy to production
+#   Suite 1 — Backend Unit Tests     Jest unit tests, no network, ~1 min
+#                  │                 Runs on every push (develop + main).
+#                  │
+#   Suite 2 — Backend API Tests      Jest stage tests against live Railway, ~2 min
+#                  │                 Verifies API contracts / DB behaviour.
+#                  │
+#   Suite 3 — Frontend UI Tests      Playwright (ui-stage project), ~3 min
+#                  │                 All Railway data calls are mocked.
+#                  │                 Only login-token fetches hit Railway.
+#                  │
+#   Suite 4 — E2E Integration Tests  Playwright (integration-stage project), ~2 min
+#                  │                 Full auth flow + error handling against live Railway.
+#                  │
+#                  └─► if ALL 4 green → auto-promote develop → main
+#                                           │
+#                                           ▼
+#                               Vercel + Railway auto-deploy to production
 #
-# Push to main only happens via the auto-promote job above.
-# Unit tests re-run on main as a sanity check (no full suite, no promote loop).
+# Suites 2–4 run only on develop pushes (sequential to avoid Railway
+# rate-limiting).  Suite 1 also runs on main as a sanity check.
 # ──────────────────────────────────────────────────────────────────────────────
 
 on:
@@ -25,18 +32,24 @@ on:
 permissions:
   contents: write   # allows the auto-promote job to push develop → main
 
-# ── Job 1: Unit + API Tests ───────────────────────────────────────────────────
+# ── Shared setup fragments ────────────────────────────────────────────────────
+# Referenced via YAML anchors where supported; otherwise duplicated inline.
+
 jobs:
-  backend-tests:
-    name: Unit + API Tests (Jest)
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Suite 1 — Backend Unit Tests
+  # Jest unit tests only — no Railway, no DB, no network calls.
+  # Fast feedback loop; runs on every push to develop and main.
+  # ════════════════════════════════════════════════════════════════════════════
+  backend-unit-tests:
+    name: "Suite 1 — Backend Unit Tests"
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -46,7 +59,7 @@ jobs:
         run: npm ci
         working-directory: backend
 
-      - name: Run unit + API tests with coverage
+      - name: Run unit tests with coverage
         run: npm run test:ci
         working-directory: backend
         env:
@@ -61,19 +74,22 @@ jobs:
           path: backend/coverage/
           retention-days: 14
 
-  # ── Job 2: Coverage Summary ───────────────────────────────────────────────
-  coverage-summary:
-    name: Coverage Summary
+  # ════════════════════════════════════════════════════════════════════════════
+  # Suite 2 — Backend API Tests
+  # Jest stage tests that call the live Railway API.
+  # Verifies API contracts, authentication, DB queries, and error responses.
+  # Runs only on develop; requires Suite 1 to pass first.
+  # ════════════════════════════════════════════════════════════════════════════
+  backend-api-tests:
+    name: "Suite 2 — Backend API Tests"
     runs-on: ubuntu-latest
-    needs: backend-tests
-    if: always()
+    needs: backend-unit-tests
+    if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -83,33 +99,56 @@ jobs:
         run: npm ci
         working-directory: backend
 
-      - name: Print coverage table
+      - name: Warm up Railway backend
         run: |
-          npm run test:ci -- --coverageReporters=text-summary 2>&1 | tail -20
+          echo "Waking Railway server..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://insuredesk-production.up.railway.app/health)
+            echo "  Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "  Server up — waiting 5s for DB pool..."
+              sleep 5; break
+            fi
+            sleep 10
+          done
+          echo "Verifying DB via login API..."
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST https://insuredesk-production.up.railway.app/api/auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"email":"admin@insuredesk.com","password":"Admin@123"}')
+            echo "  Login check $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then echo "  DB ready."; break; fi
+            sleep 5
+          done
+
+      - name: Run backend API tests (stage)
+        run: npm run test:stage
         working-directory: backend
         env:
-          JWT_SECRET: test-secret-key-insuredesk-ci
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NODE_ENV: test
 
-  # ── Job 3: Full Suite — Stage Jest + Playwright (develop pushes only) ─────
-  full-suite:
-    name: Full Suite — Stage Jest + Playwright
+  # ════════════════════════════════════════════════════════════════════════════
+  # Suite 3 — Frontend UI Tests
+  # Playwright (project: ui-stage) — tests UI behaviour with mocked backend.
+  # All Railway data calls (/api/admin/users, /api/admin/agents, etc.) are
+  # intercepted by deterministic mocks registered before page navigation.
+  # Only the login-token POST hits Railway — one fast call per test.
+  # Runs only on develop; requires Suite 2 (Railway already warm).
+  # ════════════════════════════════════════════════════════════════════════════
+  frontend-ui-tests:
+    name: "Suite 3 — Frontend UI Tests"
     runs-on: ubuntu-latest
-    needs: backend-tests
+    needs: backend-api-tests
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Install backend dependencies
-        run: npm ci
-        working-directory: backend
 
       - name: Install frontend dependencies
         run: npm ci
@@ -119,88 +158,90 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend
 
-      - name: Serve frontend locally on port 3000
+      - name: Serve frontend on port 3000
         run: |
           python3 -m http.server 3000 --directory frontend &
-          # Wait until the server responds before proceeding
           for i in $(seq 1 10); do
-            if curl -s http://localhost:3000/index.html > /dev/null; then
-              echo "Frontend server ready on port 3000"
-              break
-            fi
+            curl -s http://localhost:3000/index.html > /dev/null && echo "Frontend ready." && break
             sleep 1
           done
 
-      - name: Warm up Railway backend (avoid cold start)
-        run: |
-          echo "Step 1 — wake server via /health..."
-          for i in 1 2 3 4 5; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://insuredesk-production.up.railway.app/health)
-            echo "Attempt $i: HTTP $STATUS"
-            if [ "$STATUS" = "200" ]; then
-              echo "Server is up — waiting 5s for DB pool to settle..."
-              sleep 5
-              break
-            fi
-            sleep 10
-          done
-          echo "Step 2 — verify login API (DB-level readiness check)..."
-          for i in 1 2 3; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              -X POST https://insuredesk-production.up.railway.app/api/auth/login \
-              -H "Content-Type: application/json" \
-              -d '{"email":"admin@insuredesk.com","password":"Admin@123"}')
-            echo "Login check attempt $i: HTTP $STATUS"
-            if [ "$STATUS" = "200" ]; then
-              echo "Railway DB is ready — proceeding to tests."
-              break
-            fi
-            sleep 5
-          done
-
-      - name: Run Stage Jest API tests
-        run: npm run test:stage
-        working-directory: backend
-        env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          NODE_ENV: test
-
-      # ── UI tests: all Railway data calls are mocked ──────────────────────────
-      # Only the login token fetch hits Railway (one fast POST per test).
-      # No cold-start sensitivity — runs before the warm-up is even needed.
-      - name: Run Playwright UI tests (mocked backend)
+      - name: Run Frontend UI tests (mocked backend)
         run: npx playwright test --config playwright.config.stage.js --project=ui-stage --reporter=list
         working-directory: frontend
         env:
           STAGE_URL: http://localhost:3000
 
-      # ── Integration tests: hit Railway for real ───────────────────────────────
-      # Verifies API contracts, auth flow, and error handling against the live DB.
-      # Railway is warm from the step above — no additional warm-up needed.
-      - name: Run Playwright integration tests (live Railway)
+      - name: Upload UI test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-ui
+          path: frontend/playwright-report-stage/
+          retention-days: 14
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Suite 4 — E2E Integration Tests
+  # Playwright (project: integration-stage) — full auth flow against live Railway.
+  # Tests the real login form, token storage, error handling, and logout.
+  # No mocking — every call hits Railway to verify end-to-end behaviour.
+  # Runs only on develop; requires Suite 3 (Railway still warm).
+  # ════════════════════════════════════════════════════════════════════════════
+  e2e-integration-tests:
+    name: "Suite 4 — E2E Integration Tests"
+    runs-on: ubuntu-latest
+    needs: frontend-ui-tests
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright + Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Serve frontend on port 3000
+        run: |
+          python3 -m http.server 3000 --directory frontend &
+          for i in $(seq 1 10); do
+            curl -s http://localhost:3000/index.html > /dev/null && echo "Frontend ready." && break
+            sleep 1
+          done
+
+      - name: Run E2E Integration tests (live Railway)
         run: npx playwright test --config playwright.config.stage.js --project=integration-stage --reporter=list
         working-directory: frontend
         env:
           STAGE_URL: http://localhost:3000
 
-      - name: Upload Playwright report
+      - name: Upload E2E integration test report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-e2e
           path: frontend/playwright-report-stage/
           retention-days: 14
 
-  # ── Job 4: Auto-promote develop → main ───────────────────────────────────
+  # ════════════════════════════════════════════════════════════════════════════
+  # Auto-promote develop → main
+  # Only runs when ALL 4 suites pass on a develop push.
+  # ════════════════════════════════════════════════════════════════════════════
   promote-to-main:
     name: Auto-promote develop → main
     runs-on: ubuntu-latest
-    needs: [backend-tests, full-suite]
+    needs: [backend-unit-tests, backend-api-tests, frontend-ui-tests, e2e-integration-tests]
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Checkout full history
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -210,4 +251,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git push origin HEAD:main
-          echo "✅ develop promoted to main — Vercel + Railway will auto-deploy"
+          echo "✅ All 4 suites green — develop promoted to main"
