@@ -73,7 +73,7 @@ async function loginViaStorage(page, email, password, role, beforeNavigate = nul
   // Optional hook: runs after the proxy is registered but BEFORE page.goto.
   // Callers can use this to register additional routes (e.g. API stubs) that
   // need LIFO precedence over the proxy without losing it to a re-navigation.
-  if (beforeNavigate) await beforeNavigate();
+  if (beforeNavigate) await beforeNavigate(page);
 
   // Navigate directly to dashboard
   await page.goto('/index.html');
