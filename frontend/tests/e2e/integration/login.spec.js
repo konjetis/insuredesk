@@ -14,7 +14,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
-const { loginViaStorage } = require('./helpers/auth');
+const { loginViaStorage } = require('../helpers/auth');
 
 // ── Shared helper ──────────────────────────────────────────────────────────
 

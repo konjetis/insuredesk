@@ -165,13 +165,22 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NODE_ENV: test
 
-      - name: Run Playwright E2E tests
-        run: npx playwright test --config playwright.config.stage.js --reporter=list
+      # ── UI tests: all Railway data calls are mocked ──────────────────────────
+      # Only the login token fetch hits Railway (one fast POST per test).
+      # No cold-start sensitivity — runs before the warm-up is even needed.
+      - name: Run Playwright UI tests (mocked backend)
+        run: npx playwright test --config playwright.config.stage.js --project=ui-stage --reporter=list
         working-directory: frontend
         env:
-          # Point Playwright at the locally-served frontend so tests always
-          # run against the exact source code in this commit — no Vercel deploy needed.
-          # API calls inside index.html still go to Railway (hardcoded there).
+          STAGE_URL: http://localhost:3000
+
+      # ── Integration tests: hit Railway for real ───────────────────────────────
+      # Verifies API contracts, auth flow, and error handling against the live DB.
+      # Railway is warm from the step above — no additional warm-up needed.
+      - name: Run Playwright integration tests (live Railway)
+        run: npx playwright test --config playwright.config.stage.js --project=integration-stage --reporter=list
+        working-directory: frontend
+        env:
           STAGE_URL: http://localhost:3000
 
       - name: Upload Playwright report
@@ -179,7 +188,7 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: frontend/playwright-report/
+          path: frontend/playwright-report-stage/
           retention-days: 14
 
   # ── Job 4: Auto-promote develop → main ───────────────────────────────────

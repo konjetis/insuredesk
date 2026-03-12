@@ -4,29 +4,39 @@ const { defineConfig, devices } = require('@playwright/test');
 /**
  * InsureDesk — Stage Playwright Config
  *
- * Points all E2E tests at the Stage Vercel frontend.
- * The loginViaStorage helper calls the Railway backend directly.
- * Run AFTER confirming the backend Stage tests pass.
+ * Two test suites, one config:
  *
- * Usage:
- *   npx playwright test --config playwright.config.stage.js --project=chromium-stage
+ *   ui-stage          tests/e2e/ui/          — UI behaviour tests
+ *                                               All Railway data calls are mocked.
+ *                                               Only the login token fetch hits Railway.
+ *                                               Fast, deterministic, zero flakiness from DB state.
  *
- * Override URL if needed:
- *   STAGE_BASE_URL=https://your-custom.vercel.app npx playwright test --config playwright.config.stage.js
- *   STAGE_URL=https://your-custom.vercel.app npx playwright test --config playwright.config.stage.js  (legacy alias)
+ *   integration-stage tests/e2e/integration/ — API contract & auth flow tests
+ *                                               Hit Railway for real to verify the backend.
+ *                                               Run serially; need Railway to be warm.
+ *
+ * Run everything:
+ *   npx playwright test --config playwright.config.stage.js
+ *
+ * Run only UI tests (no Railway warm-up required beyond login):
+ *   npx playwright test --config playwright.config.stage.js --project=ui-stage
+ *
+ * Run only integration tests:
+ *   npx playwright test --config playwright.config.stage.js --project=integration-stage
+ *
+ * Override the frontend URL:
+ *   STAGE_BASE_URL=https://your-deploy.vercel.app npx playwright test --config playwright.config.stage.js
+ *   STAGE_URL=http://localhost:3000                (legacy / CI local-server)
  */
 
-// Branch alias URL — always resolves to the latest deploy of the 'develop' branch on Vercel.
-// Do NOT use a hash-based deployment URL here (e.g. insuredesk-abc123-...) because those
-// point to a fixed snapshot and won't reflect new commits pushed to develop.
-// Accepts STAGE_BASE_URL (canonical) or STAGE_URL (legacy / CI local-server override).
 const STAGE_URL = process.env.STAGE_BASE_URL || process.env.STAGE_URL || 'https://insuredesk-git-develop-konjetis-projects.vercel.app';
 
 module.exports = defineConfig({
+  // testDir is overridden per-project below — this is just a fallback.
   testDir: './tests/e2e',
-  timeout: 60_000,       // Stage can have Railway cold-start delay
-  retries: 2,            // flakier over real network — retry twice
-  workers: 1,            // serial to avoid rate-limiting
+  timeout: 60_000,
+  retries: 2,
+  workers: 1,   // serial — shared Railway login endpoint, avoid rate-limiting
 
   reporter: [
     ['list'],
@@ -44,8 +54,17 @@ module.exports = defineConfig({
   },
 
   projects: [
+    // ── UI tests — mocked backend data, fast & deterministic ─────────────────
     {
-      name: 'chromium-stage',
+      name: 'ui-stage',
+      testDir: './tests/e2e/ui',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // ── Integration tests — real Railway calls, verify API contracts ──────────
+    {
+      name: 'integration-stage',
+      testDir: './tests/e2e/integration',
       use: { ...devices['Desktop Chrome'] },
     },
   ],
