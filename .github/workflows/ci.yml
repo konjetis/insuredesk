@@ -29,6 +29,12 @@ on:
   push:
     branches: [develop, main]
 
+# Opt into Node.js 24 action runners now to silence the Node 20 deprecation
+# warning. actions/checkout@v4, setup-node@v4, and upload-artifact@v4 all
+# default to Node 20; this flag upgrades them ahead of the June 2026 deadline.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: write   # allows the auto-promote job to push develop → main
 
@@ -250,5 +256,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push origin HEAD:main
+          git push origin HEAD:main --force-with-lease
           echo "✅ All 4 suites green — develop promoted to main"
