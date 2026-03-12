@@ -57,11 +57,22 @@ async function adminBeforeEach(page) {
     })
   );
 
-  // Switch away from admin tab first, then back — guarantees loadUsers() fires
-  // even if the admin tab was already active when index.html loaded.
-  await switchTab(page, 'tab-agent');
-  await switchTab(page, 'admin-tab');
-  // No blocking waitForSelector here — individual tests wait for what they need.
+  // Re-navigate to index.html with the mock already registered.
+  //
+  // WHY re-navigate instead of just re-calling loadUsers():
+  //   loginViaStorage's page.goto('/index.html') triggered the page-init IIFE
+  //   which auto-clicked #admin-tab → loadUsers() BEFORE the mock was in place.
+  //   That inflight Railway call can arrive at any time and overwrite allUsers
+  //   with empty/error data, wiping the grid mid-test.  A fresh navigation
+  //   abandons that inflight request.  The page-init fires again — this time
+  //   with the mock already registered (LIFO: mock > proxy), so loadUsers()
+  //   returns MOCK_USERS instantly, deterministically, every time.
+  await page.goto('/index.html');
+  await expect(page.locator('.header, .logo').first()).toBeVisible({ timeout: 8000 });
+
+  // Confirm the grid is populated before any test body runs.
+  // The mock is synchronous so this resolves in < 200 ms.
+  await page.waitForSelector('.user-chk', { timeout: 10000 });
 }
 
 test.describe('Admin tab — admin role', () => {
