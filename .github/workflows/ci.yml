@@ -173,7 +173,7 @@ jobs:
           done
 
       - name: Run Frontend UI tests (mocked backend)
-        run: npx playwright test --config playwright.config.stage.js --project=ui-stage --reporter=list
+        run: npx playwright test --config playwright.config.stage.js --project=ui-stage
         working-directory: frontend
         env:
           STAGE_URL: http://localhost:3000
@@ -223,7 +223,7 @@ jobs:
           done
 
       - name: Run E2E Integration tests (live Railway)
-        run: npx playwright test --config playwright.config.stage.js --project=integration-stage --reporter=list
+        run: npx playwright test --config playwright.config.stage.js --project=integration-stage
         working-directory: frontend
         env:
           STAGE_URL: http://localhost:3000
@@ -256,5 +256,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push origin HEAD:main --force-with-lease
+          git push origin HEAD:main
           echo "✅ All 4 suites green — develop promoted to main"
