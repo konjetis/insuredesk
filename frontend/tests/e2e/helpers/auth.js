@@ -27,7 +27,7 @@ async function loginViaUI(page, email, password) {
  * Token is fetched from the live API once and reused.
  * Use for tests that need a specific role's dashboard tab.
  */
-async function loginViaStorage(page, email, password, role) {
+async function loginViaStorage(page, email, password, role, beforeNavigate = null) {
   // Fetch a real token from the API
   const apiBase = 'https://insuredesk-production.up.railway.app';
   const response = await page.request.post(`${apiBase}/api/auth/login`, {
@@ -69,6 +69,11 @@ async function loginViaStorage(page, email, password, role) {
       await route.abort('failed').catch(() => {});
     }
   });
+
+  // Optional hook: runs after the proxy is registered but BEFORE page.goto.
+  // Callers can use this to register additional routes (e.g. API stubs) that
+  // need LIFO precedence over the proxy without losing it to a re-navigation.
+  if (beforeNavigate) await beforeNavigate();
 
   // Navigate directly to dashboard
   await page.goto('/index.html');

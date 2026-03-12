@@ -44,34 +44,25 @@ const MOCK_USERS = [
 // takes precedence over the general `apiBase/**` proxy registered by
 // loginViaStorage for every other API call.
 async function adminBeforeEach(page) {
-  await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin');
+  // Pass the mock registration as a beforeNavigate callback so it runs
+  // AFTER the proxy is set up (giving LIFO precedence) but BEFORE
+  // page.goto('/index.html').  This means the very first loadUsers() call
+  // — triggered by the page-init IIFE auto-clicking #admin-tab — hits the
+  // mock instead of Railway.  No inflight Railway response can ever overwrite
+  // allUsers because the request never reaches Railway in the first place.
+  await loginViaStorage(page, ADMIN_EMAIL, ADMIN_PASS, 'admin', async () => {
+    await page.route(/\/api\/admin\/users/, route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_USERS),
+      })
+    );
+  });
 
-  // Stub /api/admin/users — regex matches with or without query strings.
-  // LIFO ordering: registered after the proxy in loginViaStorage, so this
-  // intercept takes precedence and returns instantly without hitting Railway.
-  await page.route(/\/api\/admin\/users/, route =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_USERS),
-    })
-  );
-
-  // Re-navigate to index.html with the mock already registered.
-  //
-  // WHY re-navigate instead of just re-calling loadUsers():
-  //   loginViaStorage's page.goto('/index.html') triggered the page-init IIFE
-  //   which auto-clicked #admin-tab → loadUsers() BEFORE the mock was in place.
-  //   That inflight Railway call can arrive at any time and overwrite allUsers
-  //   with empty/error data, wiping the grid mid-test.  A fresh navigation
-  //   abandons that inflight request.  The page-init fires again — this time
-  //   with the mock already registered (LIFO: mock > proxy), so loadUsers()
-  //   returns MOCK_USERS instantly, deterministically, every time.
-  await page.goto('/index.html');
-  await expect(page.locator('.header, .logo').first()).toBeVisible({ timeout: 8000 });
-
-  // Confirm the grid is populated before any test body runs.
-  // The mock is synchronous so this resolves in < 200 ms.
+  // By the time loginViaStorage resolves, page-init has auto-clicked
+  // #admin-tab → loadUsers() → mock returned MOCK_USERS → renderUsers()
+  // has run.  This is a safety-net, not a timing workaround — resolves <200ms.
   await page.waitForSelector('.user-chk', { timeout: 10000 });
 }
 
