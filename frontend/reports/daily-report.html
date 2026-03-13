@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InsureDesk Report — Friday, March 13, 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --primary:  #1E3A5F;
+    --accent:   #2563AB;
+    --pass:     #16a34a;
+    --pass-bg:  #f0fdf4;
+    --pass-mid: #86efac;
+    --fail:     #dc2626;
+    --fail-bg:  #fef2f2;
+    --warn:     #d97706;
+    --bg:       #f1f5f9;
+    --card:     #ffffff;
+    --border:   #e2e8f0;
+    --text:     #0f172a;
+    --muted:    #64748b;
+    --purple:   #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); font-size: 13px;
+    line-height: 1.4; -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Sticky header bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(135deg, #1E3A5F 0%, #2563AB 100%);
+    padding: 7px 16px; color: #fff;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .top-bar-left  { display: flex; align-items: center; gap: 8px; }
+  .brand-icon    { font-size: 16px; }
+  .brand-name    { font-size: 13px; font-weight: 800; letter-spacing: -.2px; }
+  .brand-sub     { font-size: 10px; opacity: .65; }
+  .top-bar-right { display: flex; align-items: center; gap: 8px; }
+  .top-stat {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 3px 9px; border-radius: 7px;
+    background: rgba(255,255,255,.1); min-width: 46px;
+  }
+  .top-stat .ts-num { font-size: 14px; font-weight: 800; line-height: 1; }
+  .top-stat .ts-lbl { font-size: 8px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
+  .top-stat.pass .ts-num { color: #4ade80; }
+  .top-stat.fail .ts-num { color: #94a3b8; }
+  .top-pill {
+    padding: 4px 11px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .top-pill.pass { background: rgba(74,222,128,.2); border: 1px solid rgba(74,222,128,.4); color: #4ade80; }
+  .top-pill.fail { background: rgba(248,113,113,.2); border: 1px solid rgba(248,113,113,.4); color: #f87171; }
+
+  /* ── Wrapper ── */
+  .wrapper { max-width: 980px; margin: 0 auto; padding: 10px 12px 18px; }
+
+  /* ── Summary strip (with pass rate embedded) ── */
+  .summary-strip {
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto auto;
+    gap: 7px; margin-bottom: 8px; align-items: center;
+  }
+  .s-card {
+    background: var(--card); border-radius: 8px; padding: 8px 10px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .s-card-icon { font-size: 15px; flex-shrink: 0; }
+  .s-card-num  { font-size: 18px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
+  .s-card-lbl  { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 1px; }
+  .s-card.c-total .s-card-num { color: var(--primary); }
+  .s-card.c-pass  .s-card-num { color: var(--pass); }
+  .s-card.c-fail  .s-card-num { color: var(--muted); }
+  .s-card.c-time  .s-card-num { color: var(--purple); font-size: 14px; }
+  .s-card.c-rate  { flex-direction: column; align-items: stretch; gap: 4px; min-width: 120px; }
+  .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 6px; overflow: hidden; }
+  .rate-fill  {
+    height: 100%; border-radius: 99px; width: 100%;
+    background: linear-gradient(90deg,#16a34a,#4ade80);
+  }
+  .rate-pct   {
+    font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 99px;
+    background: var(--pass-bg);
+    color: var(--pass); white-space: nowrap;
+  }
+
+  /* ── Two-column grid for Jest + PW ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  /* ── Section card ── */
+  .section {
+    background: var(--card); border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .section-head {
+    padding: 7px 11px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); background: #f8fafc;
+  }
+  .section-head-left { display: flex; align-items: center; gap: 7px; }
+  .sh-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
+  }
+  .sh-icon.jest { background: #fef3c7; }
+  .sh-icon.pw   { background: #ede9fe; }
+  .sh-icon.cov  { background: #ecfdf5; }
+  .sh-icon.hist { background: #f0f4ff; }
+  .section-head h2  { font-size: 11px; font-weight: 700; color: var(--primary); }
+  .section-head .s-meta { font-size: 9px; color: var(--muted); margin-top: 1px; }
+  .sbadge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+  .sbadge.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-mid); }
+  .sbadge.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid #fca5a5; }
+  .sbadge.none { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f8fafc; }
+  th {
+    padding: 5px 10px; text-align: left;
+    font-size: 9px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border);
+  }
+  td { padding: 5px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 11px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
+  td.tc   { text-align: center; }
+  td.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; text-align: center; color: var(--muted); }
+  td.suite-name { font-weight: 500; font-size: 10px; }
+  .pass-num { color: var(--pass); font-weight: 700; }
+  .fail-num { color: var(--fail); font-weight: 700; }
+  .zero-num { color: #94a3b8; }
+  .row-status { display: inline-flex; align-items: center; gap: 6px; }
+  .row-status .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .row-status .sdot.p { background: var(--pass); }
+  .row-status .sdot.f { background: var(--fail); }
+  tr.totals { background: #f0f4f8; border-top: 1.5px solid var(--border); }
+  tr.totals td { font-weight: 700; border-bottom: none; color: var(--primary); font-size: 11px; }
+  tr.err-row td {
+    background: #fff5f5; padding: 4px 10px 4px 24px; border-bottom: 1px solid #fee2e2;
+  }
+  tr.err-row .err-title { font-weight: 600; color: var(--fail); font-size: 10px; }
+  tr.err-row code {
+    display: block; margin-top: 2px; font-size: 9px; color: #7f1d1d;
+    white-space: pre-wrap; word-break: break-all; opacity: .85;
+    font-family: 'SF Mono','Fira Code',monospace;
+  }
+  .no-data { text-align: center; color: var(--muted); padding: 12px 10px; font-size: 11px; }
+
+  /* ── Bottom row: coverage + history side by side ── */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  /* ── Coverage inline metrics ── */
+  .cov-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 8px 10px; }
+  .cov-cell { text-align: center; }
+  .cov-pct  { font-size: 16px; font-weight: 800; line-height: 1; }
+  .cov-lbl  { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 2px 0; }
+  .cov-bar  { height: 3px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+  .cov-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* ── History chart only ── */
+  .hist-chart {
+    display: flex; gap: 5px; align-items: flex-end;
+    padding: 8px 10px; border-bottom: 1.5px solid var(--border);
+  }
+  .hist-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 0; }
+  .hist-bars { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 50px; gap: 1px; width: 100%; }
+  .hist-count { font-size: 8px; font-weight: 700; }
+  .hist-lbl { font-size: 8px; color: #94a3b8; text-align: center; max-width: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-dur { font-size: 7px; color: #cbd5e1; font-family: monospace; }
+  .hist-latest { font-size: 7px; font-weight: 700; color: #2563AB; text-transform: uppercase; }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+    padding: 7px 11px; background: var(--card); border-radius: 8px;
+    border: 1px solid var(--border); font-size: 10px; color: var(--muted);
+  }
+  .footer-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--pass-bg);
+    color: var(--pass);
+    padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 11px;
+  }
+  .footer-links { display: flex; gap: 12px; }
+  .footer-links a { color: var(--accent); text-decoration: none; }
+  .footer-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- ── Sticky top bar ── -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <span class="brand-icon">🛡️</span>
+    <div>
+      <div class="brand-name">InsureDesk</div>
+      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; Friday, March 13, 2026 &nbsp;·&nbsp; 02:55 PM UTC</div>
+    </div>
+  </div>
+  <div class="top-bar-right">
+    <div class="top-stat"><span class="ts-num">127</span><span class="ts-lbl">Total</span></div>
+    <div class="top-stat pass"><span class="ts-num">127</span><span class="ts-lbl">Passed</span></div>
+    <div class="top-stat fail"><span class="ts-num">0</span><span class="ts-lbl">Failed</span></div>
+    <div class="top-stat"><span class="ts-num" style="font-size:13px">3m 7s</span><span class="ts-lbl">Duration</span></div>
+    <span class="top-pill pass">✅ ALL PASSED</span>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <!-- ── Summary strip (with inline pass rate) ── -->
+  <div class="summary-strip">
+    <div class="s-card c-total">
+      <span class="s-card-icon">🧪</span>
+      <div><div class="s-card-num">127</div><div class="s-card-lbl">Total</div></div>
+    </div>
+    <div class="s-card c-pass">
+      <span class="s-card-icon">✅</span>
+      <div><div class="s-card-num">127</div><div class="s-card-lbl">Passed</div></div>
+    </div>
+    <div class="s-card c-fail">
+      <span class="s-card-icon">🎯</span>
+      <div><div class="s-card-num">0</div><div class="s-card-lbl">Failed</div></div>
+    </div>
+    <div class="s-card c-time">
+      <span class="s-card-icon">⏱️</span>
+      <div><div class="s-card-num">3m 7s</div><div class="s-card-lbl">Duration</div></div>
+    </div>
+    <div class="s-card c-rate">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Pass Rate</span>
+        <span class="rate-pct">100%</span>
+      </div>
+      <div class="rate-bar"><div class="rate-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Jest + Playwright side by side ── -->
+  <div class="two-col">
+
+    <!-- Backend API (Jest) -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon jest">⚡</div>
+          <div>
+            <h2>Backend API Tests</h2>
+            <div class="s-meta">Jest 25 &nbsp;·&nbsp; 33 tests &nbsp;·&nbsp; 7.8s</div>
+          </div>
+        </div>
+        <span class="sbadge pass">
+          ✅ 33/33
+        </span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Suite</th><th class="tc">✓</th><th class="tc">✗</th><th class="tc">ms</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          api.stage.test.js
+        </span>
+      </td>
+      <td class="tc pass-num">33</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">7.8s</td>
+    </tr>
+          
+          <tr class="totals">
+            <td>All Suites</td>
+            <td class="tc pass-num">33</td>
+            <td class="tc zero-num">0</td>
+            <td class="mono">7.8s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- E2E (Playwright) -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon pw">🎭</div>
+          <div>
+            <h2>End-to-End Tests</h2>
+            <div class="s-meta">Playwright &nbsp;·&nbsp; 94 tests &nbsp;·&nbsp; 2m 59s</div>
+          </div>
+        </div>
+        <span class="sbadge pass">
+          ✅ 94/94
+        </span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Spec File</th><th class="tc">✓</th><th class="tc">✗</th><th class="tc">ms</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          admin.spec.js
+        </span>
+      </td>
+      <td class="tc pass-num">35</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">56.9s</td>
+    </tr>
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          agent.spec.js
+        </span>
+      </td>
+      <td class="tc pass-num">14</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">30.1s</td>
+    </tr>
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          customer.spec.js
+        </span>
+      </td>
+      <td class="tc pass-num">12</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">22.2s</td>
+    </tr>
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          manager.spec.js
+        </span>
+      </td>
+      <td class="tc pass-num">13</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">28.4s</td>
+    </tr>
+    <tr>
+      <td class="suite-name">
+        <span class="row-status">
+          <span class="sdot p"></span>
+          login.spec.js
+        </span>
+      </td>
+      <td class="tc pass-num">20</td>
+      <td class="tc zero-num">0</td>
+      <td class="mono">36.2s</td>
+    </tr>
+          
+          <tr class="totals">
+            <td>All Specs</td>
+            <td class="tc pass-num">94</td>
+            <td class="tc zero-num">0</td>
+            <td class="mono">2m 59s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /two-col -->
+
+  <!-- ── Coverage + History side by side ── -->
+  <div class="bottom-row">
+
+    
+    <!-- Coverage -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon cov">📊</div>
+          <div>
+            <h2>Unit Test Coverage</h2>
+            <div class="s-meta">Jest — middleware + routes &nbsp;·&nbsp; Mocked DB</div>
+          </div>
+        </div>
+        <span class="sbadge pass">
+          ✅ Excellent
+        </span>
+      </div>
+      <div class="cov-row">
+        <div class="cov-cell">
+            <div class="cov-pct" style="color:#16a34a">100%</div>
+            <div class="cov-lbl">Stmts</div>
+            <div class="cov-bar"><div class="cov-bar-fill" style="width:100%;background:#16a34a"></div></div>
+          </div><div class="cov-cell">
+            <div class="cov-pct" style="color:#16a34a">99%</div>
+            <div class="cov-lbl">Branch</div>
+            <div class="cov-bar"><div class="cov-bar-fill" style="width:99%;background:#16a34a"></div></div>
+          </div><div class="cov-cell">
+            <div class="cov-pct" style="color:#16a34a">94%</div>
+            <div class="cov-lbl">Funcs</div>
+            <div class="cov-bar"><div class="cov-bar-fill" style="width:94%;background:#16a34a"></div></div>
+          </div><div class="cov-cell">
+            <div class="cov-pct" style="color:#16a34a">100%</div>
+            <div class="cov-lbl">Lines</div>
+            <div class="cov-bar"><div class="cov-bar-fill" style="width:100%;background:#16a34a"></div></div>
+          </div>
+      </div>
+      <div style="padding:0 10px 6px;font-size:8px;color:#94a3b8;text-align:right;">
+        Thresholds: Stmts ≥70% · Branches ≥65% · Functions ≥70% · Lines ≥70%
+      </div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-head">
+        <div class="section-head-left">
+          <div class="sh-icon hist">📈</div>
+          <div>
+            <h2>Run History</h2>
+            <div class="s-meta">Last 1 run &nbsp;·&nbsp; </div>
+          </div>
+        </div>
+        <span style="font-size:10px;color:#94a3b8;">Oldest → Latest</span>
+      </div>
+      <div class="hist-chart"><div class="hist-bar-wrap">
+          <div class="hist-bars">
+            
+            <div style="width:20px;background:#16a34a;border-radius:3px 3px 0 0;height:46px;" title="127 passed"></div>
+          </div>
+          <div class="hist-count" style="color:#16a34a">127/127</div>
+          <div class="hist-lbl">Mar 13 02:55 PM</div>
+          <div class="hist-dur">3m 7s</div>
+          <div class="hist-latest">Latest</div>
+        </div></div>
+      <div style="padding:5px 10px;display:flex;gap:12px;font-size:9px;color:#64748b;">
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:2px;background:#16a34a;display:inline-block;"></span>Passed</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:2px;background:#f87171;display:inline-block;"></span>Failed</span>
+      </div>
+    </div>
+
+  </div><!-- /bottom-row -->
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <span class="footer-badge">✅ Safe to Promote</span>
+    <div class="footer-links">
+      <a href="https://insuredesk-production.up.railway.app">🚂 Railway</a>
+      <a href="https://insuredesk-git-develop-konjetis-projects.vercel.app">▲ Vercel</a>
+    </div>
+    <span>Generated Friday, March 13, 2026 · 02:55 PM UTC</span>
+  </div>
+
+</div>
+</body>
+</html>
