@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InsureDesk Report — Thursday, March 26, 2026</title>
+<title>InsureDesk Report — Friday, March 27, 2026</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -51,7 +51,7 @@
   .top-stat .ts-num { font-size: 14px; font-weight: 800; line-height: 1; }
   .top-stat .ts-lbl { font-size: 8px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
   .top-stat.pass .ts-num { color: #4ade80; }
-  .top-stat.fail .ts-num { color: #94a3b8; }
+  .top-stat.fail .ts-num { color: #f87171; }
   .top-pill {
     padding: 4px 11px; border-radius: 20px; font-size: 10px; font-weight: 700;
     letter-spacing: .04em;
@@ -77,18 +77,18 @@
   .s-card-lbl  { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 1px; }
   .s-card.c-total .s-card-num { color: var(--primary); }
   .s-card.c-pass  .s-card-num { color: var(--pass); }
-  .s-card.c-fail  .s-card-num { color: var(--muted); }
+  .s-card.c-fail  .s-card-num { color: var(--fail); }
   .s-card.c-time  .s-card-num { color: var(--purple); font-size: 14px; }
   .s-card.c-rate  { flex-direction: column; align-items: stretch; gap: 4px; min-width: 120px; }
   .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 6px; overflow: hidden; }
   .rate-fill  {
-    height: 100%; border-radius: 99px; width: 100%;
-    background: linear-gradient(90deg,#16a34a,#4ade80);
+    height: 100%; border-radius: 99px; width: 13%;
+    background: linear-gradient(90deg,#dc2626,#f87171);
   }
   .rate-pct   {
     font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 99px;
-    background: var(--pass-bg);
-    color: var(--pass); white-space: nowrap;
+    background: var(--fail-bg);
+    color: var(--fail); white-space: nowrap;
   }
 
   /* ── Two-column grid for Jest + PW ── */
@@ -184,8 +184,8 @@
   }
   .footer-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: var(--pass-bg);
-    color: var(--pass);
+    background: var(--fail-bg);
+    color: var(--fail);
     padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 11px;
   }
   .footer-links { display: flex; gap: 12px; }
@@ -201,15 +201,15 @@
     <span class="brand-icon">🛡️</span>
     <div>
       <div class="brand-name">InsureDesk</div>
-      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; Thursday, March 26, 2026 &nbsp;·&nbsp; 03:17 PM UTC</div>
+      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; Friday, March 27, 2026 &nbsp;·&nbsp; 03:05 PM UTC</div>
     </div>
   </div>
   <div class="top-bar-right">
     <div class="top-stat"><span class="ts-num">127</span><span class="ts-lbl">Total</span></div>
-    <div class="top-stat pass"><span class="ts-num">127</span><span class="ts-lbl">Passed</span></div>
-    <div class="top-stat fail"><span class="ts-num">0</span><span class="ts-lbl">Failed</span></div>
-    <div class="top-stat"><span class="ts-num" style="font-size:13px">2m 46s</span><span class="ts-lbl">Duration</span></div>
-    <span class="top-pill pass">✅ ALL PASSED</span>
+    <div class="top-stat pass"><span class="ts-num">16</span><span class="ts-lbl">Passed</span></div>
+    <div class="top-stat fail"><span class="ts-num">111</span><span class="ts-lbl">Failed</span></div>
+    <div class="top-stat"><span class="ts-num" style="font-size:13px">6m 29s</span><span class="ts-lbl">Duration</span></div>
+    <span class="top-pill fail">❌ FAILURES</span>
   </div>
 </div>
 
@@ -223,20 +223,20 @@
     </div>
     <div class="s-card c-pass">
       <span class="s-card-icon">✅</span>
-      <div><div class="s-card-num">127</div><div class="s-card-lbl">Passed</div></div>
+      <div><div class="s-card-num">16</div><div class="s-card-lbl">Passed</div></div>
     </div>
     <div class="s-card c-fail">
-      <span class="s-card-icon">🎯</span>
-      <div><div class="s-card-num">0</div><div class="s-card-lbl">Failed</div></div>
+      <span class="s-card-icon">❌</span>
+      <div><div class="s-card-num">111</div><div class="s-card-lbl">Failed</div></div>
     </div>
     <div class="s-card c-time">
       <span class="s-card-icon">⏱️</span>
-      <div><div class="s-card-num">2m 46s</div><div class="s-card-lbl">Duration</div></div>
+      <div><div class="s-card-num">6m 29s</div><div class="s-card-lbl">Duration</div></div>
     </div>
     <div class="s-card c-rate">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Pass Rate</span>
-        <span class="rate-pct">100%</span>
+        <span class="rate-pct">13%</span>
       </div>
       <div class="rate-bar"><div class="rate-fill"></div></div>
     </div>
@@ -252,11 +252,11 @@
           <div class="sh-icon jest">⚡</div>
           <div>
             <h2>Backend API Tests</h2>
-            <div class="s-meta">Jest 25 &nbsp;·&nbsp; 33 tests &nbsp;·&nbsp; 8.1s</div>
+            <div class="s-meta">Jest 25 &nbsp;·&nbsp; 33 tests &nbsp;·&nbsp; 1.7s</div>
           </div>
         </div>
-        <span class="sbadge pass">
-          ✅ 33/33
+        <span class="sbadge fail">
+          ❌ 32 failed
         </span>
       </div>
       <table>
@@ -270,20 +270,234 @@
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           api.stage.test.js
         </span>
       </td>
-      <td class="tc pass-num">33</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">8.1s</td>
+      <td class="tc pass-num">1</td>
+      <td class="tc fail-num">32</td>
+      <td class="mono">1.7s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /health returns 200 and status "ok"</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:95:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/auth/login 400 when email is missing</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 400
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:107:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/auth/login 401 when credentials are wrong</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 401
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:113:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/auth/login 200 returns token and user for admin</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:118:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/auth/login 200 returns token for agent</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:127:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/auth/login 200 returns token for manager</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:133:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/auth/me 401 without token</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 401
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:143:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/auth/me 200 returns correct admin profile</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"EnDyebBxRSyDTouYBhdwDg"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/auth/me 200 returns correct agent profile</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"ywEpIVw7RIG2if2cBT7zVQ"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/users 401 without token</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 401
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:168:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/users 403 for agent role</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"3mRy90AlSCOgn2T2ezItjw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/users 200 returns users array for admin</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"xOyt0EgVRtm3v36PaP71AA"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/users admin user is present in the list</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"PKqqVb9ZSY2XO2P-c9o55Q"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/users at least one agent is present</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"HFkgDe_ySzSEtmTgg4a9AQ"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/agents 403 for agent role</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"_zTWR6SiQqaquGZaozsQ6Q"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/agents 200 returns agent scorecard for manager</div><code>Error: Login failed for jennifer.w@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"ajiw92daQLKNzrTeozsQ6Q"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredes</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ GET /api/admin/agents 200 returns agent scorecard for admin</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"QOoPVtgXSgyp-Yuzg4a9AQ"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/admin/users — create & cleanup 403 for agent role</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"iSZTISZgRpyr83QOPvyhXg"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/admin/users — create & cleanup 400 when required fields missing</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"vd5CPUdqRMmRdQelGbGh5g"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ POST /api/admin/users — create & cleanup 201 admin can create a new agent</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"MC7g4iehSjqUO7DKO8poTA"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ PUT /api/admin/users/:id 401 without token</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 401
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:300:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ PUT /api/admin/users/:id 403 for agent role</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"gFvlZwpPQuCQB_-CPvyhXg"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ PUT /api/admin/users/:id 404 for non-existent user</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"RNpWE3iWQSOtaQCwAax-fw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id — soft deactivate 401 without token</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 401
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:325:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id — soft deactivate 403 for agent role</div><code>Error: Login failed for alex.johnson@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"VlqY99JrTwCbC7W8woOzXw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insured</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id — soft deactivate 404 for non-existent user</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"MwCKoPFTSxqPq__Rg4a9AQ"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id?permanent=true — hard delete 401 without token</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"9Gh2PzeQQOWYuCvWCx5-qw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id?permanent=true — hard delete 403 for agent role</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"9Gh2PzeQQOWYuCvWCx5-qw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id?permanent=true — hard delete 404 for non-existent user</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"9Gh2PzeQQOWYuCvWCx5-qw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id?permanent=true — hard delete 200 admin can permanently delete a user</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"9Gh2PzeQQOWYuCvWCx5-qw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ DELETE /api/admin/users/:id?permanent=true — hard delete 404 on re-delete confirms user is truly gone</div><code>Error: Login failed for admin@insuredesk.com: {"status":"error","code":404,"message":"Application not found","request_id":"9Gh2PzeQQOWYuCvWCx5-qw"}
+    at getToken (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:85:29)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/bac</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Audit log (indirect verification) admin can still login after multiple logins (no lockout)</div><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404
+    at Object.&lt;anonymous&gt; (/home/runner/work/insuredesk/insuredesk/backend/tests/stage/api.stage.test.js:404:22)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</code></td>
     </tr>
           
           <tr class="totals">
             <td>All Suites</td>
-            <td class="tc pass-num">33</td>
-            <td class="tc zero-num">0</td>
-            <td class="mono">8.1s</td>
+            <td class="tc pass-num">1</td>
+            <td class="tc fail-num">32</td>
+            <td class="mono">1.7s</td>
           </tr>
         </tbody>
       </table>
@@ -296,11 +510,11 @@
           <div class="sh-icon pw">🎭</div>
           <div>
             <h2>End-to-End Tests</h2>
-            <div class="s-meta">Playwright &nbsp;·&nbsp; 94 tests &nbsp;·&nbsp; 2m 38s</div>
+            <div class="s-meta">Playwright &nbsp;·&nbsp; 94 tests &nbsp;·&nbsp; 6m 27s</div>
           </div>
         </div>
-        <span class="sbadge pass">
-          ✅ 94/94
+        <span class="sbadge fail">
+          ❌ 79 failed
         </span>
       </div>
       <table>
@@ -314,64 +528,303 @@
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           admin.spec.js
         </span>
       </td>
-      <td class="tc pass-num">35</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">48.6s</td>
+      <td class="tc pass-num">0</td>
+      <td class="tc fail-num">35</td>
+      <td class="mono">9.6s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin panel is visible</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin-tab button has active class</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ users grid is in the DOM</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ users grid shows mock data (not loading spinner)</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ users grid contains one card per mock user</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Total Users stat card is visible</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ all 5 stat cards render</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ stat card totals match mock data</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ "All" filter button is visible and clickable</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ "Agents" filter button is visible and clickable</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ "Managers" filter button is visible and clickable</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ "Customers" filter button is visible and clickable</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ "Admins" filter button is visible and clickable</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Agents filter shows only agent rows</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Admins filter shows only admin rows</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ All filter restores full list after filtering</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Add User button is present</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Add User form fields are visible in panel</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Add User form has email and password inputs</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ Add User modal closes on Escape</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin panel animation is suppressed on revisit</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ bulk action bar is in the DOM</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ select-all checkbox is present in bulk bar</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ user rows have checkboxes after list loads</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ checking a user checkbox updates bulk count</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ select-all checks all visible user checkboxes</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ bulk bar shows Delete Selected button</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ refresh button has tooltip</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ edit modal has a delete button element</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ delete button is visible when editing another user</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ edit button has tooltip</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ deactivate/activate button has tooltip</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin tab button is hidden for agent role</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin tab button is hidden for customer role</div><code>Error: Login API returned 404 for sarah.anderson@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin tab button is hidden for manager role</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
     </tr>
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           agent.spec.js
         </span>
       </td>
-      <td class="tc pass-num">14</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">28.4s</td>
+      <td class="tc pass-num">0</td>
+      <td class="tc fail-num">14</td>
+      <td class="mono">3.8s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ agent panel is visible after tab click</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ agent panel has active CSS class</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ queue count element is visible and numeric</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ queue badge shows waiting count</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ active call item is present in queue</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ queue shows at least one caller card</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ queue count is static (no random juggling)</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer profile section is rendered</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ call control buttons are present</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ call history date elements use relative dates</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ call history does not show hardcoded Feb 2026 dates</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ agent greeting shows logged-in agent name</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ numbers are stable after returning to agent tab</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ tab switches do not trigger CSS fadeUp twice</div><code>Error: Login API returned 404 for alex.johnson@insuredesk.com</code></td>
     </tr>
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           customer.spec.js
         </span>
       </td>
-      <td class="tc pass-num">12</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">20.0s</td>
+      <td class="tc pass-num">0</td>
+      <td class="tc fail-num">12</td>
+      <td class="mono">3.2s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer panel is visible</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer panel has active class</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer-greeting element exists and is visible</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ greeting says Hi [first name], not hardcoded "Sarah"</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ greeting contains the policy tagline</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ policy information section is present</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ payment due badge shows a future month name</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ payment due date carries current year</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer call history dates are relative (mh-d1)</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ claims or support section content is present</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ callback section uses current month, not hardcoded Mar 5-7</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ customer tab numbers are stable on revisit</div><code>Error: Login API returned 404 for marcus.roberts@customer.com</code></td>
     </tr>
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           manager.spec.js
         </span>
       </td>
-      <td class="tc pass-num">13</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">26.4s</td>
+      <td class="tc pass-num">0</td>
+      <td class="tc fail-num">13</td>
+      <td class="mono">3.7s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ manager panel is visible</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ manager panel has active class</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ agent scores table body exists in DOM</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ scorecard contains one row per mock agent</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ scorecard rows are non-empty</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ scorecard table has column headers</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ manager queue stat card shows a number</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ manager panel has at least 3 stat cards</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ billing month badge shows current year</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ billing month badge does not show hardcoded "Feb 2026"</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ volume chart canvas is present in manager panel</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ manager tab numbers are stable on revisit</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ switching to manager tab does not re-fetch scores unnecessarily</div><code>Error: Login API returned 404 for jennifer.w@insuredesk.com</code></td>
     </tr>
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           login.spec.js
         </span>
       </td>
-      <td class="tc pass-num">20</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">31.2s</td>
+      <td class="tc pass-num">15</td>
+      <td class="tc fail-num">5</td>
+      <td class="mono">27.7s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ admin login — API returns valid token and user object</div><code>Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+Received: [31mfalse[39m</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ token is stored in localStorage after successful login</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ user data is stored in localStorage after login</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ dashboard loads correctly after admin login</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ logout clears localStorage and redirects to login.html</div><code>Error: Login API returned 404 for admin@insuredesk.com</code></td>
     </tr>
           
           <tr class="totals">
             <td>All Specs</td>
-            <td class="tc pass-num">94</td>
-            <td class="tc zero-num">0</td>
-            <td class="mono">2m 38s</td>
+            <td class="tc pass-num">15</td>
+            <td class="tc fail-num">79</td>
+            <td class="mono">6m 27s</td>
           </tr>
         </tbody>
       </table>
@@ -435,12 +888,12 @@
       </div>
       <div class="hist-chart"><div class="hist-bar-wrap">
           <div class="hist-bars">
-            
-            <div style="width:20px;background:#16a34a;border-radius:3px 3px 0 0;height:46px;" title="127 passed"></div>
+            <div style="width:20px;background:#f87171;border-radius:3px 3px 0 0;height:40px;" title="111 failed"></div>
+            <div style="width:20px;background:#dc2626;border-radius:0;height:6px;" title="16 passed"></div>
           </div>
-          <div class="hist-count" style="color:#16a34a">127/127</div>
-          <div class="hist-lbl">Mar 26 03:17 PM</div>
-          <div class="hist-dur">2m 46s</div>
+          <div class="hist-count" style="color:#dc2626">16/127</div>
+          <div class="hist-lbl">Mar 27 03:05 PM</div>
+          <div class="hist-dur">6m 29s</div>
           <div class="hist-latest">Latest</div>
         </div></div>
       <div style="padding:5px 10px;display:flex;gap:12px;font-size:9px;color:#64748b;">
@@ -453,12 +906,12 @@
 
   <!-- ── Footer ── -->
   <div class="footer">
-    <span class="footer-badge">✅ Safe to Promote</span>
+    <span class="footer-badge">❌ Do Not Promote</span>
     <div class="footer-links">
       <a href="https://insuredesk-production.up.railway.app">🚂 Railway</a>
       <a href="https://insuredesk-git-develop-konjetis-projects.vercel.app">▲ Vercel</a>
     </div>
-    <span>Generated Thursday, March 26, 2026 · 03:17 PM UTC</span>
+    <span>Generated Friday, March 27, 2026 · 03:05 PM UTC</span>
   </div>
 
 </div>
