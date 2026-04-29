@@ -31,7 +31,7 @@ EMAIL_REPORT="$REPORT_DIR/stage-report-email-$TIMESTAMP.html"
 WEB_REPORT="$PROJECT_DIR/frontend/reports/daily-report.html"
 LOG_FILE="$REPORT_DIR/daily-run-$TIMESTAMP.log"
 
-STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk-5ssw082eq-konjetis-projects.vercel.app}"
+STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk.vercel.app}"
 REPORT_URL="${REPORT_URL:-$STAGE_BASE_URL/reports/daily-report.html}"
 
 RECIPIENT_EMAIL="${RECIPIENT_EMAIL:?ERROR: RECIPIENT_EMAIL env var must be set (e.g. export RECIPIENT_EMAIL=you@example.com)}"
@@ -39,7 +39,7 @@ GMAIL_USER="${GMAIL_USER:-}"
 GMAIL_APP_PASS="${GMAIL_APP_PASS:-}"
 
 STAGE_API_URL="${STAGE_API_URL:-https://insuredesk-production.up.railway.app}"
-STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk-5ssw082eq-konjetis-projects.vercel.app}"
+STAGE_BASE_URL="${STAGE_BASE_URL:-https://insuredesk.vercel.app}"
 
 # ── Validate dependencies ─────────────────────────────────────────────────────
 mkdir -p "$REPORT_DIR"

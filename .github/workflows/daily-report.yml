@@ -92,7 +92,7 @@ jobs:
       - name: Generate HTML report
         run: |
           mkdir -p reports frontend/reports
-          REPORT_URL="${{ vars.STAGE_BASE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app' }}/reports/daily-report.html"
+          REPORT_URL="${{ vars.STAGE_BASE_URL || 'https://insuredesk.vercel.app' }}/reports/daily-report.html"
           node scripts/generate-html-report.js \
             --jest        reports/jest-results.json \
             --playwright  reports/pw-results.json \

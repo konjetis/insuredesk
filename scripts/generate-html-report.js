@@ -28,7 +28,7 @@ const reportUrl      = getArg('--report-url');  // public URL of the full web re
 
 // ── Environment config (override via env vars) ────────────────────────────────
 const STAGE_API_URL  = process.env.STAGE_API_URL  || 'https://insuredesk-production.up.railway.app';
-const STAGE_BASE_URL = process.env.STAGE_BASE_URL || 'https://insuredesk-5ssw082eq-konjetis-projects.vercel.app';
+const STAGE_BASE_URL = process.env.STAGE_BASE_URL || 'https://insuredesk.vercel.app';
 const JEST_VERSION   = process.env.JEST_VERSION   || 'Jest 25';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
