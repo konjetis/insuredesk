@@ -252,9 +252,18 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push develop → main
+      - name: Preserve main-only files before promote
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          # Carry forward run-history.json and the latest daily report from main
+          # so the history chart and report page survive the force-push
+          git checkout origin/main -- reports/run-history.json frontend/reports/daily-report.html 2>/dev/null || echo "No main-only files to preserve yet"
+          git add reports/run-history.json frontend/reports/daily-report.html 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: carry run history and daily report forward from main"
+
+      - name: Push develop → main
+        run: |
           git push origin HEAD:main --force-with-lease
           echo "✅ All 4 suites green — develop promoted to main"
