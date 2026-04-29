@@ -38,7 +38,9 @@ frontend/node_modules/
 backend/coverage/
 
 # Daily report outputs (generated files, not source)
-reports/
+# Use reports/* instead of reports/ so the specific file exceptions below work.
+# Git cannot re-include a file if its parent directory is excluded.
+reports/*
 # Keep run history so the trend chart persists across CI runs
 !reports/run-history.json
 # Keep the web report directory so Vercel serves the daily report
