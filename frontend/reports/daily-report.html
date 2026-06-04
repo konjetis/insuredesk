@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InsureDesk Report — Wednesday, June 3, 2026</title>
+<title>InsureDesk Report — Thursday, June 4, 2026</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -82,7 +82,7 @@
   .s-card.c-rate  { flex-direction: column; align-items: stretch; gap: 4px; min-width: 120px; }
   .rate-bar   { flex: 1; background: #e2e8f0; border-radius: 99px; height: 6px; overflow: hidden; }
   .rate-fill  {
-    height: 100%; border-radius: 99px; width: 100%;
+    height: 100%; border-radius: 99px; width: 99%;
     background: linear-gradient(90deg,#16a34a,#4ade80);
   }
   .rate-pct   {
@@ -201,14 +201,14 @@
     <span class="brand-icon">🛡️</span>
     <div>
       <div class="brand-name">InsureDesk</div>
-      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; Wednesday, June 3, 2026 &nbsp;·&nbsp; 06:29 PM UTC</div>
+      <div class="brand-sub">Stage Test Report &nbsp;·&nbsp; Thursday, June 4, 2026 &nbsp;·&nbsp; 05:01 PM UTC</div>
     </div>
   </div>
   <div class="top-bar-right">
     <div class="top-stat"><span class="ts-num">127</span><span class="ts-lbl">Total</span></div>
-    <div class="top-stat pass"><span class="ts-num">127</span><span class="ts-lbl">Passed</span></div>
+    <div class="top-stat pass"><span class="ts-num">126</span><span class="ts-lbl">Passed</span></div>
     <div class="top-stat fail"><span class="ts-num">0</span><span class="ts-lbl">Failed</span></div>
-    <div class="top-stat"><span class="ts-num" style="font-size:13px">3m 58s</span><span class="ts-lbl">Duration</span></div>
+    <div class="top-stat"><span class="ts-num" style="font-size:13px">4m 7s</span><span class="ts-lbl">Duration</span></div>
     <span class="top-pill pass">✅ ALL PASSED</span>
   </div>
 </div>
@@ -223,7 +223,7 @@
     </div>
     <div class="s-card c-pass">
       <span class="s-card-icon">✅</span>
-      <div><div class="s-card-num">127</div><div class="s-card-lbl">Passed</div></div>
+      <div><div class="s-card-num">126</div><div class="s-card-lbl">Passed</div></div>
     </div>
     <div class="s-card c-fail">
       <span class="s-card-icon">🎯</span>
@@ -231,12 +231,12 @@
     </div>
     <div class="s-card c-time">
       <span class="s-card-icon">⏱️</span>
-      <div><div class="s-card-num">3m 58s</div><div class="s-card-lbl">Duration</div></div>
+      <div><div class="s-card-num">4m 7s</div><div class="s-card-lbl">Duration</div></div>
     </div>
     <div class="s-card c-rate">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Pass Rate</span>
-        <span class="rate-pct">100%</span>
+        <span class="rate-pct">99%</span>
       </div>
       <div class="rate-bar"><div class="rate-fill"></div></div>
     </div>
@@ -252,7 +252,7 @@
           <div class="sh-icon jest">⚡</div>
           <div>
             <h2>Backend API Tests</h2>
-            <div class="s-meta">Jest 25 &nbsp;·&nbsp; 33 tests &nbsp;·&nbsp; 43.2s</div>
+            <div class="s-meta">Jest 25 &nbsp;·&nbsp; 33 tests &nbsp;·&nbsp; 44.6s</div>
           </div>
         </div>
         <span class="sbadge pass">
@@ -276,14 +276,14 @@
       </td>
       <td class="tc pass-num">33</td>
       <td class="tc zero-num">0</td>
-      <td class="mono">43.2s</td>
+      <td class="mono">44.6s</td>
     </tr>
           
           <tr class="totals">
             <td>All Suites</td>
             <td class="tc pass-num">33</td>
             <td class="tc zero-num">0</td>
-            <td class="mono">43.2s</td>
+            <td class="mono">44.6s</td>
           </tr>
         </tbody>
       </table>
@@ -296,11 +296,11 @@
           <div class="sh-icon pw">🎭</div>
           <div>
             <h2>End-to-End Tests</h2>
-            <div class="s-meta">Playwright &nbsp;·&nbsp; 94 tests &nbsp;·&nbsp; 3m 15s</div>
+            <div class="s-meta">Playwright &nbsp;·&nbsp; 94 tests &nbsp;·&nbsp; 3m 22s</div>
           </div>
         </div>
         <span class="sbadge pass">
-          ✅ 94/94
+          ✅ 93/94
         </span>
       </div>
       <table>
@@ -325,13 +325,16 @@
     <tr>
       <td class="suite-name">
         <span class="row-status">
-          <span class="sdot p"></span>
+          <span class="sdot f"></span>
           agent.spec.js
         </span>
       </td>
-      <td class="tc pass-num">14</td>
-      <td class="tc zero-num">0</td>
-      <td class="mono">32.8s</td>
+      <td class="tc pass-num">13</td>
+      <td class="tc fail-num">1</td>
+      <td class="mono">32.0s</td>
+    </tr>
+    <tr class="err-row">
+      <td colspan="4"><div class="err-title">✗ queue count is static (no random juggling)</div><code>Error: Login API returned 502 for alex.johnson@insuredesk.com</code></td>
     </tr>
     <tr>
       <td class="suite-name">
@@ -342,7 +345,7 @@
       </td>
       <td class="tc pass-num">12</td>
       <td class="tc zero-num">0</td>
-      <td class="mono">24.9s</td>
+      <td class="mono">24.8s</td>
     </tr>
     <tr>
       <td class="suite-name">
@@ -353,7 +356,7 @@
       </td>
       <td class="tc pass-num">13</td>
       <td class="tc zero-num">0</td>
-      <td class="mono">32.3s</td>
+      <td class="mono">32.1s</td>
     </tr>
     <tr>
       <td class="suite-name">
@@ -364,14 +367,14 @@
       </td>
       <td class="tc pass-num">20</td>
       <td class="tc zero-num">0</td>
-      <td class="mono">36.9s</td>
+      <td class="mono">38.1s</td>
     </tr>
           
           <tr class="totals">
             <td>All Specs</td>
-            <td class="tc pass-num">94</td>
+            <td class="tc pass-num">93</td>
             <td class="tc zero-num">0</td>
-            <td class="mono">3m 15s</td>
+            <td class="mono">3m 22s</td>
           </tr>
         </tbody>
       </table>
@@ -428,21 +431,12 @@
           <div class="sh-icon hist">📈</div>
           <div>
             <h2>Run History</h2>
-            <div class="s-meta">Last 7 runs &nbsp;·&nbsp; <span style="color:#94a3b8;">→ No change</span></div>
+            <div class="s-meta">Last 7 runs &nbsp;·&nbsp; <span style="color:#f87171;font-weight:700;">↓ -1</span></div>
           </div>
         </div>
         <span style="font-size:10px;color:#94a3b8;">Oldest → Latest</span>
       </div>
       <div class="hist-chart"><div class="hist-bar-wrap">
-          <div class="hist-bars">
-            
-            <div style="width:20px;background:#16a34a;border-radius:3px 3px 0 0;height:46px;" title="127 passed"></div>
-          </div>
-          <div class="hist-count" style="color:#16a34a">127/127</div>
-          <div class="hist-lbl">May 28 05:39 PM</div>
-          <div class="hist-dur">2m 35s</div>
-          
-        </div><div class="hist-bar-wrap">
           <div class="hist-bars">
             
             <div style="width:20px;background:#16a34a;border-radius:3px 3px 0 0;height:46px;" title="127 passed"></div>
@@ -495,6 +489,15 @@
           <div class="hist-count" style="color:#16a34a">127/127</div>
           <div class="hist-lbl">Jun 3 06:29 PM</div>
           <div class="hist-dur">3m 58s</div>
+          
+        </div><div class="hist-bar-wrap">
+          <div class="hist-bars">
+            
+            <div style="width:20px;background:#16a34a;border-radius:3px 3px 0 0;height:46px;" title="126 passed"></div>
+          </div>
+          <div class="hist-count" style="color:#16a34a">126/127</div>
+          <div class="hist-lbl">Jun 4 05:01 PM</div>
+          <div class="hist-dur">4m 7s</div>
           <div class="hist-latest">Latest</div>
         </div></div>
       <div style="padding:5px 10px;display:flex;gap:12px;font-size:9px;color:#64748b;">
@@ -512,7 +515,7 @@
       <a href="https://insuredesk-production.up.railway.app">🚂 Railway</a>
       <a href="https://insuredesk-git-develop-konjetis-projects.vercel.app">▲ Vercel</a>
     </div>
-    <span>Generated Wednesday, June 3, 2026 · 06:29 PM UTC</span>
+    <span>Generated Thursday, June 4, 2026 · 05:01 PM UTC</span>
   </div>
 
 </div>
