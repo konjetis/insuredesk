@@ -1,14 +1,5 @@
 [
   {
-    "ts": "2026-06-08T17:30:33.559Z",
-    "label": "Jun 8 05:30 PM",
-    "total": 127,
-    "passed": 127,
-    "failed": 0,
-    "duration": 271671.75800000003,
-    "pass": true
-  },
-  {
     "ts": "2026-06-09T16:38:12.276Z",
     "label": "Jun 9 04:38 PM",
     "total": 127,
@@ -60,6 +51,15 @@
     "passed": 127,
     "failed": 0,
     "duration": 193709.15000000002,
+    "pass": true
+  },
+  {
+    "ts": "2026-06-15T18:46:30.734Z",
+    "label": "Jun 15 06:46 PM",
+    "total": 127,
+    "passed": 127,
+    "failed": 0,
+    "duration": 181853.209,
     "pass": true
   }
 ]
